@@ -18,7 +18,6 @@ public sealed class TrayApplicationContext : ApplicationContext
     private string? _savedPassword;
     private SettingsForm? _settingsForm;
     private bool _busy;
-    private bool _started;
 
     public TrayApplicationContext(string[] args)
     {
@@ -70,7 +69,6 @@ public sealed class TrayApplicationContext : ApplicationContext
 
     private void Start()
     {
-        _started = true;
         SyncLaunchSetting();
 
         if (!HasConfig(_settings))

@@ -39,7 +39,7 @@ public static class DriveMapper
         return text.Length == 1 && text[0] >= 'D' && text[0] <= 'Z' ? text : "T";
     }
 
-    public static IReadOnlyList<string> AvailableDriveLetters()
+    public static List<string> AvailableDriveLetters()
     {
         var used = new HashSet<char>();
         try
