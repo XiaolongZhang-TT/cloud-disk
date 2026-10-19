@@ -1,6 +1,7 @@
 # Tern
 
 [![CI](https://github.com/XiaolongZhang-TT/tern/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/XiaolongZhang-TT/tern/actions/workflows/ci.yml)
+[![Docker Publish](https://github.com/XiaolongZhang-TT/tern/actions/workflows/docker-publish.yml/badge.svg?branch=main)](https://github.com/XiaolongZhang-TT/tern/actions/workflows/docker-publish.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Latest release](https://img.shields.io/github/v/release/XiaolongZhang-TT/tern)](https://github.com/XiaolongZhang-TT/tern/releases)
 [![GitHub stars](https://img.shields.io/github/stars/XiaolongZhang-TT/tern?style=flat)](https://github.com/XiaolongZhang-TT/tern/stargazers)
@@ -58,7 +59,7 @@ Mobile is supported too: the sidebar becomes a drawer and the toolbar adapts.
   <img src="docs/screenshots/13-mobile-drive.png" width="300" alt="Tern on mobile">
 </p>
 
-## Quick start (Docker)
+## Quick start (Docker source build)
 
 ```bash
 # 1. Enter the project directory
@@ -87,6 +88,55 @@ upgrades. Back up the whole `data/` directory.
 > Verified in Docker with multi-stage builds, non-root execution
 > (`DATA_UID=501`), healthchecks, the SPA, login and WebDAV. See
 > [docs/DEPLOY.md](docs/DEPLOY.md) for NAS-specific notes.
+
+## Pull the Docker Hub image (no build)
+
+Pushing a `v*` tag triggers GitHub Actions to build and publish a multi-arch image
+to Docker Hub (`linux/amd64` + `linux/arm64`). The image contains the web app,
+REST API and WebDAV, so no Node.js or local build is needed on the NAS.
+
+Replace `your-dockerhub-username` with your Docker Hub namespace:
+
+```bash
+export TERN_IMAGE=your-dockerhub-username/tern:latest
+
+docker pull "$TERN_IMAGE"
+mkdir -p data
+
+docker run -d --name tern --restart unless-stopped \
+  -p 8080:8080 \
+  -v "$PWD/data:/data" \
+  -e ADMIN_USERNAME=admin \
+  -e ADMIN_PASSWORD='change-me' \
+  -e DATA_UID="$(id -u)" \
+  -e DATA_GID="$(id -g)" \
+  "$TERN_IMAGE"
+```
+
+Open `http://<NAS-IP>:8080`. Reverse-proxy and upload settings are the same as
+the source-build deployment.
+
+Or use the dedicated Compose file:
+
+```bash
+cp .env.example .env
+# Add to .env:
+# TERN_IMAGE=your-dockerhub-username/tern:latest
+
+docker compose -f docker-compose.hub.yml pull
+docker compose -f docker-compose.hub.yml up -d
+```
+
+| Tag | Description |
+|---|---|
+| `latest` | Latest stable release |
+| `1.1.1` / `1.1` / `1` | Semantic-version tags |
+| `edge` | Manual `workflow_dispatch` test build |
+
+> Maintainers: add `DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN` under
+> **Settings → Secrets and variables → Actions**, then push a `v*` tag or run
+> [Docker Publish](https://github.com/XiaolongZhang-TT/tern/actions/workflows/docker-publish.yml)
+> manually. The Docker Hub token needs Read & Write permission.
 
 ## macOS client (Finder mount)
 

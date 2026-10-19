@@ -3,6 +3,7 @@
 [English](README.en.md) | **简体中文**
 
 [![CI](https://github.com/XiaolongZhang-TT/tern/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/XiaolongZhang-TT/tern/actions/workflows/ci.yml)
+[![Docker Publish](https://github.com/XiaolongZhang-TT/tern/actions/workflows/docker-publish.yml/badge.svg?branch=main)](https://github.com/XiaolongZhang-TT/tern/actions/workflows/docker-publish.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Latest release](https://img.shields.io/github/v/release/XiaolongZhang-TT/tern)](https://github.com/XiaolongZhang-TT/tern/releases)
 [![GitHub stars](https://img.shields.io/github/stars/XiaolongZhang-TT/tern?style=flat)](https://github.com/XiaolongZhang-TT/tern/stargazers)
@@ -48,7 +49,7 @@
   <img src="docs/screenshots/13-mobile-drive.png" width="300" alt="手机端">
 </p>
 
-## 快速开始（Docker）
+## 快速开始（Docker 源码构建）
 
 ```bash
 # 1. 获取代码后进入目录
@@ -73,6 +74,57 @@ docker compose up -d --build
 数据默认保存在 `./data`（SQLite 数据库 + 文件内容），升级容器不会丢失。备份时直接备份整个 `data/` 目录即可。
 
 > 已在 Docker 中验证多阶段构建、非 root 运行（`DATA_UID=501`）、健康检查、SPA、登录和 WebDAV。详见 [docs/DEPLOY.md](docs/DEPLOY.md)。
+
+## 直接使用 Docker Hub 镜像（无需构建）
+
+推送 `v*` tag 时，GitHub Actions 会自动构建并发布多架构镜像到 Docker Hub
+（`linux/amd64` + `linux/arm64`）。镜像已经包含网页端、REST API 和 WebDAV，
+NAS 上不需要 Node，也不需要本地构建。
+
+把下面的 `your-dockerhub-username` 换成实际 Docker Hub 命名空间：
+
+```bash
+export TERN_IMAGE=your-dockerhub-username/tern:latest
+
+docker pull "$TERN_IMAGE"
+mkdir -p data
+
+docker run -d --name tern --restart unless-stopped \
+  -p 8080:8080 \
+  -v "$PWD/data:/data" \
+  -e ADMIN_USERNAME=admin \
+  -e ADMIN_PASSWORD='请换成强密码' \
+  -e DATA_UID="$(id -u)" \
+  -e DATA_GID="$(id -g)" \
+  "$TERN_IMAGE"
+```
+
+打开 `http://<NAS-IP>:8080` 即可。上传大小、反向代理的 `client_max_body_size`
+等配置与源码构建方式完全相同。
+
+也可以使用专门的镜像版 Compose 文件：
+
+```bash
+cp .env.example .env
+# 在 .env 中增加：
+# TERN_IMAGE=your-dockerhub-username/tern:latest
+
+docker compose -f docker-compose.hub.yml pull
+docker compose -f docker-compose.hub.yml up -d
+```
+
+常用 tag：
+
+| Tag | 说明 |
+|---|---|
+| `latest` | 最新稳定版本 |
+| `1.1.1` / `1.1` / `1` | 语义化版本 tag |
+| `edge` | 手动触发 `workflow_dispatch` 构建的测试镜像 |
+
+> 维护者：在仓库 **Settings → Secrets and variables → Actions** 中添加
+> `DOCKERHUB_USERNAME` 和 `DOCKERHUB_TOKEN`，然后推送 `v*` tag 或手动运行
+> [Docker Publish](https://github.com/XiaolongZhang-TT/tern/actions/workflows/docker-publish.yml)。
+> Docker Hub token 只需要 Read & Write 权限。
 
 ## macOS 客户端（挂载到 Finder）
 

@@ -58,6 +58,37 @@ docker compose start
 
 恢复时把 `data/` 放回原处再启动即可。容器升级不会修改数据格式，版本升级前仍建议备份。
 
+### 直接拉取 Docker Hub 镜像（可选）
+
+如果不想在 NAS 上构建，可以直接拉取预构建的多架构镜像。镜像名由发布者的
+Docker Hub 命名空间决定，例如 `yourname/tern:latest`：
+
+```bash
+export TERN_IMAGE=yourname/tern:latest
+mkdir -p data
+docker pull "$TERN_IMAGE"
+docker run -d --name tern --restart unless-stopped \
+  -p 8080:8080 \
+  -v "$PWD/data:/data" \
+  -e ADMIN_USERNAME=admin \
+  -e ADMIN_PASSWORD='请换成强密码' \
+  -e DATA_UID="$(id -u)" \
+  -e DATA_GID="$(id -g)" \
+  "$TERN_IMAGE"
+```
+
+或者使用仓库提供的镜像版 Compose：
+
+```bash
+cp .env.example .env
+# 在 .env 中设置 TERN_IMAGE=yourname/tern:latest
+docker compose -f docker-compose.hub.yml pull
+docker compose -f docker-compose.hub.yml up -d
+```
+
+镜像同时支持 `linux/amd64` 和 `linux/arm64`，包含网页端、API 和 WebDAV。
+推送 `v*` tag 时会由 GitHub Actions 自动发布镜像。
+
 ## 2. 群晖 Synology（Container Manager）
 
 1. **File Station** 新建目录，例如 `/volume1/docker/tern`，把本项目文件上传进去；
@@ -149,6 +180,7 @@ COOKIE_SECURE=true
 | `TRUST_PROXY` | `false` | 是否信任反向代理头 |
 | `COOKIE_SECURE` | `auto` | Cookie 是否仅 HTTPS；auto 按请求协议判断 |
 | `DATA_UID` / `DATA_GID` | `1000` / `1000` | 容器运行用户，需对 `data/` 有写权限 |
+| `TERN_IMAGE` | 无 | `docker-compose.hub.yml` 使用的 Docker Hub 镜像名 |
 
 ## 6. 健康检查与升级
 
@@ -179,3 +211,41 @@ docker compose pull && docker compose up -d --build
 **忘记管理员密码**
 
 停止容器，用 SQLite 命令行无法轻易重置 scrypt 密码；推荐通过环境变量重建管理员（仅当没有用户时生效），或从备份恢复。请妥善保存密码。
+
+
+## 8. Docker Hub 自动发布（维护者）
+
+镜像发布工作流在 [`.github/workflows/docker-publish.yml`](../.github/workflows/docker-publish.yml)：
+
+- 推送 `v*` tag 时构建并推送 `linux/amd64` + `linux/arm64` 镜像；
+- tag `v1.1.1` 会生成 Docker Hub 的 `1.1.1`、`1.1`、`1`、`latest`；
+- 手动运行 `workflow_dispatch` 会生成 `edge` 和 `latest` 镜像；
+- 使用 GitHub Actions cache，不重复构建所有层。
+
+首次使用前，在 GitHub 仓库设置中添加两个 Actions secrets：
+
+| Secret | 内容 |
+|---|---|
+| `DOCKERHUB_USERNAME` | Docker Hub 用户名/命名空间 |
+| `DOCKERHUB_TOKEN` | Docker Hub Access Token（Read & Write） |
+
+创建 token：Docker Hub → Account settings → Security → New access token。
+
+```bash
+gh secret set DOCKERHUB_USERNAME --body 'yourname' -R XiaolongZhang-TT/tern
+gh secret set DOCKERHUB_TOKEN --body 'dckr_pat_xxx' -R XiaolongZhang-TT/tern
+
+# 手动构建 edge 镜像
+gh workflow run docker-publish.yml -R XiaolongZhang-TT/tern
+
+# 或创建版本 tag 触发正式发布
+git tag v1.1.1
+git push origin v1.1.1
+```
+
+发布后的镜像名：
+
+```text
+docker.io/<DOCKERHUB_USERNAME>/tern:latest
+docker.io/<DOCKERHUB_USERNAME>/tern:1.1.1
+```

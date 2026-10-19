@@ -1,0 +1,44 @@
+# Deploy the prebuilt multi-arch image from Docker Hub.
+#
+#   cp .env.example .env
+#   # set TERN_IMAGE=your-dockerhub-username/tern:latest in .env
+#   docker compose -f docker-compose.hub.yml pull
+#   docker compose -f docker-compose.hub.yml up -d
+#
+# This file is intentionally separate from docker-compose.yml: the default file
+# builds from source; this one only pulls the published image.
+
+name: tern
+
+services:
+  tern:
+    image: ${TERN_IMAGE:-your-dockerhub-username/tern:latest}
+    container_name: tern
+    restart: unless-stopped
+    pull_policy: always
+    ports:
+      - "${PORT:-8080}:8080"
+    environment:
+      PORT: "8080"
+      DATA_DIR: /data
+      STATIC_DIR: /app/public
+      SERVER_NAME: "${SERVER_NAME:-Tern}"
+      PUBLIC_BASE_URL: "${PUBLIC_BASE_URL:-}"
+      ADMIN_USERNAME: "${ADMIN_USERNAME:-}"
+      ADMIN_PASSWORD: "${ADMIN_PASSWORD:-}"
+      ALLOW_REGISTRATION: "${ALLOW_REGISTRATION:-false}"
+      DEFAULT_QUOTA_GB: "${DEFAULT_QUOTA_GB:-0}"
+      MAX_UPLOAD_BYTES: "${MAX_UPLOAD_BYTES:-21474836480}"
+      COOKIE_SECURE: "${COOKIE_SECURE:-auto}"
+      TRUST_PROXY: "${TRUST_PROXY:-false}"
+      DATA_UID: "${DATA_UID:-1000}"
+      DATA_GID: "${DATA_GID:-1000}"
+      TZ: "${TZ:-Asia/Shanghai}"
+    volumes:
+      - ./data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8080/api/health > /dev/null || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s

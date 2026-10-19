@@ -10,6 +10,12 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 See [ROADMAP.md](ROADMAP.md) for the prioritized backlog.
 
+### Added
+
+- GitHub Actions workflow to publish multi-arch (`amd64`/`arm64`) Docker images to
+  Docker Hub on `v*` tags, plus a `docker-compose.hub.yml` deployment path for the
+  prebuilt image.
+
 ## [1.1.1] - 2026-10-19
 
 ### Fixed
