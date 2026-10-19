@@ -5,7 +5,7 @@
 #
 # Stage 1 builds the web SPA from source, so `docker compose up -d --build`
 # works on a fresh clone without requiring a host-side `npm run build`.
-FROM node:24-alpine AS web-build
+FROM node:26-alpine AS web-build
 
 WORKDIR /web
 ENV NPM_CONFIG_UPDATE_NOTIFIER=false \
@@ -19,7 +19,7 @@ RUN npm run build
 # Stage 2 installs the server's production dependencies only. There are no
 # native modules: SQLite is node:sqlite, scrypt comes from node:crypto, so the
 # final image stays small and identical on x86_64 and arm64 NAS hardware.
-FROM node:24-alpine AS deps
+FROM node:26-alpine AS deps
 
 WORKDIR /app
 ENV NPM_CONFIG_UPDATE_NOTIFIER=false \
@@ -29,7 +29,7 @@ COPY server/package.json server/package-lock.json ./
 RUN npm ci --omit=dev --no-audit --no-fund
 
 # Stage 3 is the runtime image.
-FROM node:24-alpine AS runtime
+FROM node:26-alpine AS runtime
 
 WORKDIR /app
 
