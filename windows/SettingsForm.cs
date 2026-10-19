@@ -18,6 +18,7 @@ public sealed class SettingsForm : Form
     private readonly CheckBox _autoConnect = new();
     private readonly Label _statusLabel = new();
     private readonly Label _serviceLabel = new();
+    private readonly Button _startServiceButton = new();
     private readonly Label _limitLabel = new();
     private readonly Button _testButton = new();
     private readonly Button _saveButton = new();
@@ -38,7 +39,7 @@ public sealed class SettingsForm : Form
         ShowInTaskbar = true;
         AutoScaleMode = AutoScaleMode.Dpi;
         Font = new Font("Segoe UI", 9F);
-        ClientSize = new Size(600, 610);
+        ClientSize = new Size(600, 650);
         BackColor = Color.FromArgb(248, 247, 244);
 
         BuildUi(firstRun);
@@ -110,11 +111,28 @@ public sealed class SettingsForm : Form
         layout.Controls.Add(_autoConnect, 1, 7);
 
         _serviceLabel.AutoSize = true;
-        _serviceLabel.Margin = new Padding(0, 4, 0, 2);
-        layout.Controls.Add(_serviceLabel, 0, 8);
-        layout.SetColumnSpan(_serviceLabel, 2);
+        _serviceLabel.MaximumSize = new Size(380, 40);
+        _serviceLabel.Margin = new Padding(0, 4, 12, 2);
+
+        _startServiceButton.Text = "启动服务";
+        _startServiceButton.Width = 92;
+        _startServiceButton.Height = 26;
+        _startServiceButton.Margin = new Padding(0, 2, 0, 2);
+        _startServiceButton.Click += async (_, _) => await StartServiceAsync();
+
+        var serviceRow = new FlowLayoutPanel
+        {
+            AutoSize = true,
+            WrapContents = false,
+            Margin = new Padding(0),
+        };
+        serviceRow.Controls.Add(_serviceLabel);
+        serviceRow.Controls.Add(_startServiceButton);
+        layout.Controls.Add(serviceRow, 0, 8);
+        layout.SetColumnSpan(serviceRow, 2);
 
         _limitLabel.AutoSize = true;
+        _limitLabel.MaximumSize = new Size(540, 40);
         _limitLabel.Margin = new Padding(0, 2, 0, 2);
         layout.Controls.Add(_limitLabel, 0, 9);
         layout.SetColumnSpan(_limitLabel, 2);
@@ -130,6 +148,7 @@ public sealed class SettingsForm : Form
         layout.SetColumnSpan(helpLink, 2);
 
         _statusLabel.AutoSize = true;
+        _statusLabel.MaximumSize = new Size(540, 44);
         _statusLabel.ForeColor = Color.FromArgb(105, 101, 116);
         _statusLabel.Margin = new Padding(0, 8, 0, 4);
         layout.Controls.Add(_statusLabel, 0, 11);
@@ -203,14 +222,13 @@ public sealed class SettingsForm : Form
 
     private void UpdateDiagnostics()
     {
-        var running = DriveMapper.IsWebClientServiceRunning();
-        _serviceLabel.Text = running
-            ? "WebClient 服务：运行中"
-            : "WebClient 服务：未运行（连接可能失败，请先启动 Windows WebClient 服务）";
+        var running = WindowsWebClient.IsWebClientRunning();
+        _serviceLabel.Text = running ? "WebClient：运行中" : "WebClient：未运行";
         _serviceLabel.ForeColor = running ? Color.FromArgb(35, 117, 82) : Color.FromArgb(180, 95, 25);
+        _startServiceButton.Visible = !running;
 
         var limit = WindowsWebClient.FileSizeLimitBytes();
-        _limitLabel.Text = "Windows WebDAV 文件大小限制：" + WindowsWebClient.LimitDescription();
+        _limitLabel.Text = "文件大小限制：" + WindowsWebClient.LimitDescription();
         _limitLabel.ForeColor = limit is null || limit < 100L * 1024 * 1024
             ? Color.FromArgb(180, 95, 25)
             : Color.FromArgb(105, 101, 116);
@@ -239,6 +257,27 @@ public sealed class SettingsForm : Form
         driveLetter = DriveMapper.NormalizeDriveLetter(
             (_driveBox.SelectedItem?.ToString() ?? "T:").TrimEnd(':'));
         return true;
+    }
+
+    private async Task StartServiceAsync()
+    {
+        SetBusy(true);
+        SetStatus("正在请求管理员权限启动 WebClient…", false);
+        try
+        {
+            var error = "";
+            var started = await Task.Run(() => WindowsWebClient.TryStartWebClient(out error));
+            UpdateDiagnostics();
+            SetStatus(started ? "WebClient 服务已启动。" : error, !started);
+        }
+        catch (Exception ex)
+        {
+            SetStatus($"启动 WebClient 失败：{ex.Message}", true);
+        }
+        finally
+        {
+            SetBusy(false);
+        }
     }
 
     private async Task TestAsync()
@@ -271,6 +310,12 @@ public sealed class SettingsForm : Form
         if (!TryReadInputs(out var serverUrl, out var username, out var password, out var driveLetter, out var error))
         {
             SetStatus(error, true);
+            return;
+        }
+
+        if (!WindowsWebClient.IsWebClientRunning())
+        {
+            SetStatus("请先启动 WebClient 服务（点击上方“启动服务”）。", true);
             return;
         }
 
@@ -362,6 +407,7 @@ public sealed class SettingsForm : Form
 
     private void SetStatus(string message, bool error)
     {
+        if (message.Length > 160) message = message[..157] + "…";
         _statusLabel.Text = message;
         _statusLabel.ForeColor = error ? Color.FromArgb(180, 45, 55) : Color.FromArgb(35, 117, 82);
     }
