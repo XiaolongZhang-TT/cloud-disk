@@ -66,6 +66,13 @@ jobs:
         shell: powershell
         run: Start-Process -FilePath "windows/dist/Tern.exe" -ArgumentList "--screenshot","settings.png" -Wait
 
+      - name: Upload UI screenshot
+        uses: actions/upload-artifact@v7
+        with:
+          name: tern-ui-screenshot
+          path: settings.png
+          retention-days: 7
+
       - name: Upload artifacts
         uses: actions/upload-artifact@v7
         with:
