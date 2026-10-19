@@ -39,8 +39,8 @@ public sealed class SettingsForm : Form
         ShowInTaskbar = true;
         AutoScaleMode = AutoScaleMode.Dpi;
         Font = new Font("Segoe UI", 9F);
-        ClientSize = new Size(640, 600);
-        MinimumSize = new Size(620, 540);
+        ClientSize = new Size(640, 560);
+        MinimumSize = new Size(620, 500);
         BackColor = Color.FromArgb(248, 247, 244);
 
         FormClosing += (_, _) => Log.Info("设置窗口关闭");
