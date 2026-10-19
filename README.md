@@ -122,7 +122,7 @@ docker compose -f docker-compose.hub.yml up -d
 | `edge` | 手动触发 `workflow_dispatch` 构建的测试镜像 |
 
 > 维护者：在仓库 **Settings → Secrets and variables → Actions** 中添加
-> `DOCKERHUB_USERNAME` 和 `DOCKERHUB_TOKEN`，然后推送 `v*` tag 或手动运行
+> `DOCKERHUB_USERNAME` 和 `DOCKERHUB_TOKEN`，然后手动运行一次（发布 `latest` + `edge`），或为新版本推送 `v*` tag。
 > [Docker Publish](https://github.com/XiaolongZhang-TT/tern/actions/workflows/docker-publish.yml)。
 > Docker Hub token 只需要 Read & Write 权限。
 
