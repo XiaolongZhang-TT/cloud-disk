@@ -29,3 +29,6 @@ server/.data/
 .npm-logs/
 .qa/
 .DS_Store
+
+# local gh cache used in sandboxed development
+.gh-cache/
