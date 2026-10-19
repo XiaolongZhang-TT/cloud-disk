@@ -54,7 +54,7 @@ These are known and accepted for v1.1.1:
 - [ ] CLI backup/restore and SQLite online backup helper.
 - [ ] S3-compatible object storage backend for blobs.
 - [ ] Optional S3/NAS snapshot integration for backups.
-- [ ] Windows/Linux desktop clients (WebDAV mount guides at minimum).
+- [ ] Linux desktop client (WebDAV mount guide at minimum).
 - [ ] PWA install/offline shell and file search improvements.
 - [ ] i18n (English UI in addition to Chinese) and accessibility audit.
 - [ ] End-to-end encryption option (client-side encrypted blobs).
@@ -70,6 +70,7 @@ These are known and accepted for v1.1.1:
 
 ## Done recently
 
+- [x] Windows tray client with WebDAV drive mapping (`Tern (T:)`)
 - [x] Docker deployment with web build inside the image
 - [x] macOS Finder mount client and `mount-smoke` verification
 - [x] CI for server, web, Docker and macOS builds

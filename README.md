@@ -72,19 +72,33 @@ docker compose up -d --build
 
 连接后，Finder 的「位置」会出现 **Tern**，可拖到「个人收藏」固定。完整说明见 [docs/MAC.md](docs/MAC.md)。
 
+## Windows 客户端
+
+Windows 10/11 x64 托盘客户端，把网盘映射为 **`Tern (T:)`**，在「此电脑」里像网络盘一样使用。
+
+从 [Releases](https://github.com/XiaolongZhang-dev/tern/releases/download/v1.1.1/Tern-Windows-x64.zip) 下载 `Tern-Windows-x64.zip`（或运行 `windows/build.ps1` 构建），解压后运行 `Tern.exe`：
+
+1. 托盘 Tern →「设置」；
+2. 填 `https://<NAS-IP>:8080/Tern`、用户名、密码，选择盘符；
+3. 点「保存并连接」，然后打开「此电脑」里的 `Tern (T:)`。
+
+需要 Windows **WebClient** 服务；大文件默认 50MB 限制的处理方式见 [docs/WINDOWS.md](docs/WINDOWS.md)。
+
 ## 文档
 
 - [部署指南](docs/DEPLOY.md)：NAS、HTTPS、备份升级
 - [macOS 客户端](docs/MAC.md)：构建、安装、Finder 集成
+- [Windows 客户端](docs/WINDOWS.md)：安装、盘符映射、WebClient
 - [架构](docs/ARCHITECTURE.md) · [API](docs/API.md)
 - [路线图](ROADMAP.md) · [贡献指南](CONTRIBUTING.md) · [安全策略](SECURITY.md)
 
 ## 开发与测试
 
 ```bash
-cd server && npm ci && npm test
-cd web && npm ci && npm run build
-cd macos && ./build.sh
+(cd server && npm ci && npm test)
+(cd web && npm ci && npm run build)
+(cd macos && ./build.sh)
+cd windows && powershell -File build.ps1   # Windows
 ```
 
 ## 安全

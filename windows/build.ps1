@@ -17,7 +17,7 @@ dotnet publish Tern.Windows.csproj `
     -p:IncludeNativeLibrariesForSelfExtract=true `
     -o $dist
 
-$zip = Join-Path $PSScriptRoot "Tern-Windows-$Runtime.zip"
+$zip = Join-Path $PSScriptRoot "Tern-Windows-x64.zip"
 if (Test-Path $zip) { Remove-Item $zip -Force }
 Compress-Archive -Path (Join-Path $dist "*") -DestinationPath $zip -Force
 

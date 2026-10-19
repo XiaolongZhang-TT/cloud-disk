@@ -72,19 +72,33 @@ Pass:   web password
 
 After connecting, **Tern** appears in Finder's **Locations** sidebar; drag it to **Favorites** to pin it. See [docs/MAC.md](docs/MAC.md) for details.
 
+## Windows client
+
+A Windows 10/11 x64 tray app that maps the drive as **`Tern (T:)`** in **This PC**.
+
+Download `Tern-Windows-x64.zip` from [Releases](https://github.com/XiaolongZhang-dev/tern/releases/download/v1.1.1/Tern-Windows-x64.zip) (or run `windows/build.ps1`), extract it and run `Tern.exe`:
+
+1. Tray icon → **Settings**;
+2. enter `https://<NAS-IP>:8080/Tern`, username, password and drive letter;
+3. click **Save and connect**, then open `Tern (T:)` in This PC.
+
+The Windows **WebClient** service is required. See [docs/WINDOWS.md](docs/WINDOWS.md) for the 50MB default limit and troubleshooting.
+
 ## Documentation
 
 - [Deployment](docs/DEPLOY.md): NAS, HTTPS, backups and upgrades
 - [macOS client](docs/MAC.md): build, install and Finder integration
+- [Windows client](docs/WINDOWS.md): install, drive mapping, WebClient
 - [Architecture](docs/ARCHITECTURE.md) · [API](docs/API.md)
 - [Roadmap](ROADMAP.md) · [Contributing](CONTRIBUTING.md) · [Security](SECURITY.md)
 
 ## Development and tests
 
 ```bash
-cd server && npm ci && npm test
-cd web && npm ci && npm run build
-cd macos && ./build.sh
+(cd server && npm ci && npm test)
+(cd web && npm ci && npm run build)
+(cd macos && ./build.sh)
+cd windows && powershell -File build.ps1   # Windows
 ```
 
 ## Security
