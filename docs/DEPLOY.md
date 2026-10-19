@@ -1,18 +1,18 @@
 # 部署指南
 
-云屿 CloudDisk 的推荐部署方式是 Docker Compose：一个容器同时提供网页、REST API 与 WebDAV，数据落在宿主机的 `./data` 目录。
+Tern 的推荐部署方式是 Docker Compose：一个容器同时提供网页、REST API 与 WebDAV，数据落在宿主机的 `./data` 目录。
 
 ## 1. 通用 Docker 部署
 
 ```bash
-cd cloud_disk
+cd tern
 cp .env.example .env
 ```
 
 编辑 `.env`：
 
 ```dotenv
-SERVER_NAME=云屿 CloudDisk
+SERVER_NAME=Tern
 PORT=8080
 ADMIN_USERNAME=admin
 ADMIN_PASSWORD=请改成强密码
@@ -52,7 +52,7 @@ data/
 
 ```bash
 docker compose stop
-tar czf clouddisk-backup-$(date +%F).tar.gz data/
+tar czf tern-backup-$(date +%F).tar.gz data/
 docker compose start
 ```
 
@@ -60,7 +60,7 @@ docker compose start
 
 ## 2. 群晖 Synology（Container Manager）
 
-1. **File Station** 新建目录，例如 `/volume1/docker/clouddisk`，把本项目文件上传进去；
+1. **File Station** 新建目录，例如 `/volume1/docker/tern`，把本项目文件上传进去；
 2. **Container Manager → 项目 → 新增**，选择该目录中的 `docker-compose.yml`；
 3. 在「环境」中设置 `ADMIN_PASSWORD`、`DATA_UID=1026`、`DATA_GID=100`（以群晖 `id` 输出为准）；
 4. 端口映射保持 `8080:8080`，启动项目；
@@ -74,12 +74,12 @@ docker compose start
 
 ## 3. QNAP / Unraid / 威联通
 
-- **QNAP Container Station**：使用「应用程序」模式导入 `docker-compose.yml`，将 `./data` 换成 `/share/Container/clouddisk/data`。
-- **Unraid**：把项目放到 `/mnt/user/appdata/clouddisk`，用 Compose Manager 启动；`DATA_UID=99`、`DATA_GID=100` 通常是 Unraid 的 `nobody/users`。
+- **QNAP Container Station**：使用「应用程序」模式导入 `docker-compose.yml`，将 `./data` 换成 `/share/Container/tern/data`。
+- **Unraid**：把项目放到 `/mnt/user/appdata/tern`，用 Compose Manager 启动；`DATA_UID=99`、`DATA_GID=100` 通常是 Unraid 的 `nobody/users`。
 - **TrueNAS SCALE**：使用 Apps → Custom App 或 Dockge 运行 Compose 文件。
 
 > 如果 NAS 的 Docker 面板要求填写路径，请使用绝对路径挂载数据卷，例如
-> `-v /volume1/docker/clouddisk/data:/data`。
+> `-v /volume1/docker/tern/data:/data`。
 
 ## 4. 公网访问与 HTTPS（强烈推荐）
 
@@ -139,7 +139,7 @@ COOKIE_SECURE=true
 |---|---|---|
 | `PORT` | `8080` | 容器内监听端口 |
 | `DATA_DIR` | `/data` | 数据目录 |
-| `SERVER_NAME` | `云屿 CloudDisk` | 页面显示名称 |
+| `SERVER_NAME` | `Tern` | 页面显示名称 |
 | `ADMIN_USERNAME` | 空 | 首次启动自动创建的管理员用户名 |
 | `ADMIN_PASSWORD` | 空 | 管理员密码（至少 8 位） |
 | `ALLOW_REGISTRATION` | `false` | 是否允许公开注册 |
@@ -172,7 +172,7 @@ docker compose pull && docker compose up -d --build
 
 **Finder 无法挂载**
 - 先在浏览器确认账号密码正确；
-- 用 `curl -u 用户名:密码 -X PROPFIND -H 'Depth: 0' http://NAS:8080/CloudDisk` 检查是否返回 207；
+- 用 `curl -u 用户名:密码 -X PROPFIND -H 'Depth: 0' http://NAS:8080/Tern` 检查是否返回 207；
 - 公网请使用 `https://` 地址；
 - 详见 [MAC.md](MAC.md)。
 

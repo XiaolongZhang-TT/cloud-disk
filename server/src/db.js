@@ -3,7 +3,7 @@ import path from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 
 /**
- * CloudDisk SQLite schema.
+ * Tern SQLite schema.
  *
  * Metadata lives here while file blobs live in `storage/<owner>/<node-id>`.
  * No user supplied string is ever used as a filesystem path, which removes the

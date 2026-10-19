@@ -15,7 +15,7 @@ test('auth: setup, status, login, logout and session guards', async (t) => {
   assert.equal(res.json.setupRequired, true);
   assert.equal(res.json.authenticated, false);
   assert.equal(res.json.version, server.config.version);
-  assert.equal(res.json.serverName, '云屿 CloudDisk');
+  assert.equal(res.json.serverName, 'Tern');
   assert.equal(res.json.allowRegistration, false);
   assert.equal(res.json.maxUploadBytes, server.config.maxUploadBytes);
 
@@ -46,7 +46,7 @@ test('auth: setup, status, login, logout and session guards', async (t) => {
 
   res = await api.get('/api/config');
   assert.equal(res.status, 200);
-  assert.equal(res.json.serverName, '云屿 CloudDisk');
+  assert.equal(res.json.serverName, 'Tern');
 
   res = await api.post('/api/auth/setup', { username: 'bob', password: 'secret123' });
   assert.equal(res.status, 403);

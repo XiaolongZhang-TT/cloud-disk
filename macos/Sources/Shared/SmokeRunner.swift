@@ -1,6 +1,6 @@
 //
 //  SmokeRunner.swift
-//  CloudDisk (云屿) macOS menu-bar client
+//  Tern (Tern) macOS menu-bar client
 //
 //  End-to-end self test used by `macos/tools/mount-smoke` and by the app's
 //  hidden `--smoke` mode:
@@ -32,7 +32,7 @@ public struct SmokeParseError: Error, Equatable {
 }
 
 public struct SmokeOptions {
-    public var serverURL: URL = URL(string: "http://127.0.0.1:18080/CloudDisk")!
+    public var serverURL: URL = URL(string: "http://127.0.0.1:18080/Tern")!
     public var username: String = "admin"
     public var password: String = ""
     public var keepMounted: Bool = false
@@ -85,7 +85,7 @@ private final class SmokeOutput {
 
 public enum SmokeRunner {
 
-    public static let toolName = "CloudDisk mount-smoke"
+    public static let toolName = "Tern mount-smoke"
 
     // MARK: - Argument parsing
 
@@ -167,7 +167,7 @@ public enum SmokeRunner {
             options.password = line.trimmingCharacters(in: .newlines)
         }
         if options.password.isEmpty {
-            if let environment = ProcessInfo.processInfo.environment["CLOUDDISK_PASSWORD"],
+            if let environment = ProcessInfo.processInfo.environment["TERN_PASSWORD"],
                !environment.isEmpty {
                 options.password = environment
             }
@@ -181,21 +181,21 @@ public enum SmokeRunner {
 
     public static func usageText() -> String {
         """
-        \(toolName) \(CloudDiskInfo.version)
-        验证 CloudDisk WebDAV 端点在 macOS 上的真实挂载能力。
+        \(toolName) \(TernInfo.version)
+        验证 Tern WebDAV 端点在 macOS 上的真实挂载能力。
 
         用法:
-          mount-smoke --url http://127.0.0.1:18080/CloudDisk --user admin --password '密码'
+          mount-smoke --url http://127.0.0.1:18080/Tern --user admin --password '密码'
           mount-smoke --url URL --user NAME --keychain
           mount-smoke --check --url URL --user NAME --password '密码'
-          mount-smoke --unmount /Volumes/CloudDisk [--force]
+          mount-smoke --unmount /Volumes/Tern [--force]
 
         参数:
-          --url URL          WebDAV 地址（默认 http://127.0.0.1:18080/CloudDisk）
+          --url URL          WebDAV 地址（默认 http://127.0.0.1:18080/Tern）
           --user NAME        用户名（默认 admin）
-          --password PASS    密码（也可用环境变量 CLOUDDISK_PASSWORD 或 --password-stdin）
+          --password PASS    密码（也可用环境变量 TERN_PASSWORD 或 --password-stdin）
           --password-stdin   从标准输入读取密码
-          --keychain         从 macOS 钥匙串读取密码（需先由 CloudDisk.app 保存）
+          --keychain         从 macOS 钥匙串读取密码（需先由 Tern.app 保存）
           --keep-mounted     测试完成后保留挂载（会打印卸载提示）
           --force            卸载失败时强制卸载
           --check            仅探测服务器可达性，不挂载
@@ -215,7 +215,7 @@ public enum SmokeRunner {
         说明:
           macOS 的 NetFS 挂载需要运行在图形登录会话（Aqua）中。若在 SSH /
           沙箱化的终端里运行出现 EPERM，可使用应用内建模式：
-          open -n CloudDisk.app --args --smoke --url ... --user ... --password ... --result /tmp/smoke.log
+          open -n Tern.app --args --smoke --url ... --user ... --password ... --result /tmp/smoke.log
         """
     }
 
@@ -225,7 +225,7 @@ public enum SmokeRunner {
         let output = SmokeOutput(json: options.json, resultFile: options.resultFile)
         defer { output.finish() }
 
-        output.log("== \(toolName) \(CloudDiskInfo.version) ==")
+        output.log("== \(toolName) \(TernInfo.version) ==")
         output.log("date: \(isoNow())")
         output.log("url: \(options.serverURL.absoluteString)")
         output.log("user: \(options.username)")
@@ -344,9 +344,9 @@ public enum SmokeRunner {
             let formatter = DateFormatter()
             formatter.locale = Locale(identifier: "en_US_POSIX")
             formatter.dateFormat = "yyyyMMdd-HHmmss"
-            let name = "clouddisk-smoke-\(formatter.string(from: Date()))-\(String(UUID().uuidString.prefix(6))).txt"
+            let name = "tern-smoke-\(formatter.string(from: Date()))-\(String(UUID().uuidString.prefix(6))).txt"
             let url = mountedVolume.url.appendingPathComponent(name)
-            let payload = "CloudDisk macOS smoke test\nurl=\(options.serverURL.absoluteString)\ndate=\(isoNow())\nuuid=\(UUID().uuidString)\n"
+            let payload = "Tern macOS smoke test\nurl=\(options.serverURL.absoluteString)\ndate=\(isoNow())\nuuid=\(UUID().uuidString)\n"
             do {
                 try payload.write(to: url, atomically: true, encoding: .utf8)
                 testFileURL = url
@@ -506,7 +506,7 @@ public enum SmokeRunner {
             "result": result.result,
             "exitCode": result.exitCode,
             "tool": toolName,
-            "version": CloudDiskInfo.version,
+            "version": TernInfo.version,
         ]
         if let path = result.mountPath { dictionary["mountPath"] = path }
         if let seconds = result.mountSeconds { dictionary["mountSeconds"] = (seconds * 1000).rounded() / 1000 }

@@ -6,11 +6,11 @@ import fsp from 'node:fs/promises';
 import { createApp } from '../src/app.js';
 import { loadConfig } from '../src/config.js';
 
-export const ADMIN = { username: 'admin', password: 'clouddisk123' };
+export const ADMIN = { username: 'admin', password: 'tern123' };
 
 /** Start the real HTTP stack against a throwaway data directory. */
 export async function startTestServer(overrides = {}) {
-  const dataDir = await fsp.mkdtemp(path.join(os.tmpdir(), 'clouddisk-test-'));
+  const dataDir = await fsp.mkdtemp(path.join(os.tmpdir(), 'tern-test-'));
   const config = loadConfig({ dataDir, port: 0, ...overrides });
   const app = createApp(config);
   const server = http.createServer(app);

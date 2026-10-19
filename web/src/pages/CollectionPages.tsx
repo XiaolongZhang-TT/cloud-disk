@@ -195,9 +195,9 @@ export function SearchPage() {
 
   useEffect(() => {
     if (!query) return
-    document.title = `搜索「${query}」 · 云屿 CloudDisk`
+    document.title = `搜索「${query}」 · Tern`
     return () => {
-      document.title = '云屿 CloudDisk'
+      document.title = 'Tern'
     }
   }, [query])
 
@@ -214,7 +214,7 @@ export function SearchPage() {
         </div>
         <EmptyState
           icon={<SearchIcon size={28} />}
-          title="搜索你的云屿"
+          title="在 Tern 中搜索"
           description="在顶部搜索框中输入文件名或文件夹名，按回车开始搜索。"
         />
       </div>

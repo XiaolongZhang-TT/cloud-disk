@@ -71,18 +71,18 @@ jobs:
       - uses: actions/checkout@v7
 
       - name: Build image
-        run: docker build --tag clouddisk:ci .
+        run: docker build --tag tern:ci .
 
       - name: Smoke test the container
         run: |
           set -euo pipefail
-          trap 'docker rm -f clouddisk-ci >/dev/null 2>&1 || true' EXIT
-          docker run -d --name clouddisk-ci -p 18080:8080 \
+          trap 'docker rm -f tern-ci >/dev/null 2>&1 || true' EXIT
+          docker run -d --name tern-ci -p 18080:8080 \
             -e ADMIN_USERNAME=admin \
             -e ADMIN_PASSWORD=ci-test-password \
             -e DATA_UID=1000 \
             -e DATA_GID=1000 \
-            clouddisk:ci
+            tern:ci
 
           for _ in $(seq 1 45); do
             if curl -fsS http://127.0.0.1:18080/api/health >/dev/null 2>&1; then
@@ -99,11 +99,11 @@ jobs:
             http://127.0.0.1:18080/api/auth/login
           code=$(curl -sS -o /tmp/propfind.xml -w '%{http_code}' \
             -u admin:ci-test-password -X PROPFIND -H 'Depth: 0' \
-            http://127.0.0.1:18080/CloudDisk)
+            http://127.0.0.1:18080/Tern)
           test "$code" = "207"
           grep -q 'multistatus' /tmp/propfind.xml
           echo "WebDAV PROPFIND HTTP $code"
-          docker logs clouddisk-ci | tail -20
+          docker logs tern-ci | tail -20
 
   macos:
     name: macOS client build
@@ -125,14 +125,14 @@ jobs:
 
       - name: Verify signed bundle
         run: |
-          codesign --verify --deep --strict --verbose=2 dist/CloudDisk.app
-          unzip -t dist/CloudDisk-1.0.0.zip
+          codesign --verify --deep --strict --verbose=2 dist/Tern.app
+          unzip -t dist/Tern-1.1.0.zip
 
       - name: Upload macOS build
         uses: actions/upload-artifact@v7
         with:
           name: macos-client
           path: |
-            macos/dist/CloudDisk-1.0.0.zip
-            macos/dist/CloudDisk-1.0.0.zip.sha256
+            macos/dist/Tern-1.1.0.zip
+            macos/dist/Tern-1.1.0.zip.sha256
           retention-days: 7

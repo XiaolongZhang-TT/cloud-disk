@@ -1,15 +1,17 @@
-# 云屿 CloudDisk
+# Tern
 
-[![CI](https://github.com/XiaolongZhang-TT/cloud-disk/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/XiaolongZhang-TT/cloud-disk/actions/workflows/ci.yml)
+[English](README.en.md) | **简体中文**
+
+[![CI](https://github.com/XiaolongZhang-TT/tern/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/XiaolongZhang-TT/tern/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Latest release](https://img.shields.io/github/v/release/XiaolongZhang-TT/cloud-disk)](https://github.com/XiaolongZhang-TT/cloud-disk/releases)
-[![GitHub stars](https://img.shields.io/github/stars/XiaolongZhang-TT/cloud-disk?style=flat)](https://github.com/XiaolongZhang-TT/cloud-disk/stargazers)
+[![Latest release](https://img.shields.io/github/v/release/XiaolongZhang-TT/tern)](https://github.com/XiaolongZhang-TT/tern/releases)
+[![GitHub stars](https://img.shields.io/github/stars/XiaolongZhang-TT/tern?style=flat)](https://github.com/XiaolongZhang-TT/tern/stargazers)
 
 一个可以部署在 NAS 上的私有网盘：**Docker 一键部署**，网页端界面简洁美观，macOS 客户端可把网盘挂载到 Finder 的「位置」中，与 iCloud 云盘并排显示。
 
 > 数据完全属于你：文件保存在自己的 NAS 上，不经过任何第三方云服务。项目使用 MIT 协议开源，欢迎参与贡献。
 
-![云屿 CloudDisk 网页端](docs/screenshots/02-drive.png)
+![Tern 网页端](docs/screenshots/02-drive.png)
 
 ## 功能
 
@@ -18,7 +20,7 @@
 - **分享**：生成公开链接，可设置访问密码和有效期，支持文件与文件夹（文件夹打包 ZIP）
 - **回收站**：误删可恢复，也可彻底删除、一键清空
 - **多用户**：管理员可创建成员并设置空间配额，每人数据互相隔离
-- **WebDAV**：`/dav` 与 `/CloudDisk` 端点，Finder、Windows 资源管理器、rclone 等均可连接
+- **WebDAV**：`/dav` 与 `/Tern` 端点，Finder、Windows 资源管理器、rclone 等均可连接
 - **macOS 客户端**：菜单栏常驻，一键把网盘挂载成 Finder 网络卷，出现在「位置」栏，可随登录自动挂载
 - **Docker**：单容器，SQLite + 本地文件存储，支持 x86_64 / arm64 NAS，支持 PUID/PGID 非 root 运行
 
@@ -50,7 +52,7 @@
 
 ```bash
 # 1. 获取代码后进入目录
-cd cloud_disk
+cd tern
 
 # 2. 准备配置
 cp .env.example .env
@@ -78,10 +80,10 @@ docker compose up -d --build
 
 **方式 A：使用仓库中构建好的应用（Apple Silicon / arm64）**
 
-解压 [`macos/dist/CloudDisk-1.0.0.zip`](macos/dist/CloudDisk-1.0.0.zip)（也可从 [Releases](https://github.com/XiaolongZhang-TT/cloud-disk/releases) 下载），把其中的 `CloudDisk.app` 拖到「应用程序」。校验下载文件：
+解压 [`macos/dist/Tern-1.1.0.zip`](macos/dist/Tern-1.1.0.zip)（也可从 [Releases](https://github.com/XiaolongZhang-TT/tern/releases) 下载），把其中的 `Tern.app` 拖到「应用程序」。校验下载文件：
 
 ```bash
-cd macos/dist && shasum -a 256 -c CloudDisk-1.0.0.zip.sha256
+cd macos/dist && shasum -a 256 -c Tern-1.1.0.zip.sha256
 ```
 
 > 预构建包为 Apple Silicon（arm64）；Intel Mac 请使用方式 B 构建：
@@ -90,7 +92,7 @@ cd macos/dist && shasum -a 256 -c CloudDisk-1.0.0.zip.sha256
 若从网络传输后被 Gatekeeper 拦截，请右键 →「打开」，或执行：
 
 ```bash
-xattr -dr com.apple.quarantine /Applications/CloudDisk.app
+xattr -dr com.apple.quarantine /Applications/Tern.app
 ```
 
 **方式 B：从源码构建**
@@ -98,21 +100,21 @@ xattr -dr com.apple.quarantine /Applications/CloudDisk.app
 ```bash
 cd macos
 ./build.sh
-open dist/CloudDisk.app
+open dist/Tern.app
 ```
 
 首次打开：
 
 1. 菜单栏出现云朵图标 → 打开「设置」；
-2. 填写服务器地址，例如 `http://192.168.1.10:8080/CloudDisk`（本机测试为 `http://127.0.0.1:8080/CloudDisk`）；
+2. 填写服务器地址，例如 `http://192.168.1.10:8080/Tern`（本机测试为 `http://127.0.0.1:8080/Tern`）；
 3. 填写与网页端相同的用户名、密码，点击「连接」；
-4. Finder 的「位置」中会出现 **CloudDisk**，可拖到「个人收藏」固定；
+4. Finder 的「位置」中会出现 **Tern**，可拖到「个人收藏」固定；
 5. 在设置中可开启「登录时自动启动 / 自动连接」。
 
 命令行验收挂载链路：
 
 ```bash
-macos/tools/mount-smoke --url http://127.0.0.1:8080/CloudDisk --user admin --password '你的密码'
+macos/tools/mount-smoke --url http://127.0.0.1:8080/Tern --user admin --password '你的密码'
 # RESULT: PASS (exit 0)
 ```
 
@@ -149,7 +151,7 @@ macOS Finder ──WebDAV─┘                     │
 # 终端 1：后端（Node 24+，零原生依赖）
 cd server
 npm install
-PORT=18080 DATA_DIR=./.data ADMIN_USERNAME=admin ADMIN_PASSWORD=clouddisk123 npm run dev
+PORT=18080 DATA_DIR=./.data ADMIN_USERNAME=admin ADMIN_PASSWORD=tern123 npm run dev
 
 # 终端 2：前端（Vite，代理到 18080）
 cd web
@@ -186,7 +188,7 @@ cd macos && ./build.sh     # 菜单栏应用 + 挂载 CLI
 这是一个开源项目，欢迎提交 Issue、改进文档、翻译或代码：
 
 - 先阅读 [CONTRIBUTING.md](CONTRIBUTING.md) 和 [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)
-- 功能建议和缺陷请使用 [Issues](https://github.com/XiaolongZhang-TT/cloud-disk/issues)
+- 功能建议和缺陷请使用 [Issues](https://github.com/XiaolongZhang-TT/tern/issues)
 - 安全问题请**不要**公开提 Issue，按 [SECURITY.md](SECURITY.md) 私下报告
 - 想参与但不知道从哪开始，可以看 [ROADMAP.md](ROADMAP.md) 或 `good first issue`
 
@@ -194,6 +196,6 @@ cd macos && ./build.sh     # 菜单栏应用 + 挂载 CLI
 
 ## License
 
-[MIT](LICENSE) © 2026 CloudDisk / 云屿 contributors
+[MIT](LICENSE) © 2026 Tern / Tern contributors
 
 第三方依赖的许可证信息以其各自仓库为准。macOS 客户端使用 Apple 系统框架，分发时请遵守 Apple 的相关条款。

@@ -84,7 +84,7 @@ export function createApp(config) {
   // `.json` file arrives with `Content-Type: application/json` and must be
   // streamed to disk, not consumed by express.json(). It is also mounted before
   // the SPA so unknown /dav paths never fall through to index.html.
-  app.use(['/dav', '/CloudDisk'], createWebdavRouter({ store, config, basicCache }));
+  app.use(['/dav', '/Tern'], createWebdavRouter({ store, config, basicCache }));
 
   app.use(express.json({ limit: '1mb' }));
   app.use(express.urlencoded({ extended: false, limit: '1mb' }));

@@ -11,8 +11,8 @@ web/screenshots/
 
 # Keep the downloadable macOS build in the repo, but not the .app bundle or CLI
 macos/dist/*
-!macos/dist/CloudDisk-1.0.0.zip
-!macos/dist/CloudDisk-1.0.0.zip.sha256
+!macos/dist/Tern-*.zip
+!macos/dist/Tern-*.zip.sha256
 
 # runtime data & secrets
 data/*

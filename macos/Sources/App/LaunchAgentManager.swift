@@ -1,6 +1,6 @@
 //
 //  LaunchAgentManager.swift
-//  CloudDisk (云屿) macOS menu-bar client
+//  Tern (Tern) macOS menu-bar client
 //
 //  “登录时启动” is implemented with a per-user LaunchAgent instead of
 //  SMAppService/LoginItems.  Reasons:
@@ -15,8 +15,8 @@ import Foundation
 
 public enum LaunchAgentManager {
 
-    public static let label = CloudDiskInfo.bundleIdentifier
-    public static let queueLabel = "\(CloudDiskInfo.bundleIdentifier).launch"
+    public static let label = TernInfo.bundleIdentifier
+    public static let queueLabel = "\(TernInfo.bundleIdentifier).launch"
 
     public static var plistURL: URL {
         FileManager.default.homeDirectoryForCurrentUser
@@ -27,7 +27,7 @@ public enum LaunchAgentManager {
     public static var launchdLogURL: URL {
         FileManager.default.homeDirectoryForCurrentUser
             .appendingPathComponent("Library/Logs", isDirectory: true)
-            .appendingPathComponent("CloudDisk-launchd.log")
+            .appendingPathComponent("Tern-launchd.log")
     }
 
     public static func isInstalled() -> Bool {
@@ -80,7 +80,7 @@ public enum LaunchAgentManager {
     }
 
     /// Called on app launch: if the user enabled “登录时启动”, rewrite the
-    /// plist so it points at the current location of CloudDisk.app.  This makes
+    /// plist so it points at the current location of Tern.app.  This makes
     /// the login item survive the app being moved to /Applications.
     public static func repairIfInstalled(appURL: URL) {
         guard isInstalled() else { return }

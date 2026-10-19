@@ -1,4 +1,4 @@
-/* Visual + interaction smoke test for 云屿 CloudDisk.
+/* Visual + interaction smoke test for Tern.
    Usage: node scripts/screenshot.mjs [baseUrl]
    Requires playwright-core and a local Google Chrome. */
 import { chromium } from 'playwright-core'
@@ -34,7 +34,7 @@ async function clearToasts(page) {
 async function login(page) {
   await page.goto(`${BASE}/login`, { waitUntil: 'networkidle' })
   await page.getByLabel('用户名').fill('admin')
-  await page.getByLabel('密码', { exact: true }).fill('clouddisk123')
+  await page.getByLabel('密码', { exact: true }).fill('tern123')
   await page.getByRole('button', { name: '登录', exact: true }).click()
   await page.waitForURL((url) => new URL(url).pathname === '/', { timeout: 15000 })
   await page.waitForLoadState('networkidle')

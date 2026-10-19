@@ -449,7 +449,7 @@ export async function streamBlob(req, res, config, node, { attachment = false, i
   } else {
     if (inline) res.setHeader('Content-Disposition', contentDisposition('inline', node.name));
     // Stored XSS defence: user-uploaded HTML/SVG/XML/JS must never execute with
-    // the CloudDisk origin's cookies. A sandbox CSP blocks scripts, framing and
+    // the Tern origin's cookies. A sandbox CSP blocks scripts, framing and
     // network access while still letting images/text be previewed.
     if (UNSAFE_INLINE_MIME_TYPES.has(mime)) {
       res.setHeader(

@@ -1,7 +1,7 @@
 # Roadmap
 
 This is a living list, not a commitment. Priorities are based on user value,
-security, and how much they move CloudDisk toward a dependable self-hosted
+security, and how much they move Tern toward a dependable self-hosted
 alternative to commercial cloud drives.
 
 If you want to work on an item, open an issue first so we can agree on the
@@ -9,7 +9,7 @@ approach. Items marked **good first issue** are usually small and self-contained
 
 ## Current limitations
 
-These are known and accepted for v1.0.0:
+These are known and accepted for v1.1.0:
 
 - **No offline sync / File Provider.** The macOS client mounts a WebDAV network
   volume. It appears in Finder's *Locations* next to iCloud Drive, but unlike

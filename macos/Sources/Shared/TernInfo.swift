@@ -1,15 +1,15 @@
 //
-//  CloudDiskInfo.swift
-//  CloudDisk (云屿) macOS menu-bar client
+//  TernInfo.swift
+//  Tern (Tern) macOS menu-bar client
 //
 
 import Foundation
 
-public enum CloudDiskInfo {
-    public static let appName = "云屿 CloudDisk"
-    public static let volumeBrand = "CloudDisk"
-    public static let bundleIdentifier = "com.clouddisk.menubar"
-    public static let fallbackVersion = "1.0.0"
+public enum TernInfo {
+    public static let appName = "Tern"
+    public static let volumeBrand = "Tern"
+    public static let bundleIdentifier = "com.tern.menubar"
+    public static let fallbackVersion = "1.1.0"
 
     public static var version: String {
         (Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String) ?? fallbackVersion

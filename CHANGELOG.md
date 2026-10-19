@@ -10,7 +10,10 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 See [ROADMAP.md](ROADMAP.md) for the prioritized backlog.
 
-## [1.0.0] - 2026-10-19
+## [1.1.0] - 2026-10-19
+
+Tern is the new name of the project. This release is the first public Tern
+release.
 
 ### Added
 
@@ -25,18 +28,33 @@ See [ROADMAP.md](ROADMAP.md) for the prioritized backlog.
   soft-delete trash with restore/permanent delete/empty, folder ZIP downloads.
 - Share links with optional scrypt-hashed passwords, expiry and download
   counters; public share page with password gate and inline preview.
-- Finder-compatible WebDAV at `/dav` and `/CloudDisk`: DAV 1,2, PROPFIND,
-  PROPPATCH, GET/HEAD with Range, PUT, MKCOL, DELETE, COPY, MOVE, LOCK/UNLOCK.
+- Finder-compatible WebDAV at `/dav` and `/Tern`:
+  DAV 1,2, PROPFIND, PROPPATCH, GET/HEAD with Range, PUT, MKCOL, DELETE, COPY,
+  MOVE, LOCK/UNLOCK.
 - React 19 + TypeScript web client with light/dark themes, responsive layout,
   drag-and-drop upload queue with progress, previews, dialogs, toasts and admin
   screens; no external CDN/font dependencies.
-- SwiftUI macOS menu-bar client that mounts the WebDAV endpoint via NetFS at
-  `/Volumes/CloudDisk`, stores passwords in Keychain, supports launch at login,
-  clean unmount, diagnostics and a `mount-smoke` CLI.
+- SwiftUI macOS menu-bar client `Tern.app` that mounts the WebDAV endpoint via
+  NetFS at `/Volumes/Tern`, stores passwords in Keychain, supports launch at
+  login, clean unmount, diagnostics and a `mount-smoke` CLI.
 - Documentation: deployment (Synology/QNAP/Unraid, HTTPS proxy), macOS client,
-  architecture, API contract; UI screenshots.
+  architecture, API contract, English README and UI screenshots.
 - 35 server integration tests covering auth, file operations, shares, quotas and
   WebDAV; CI for server, web, Docker and macOS builds.
+- Open-source infrastructure: CONTRIBUTING, CODE_OF_CONDUCT, SECURITY,
+  CHANGELOG, ROADMAP, issue/PR templates and Dependabot.
+
+### Changed
+
+- Rebranded to **Tern**:
+  - Docker image/container/project: `tern`;
+  - WebDAV path: `/Tern`;
+  - macOS app: `Tern.app`, bundle id `com.tern.menubar`, volume `/Volumes/Tern`;
+  - default server name and UI copy use Tern.
+- macOS users upgrading from the pre-release build must re-enter the server
+  password because the Keychain service identifier changed.
+- The macOS bundle is ad-hoc signed; see [docs/MAC.md](docs/MAC.md) for
+  Gatekeeper instructions.
 
 ### Security
 
@@ -46,5 +64,5 @@ See [ROADMAP.md](ROADMAP.md) for the prioritized backlog.
 - macOS AppleDouble/metadata files are hidden from REST listings while remaining
   available to Finder over WebDAV.
 
-[Unreleased]: https://github.com/XiaolongZhang-TT/cloud-disk/compare/v1.0.0...HEAD
-[1.0.0]: https://github.com/XiaolongZhang-TT/cloud-disk/releases/tag/v1.0.0
+[Unreleased]: https://github.com/XiaolongZhang-TT/tern/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/XiaolongZhang-TT/tern/releases/tag/v1.1.0

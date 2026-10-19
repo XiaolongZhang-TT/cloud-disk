@@ -1,6 +1,6 @@
 //
-//  CloudDiskApp.swift
-//  CloudDisk (云屿) macOS menu-bar client
+//  TernApp.swift
+//  Tern (Tern) macOS menu-bar client
 //
 //  SwiftUI `MenuBarExtra` app (macOS 13+) with an AppKit delegate for
 //  lifecycle, a single-instance lock, and a set of hidden command-line modes
@@ -14,7 +14,7 @@ import Darwin
 // MARK: - Entry point
 
 @main
-struct CloudDiskMain {
+struct TernMain {
     static func main() {
         let arguments = Array(CommandLine.arguments.dropFirst())
 
@@ -26,16 +26,16 @@ struct CloudDiskMain {
         }
 
         guard SingleInstance.acquire() else {
-            FileHandle.standardError.write(Data("CloudDisk 已经在运行，本次启动已跳过。\n".utf8))
+            FileHandle.standardError.write(Data("Tern 已经在运行，本次启动已跳过。\n".utf8))
             exit(0)
         }
-        CloudDiskApp.main()
+        TernApp.main()
     }
 }
 
 // MARK: - SwiftUI app
 
-struct CloudDiskApp: App {
+struct TernApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
 
     var body: some Scene {
@@ -57,7 +57,7 @@ struct MenuBarLabel: View {
 
     var body: some View {
         Image(systemName: model.menuBarSymbol)
-            .accessibilityLabel(Text("云屿 CloudDisk"))
+            .accessibilityLabel(Text("Tern"))
     }
 }
 
@@ -96,7 +96,7 @@ enum SingleInstance {
     /// when another instance holds the lock.
     static func acquire() -> Bool {
         let directory = FileManager.default.homeDirectoryForCurrentUser
-            .appendingPathComponent("Library/Application Support/CloudDisk", isDirectory: true)
+            .appendingPathComponent("Library/Application Support/Tern", isDirectory: true)
         try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
         let lockPath = directory.appendingPathComponent("app.lock").path
         let descriptor = open(lockPath, O_CREAT | O_RDWR, 0o644)
@@ -128,7 +128,7 @@ enum CommandLineModes {
 
         switch command {
         case "--version":
-            print(CloudDiskInfo.versionDescription)
+            print(TernInfo.versionDescription)
             return 0
         case "--help":
             print(helpText())
@@ -144,7 +144,7 @@ enum CommandLineModes {
                     print(SmokeRunner.usageText())
                     return 0
                 case "__VERSION__":
-                    print(CloudDiskInfo.versionDescription)
+                    print(TernInfo.versionDescription)
                     return 0
                 default:
                     FileHandle.standardError.write(Data(("错误：\(error.message)\n\n" + SmokeRunner.usageText() + "\n").utf8))
@@ -168,10 +168,10 @@ enum CommandLineModes {
 
     private static func helpText() -> String {
         """
-        \(CloudDiskInfo.versionDescription)
+        \(TernInfo.versionDescription)
 
         菜单栏应用（直接打开即可）：
-          open CloudDisk.app
+          open Tern.app
 
         隐藏的命令行模式（用于自动化与排障）：
           --smoke <mount-smoke 参数>   运行挂载冒烟测试（见 --help 中的 mount-smoke 说明）
@@ -215,7 +215,7 @@ enum CommandLineModes {
 
     private static func passwordFromFlags(_ flags: [String: String]) -> String {
         if let password = flags["--password"], !password.isEmpty { return password }
-        if let environment = ProcessInfo.processInfo.environment["CLOUDDISK_PASSWORD"] {
+        if let environment = ProcessInfo.processInfo.environment["TERN_PASSWORD"] {
             return environment
         }
         return ""
@@ -226,7 +226,7 @@ enum CommandLineModes {
         let resultFile = flags["--result"]
         guard let urlText = flags["--url"],
               let url = try? SettingsStore.normalize(serverText: urlText) else {
-            writeResult("错误：请提供有效的 --url（例如 http://127.0.0.1:18080/CloudDisk）", to: resultFile)
+            writeResult("错误：请提供有效的 --url（例如 http://127.0.0.1:18080/Tern）", to: resultFile)
             return 1
         }
         guard let username = flags["--user"], !username.isEmpty else {
@@ -235,7 +235,7 @@ enum CommandLineModes {
         }
         let password = passwordFromFlags(flags)
         guard !password.isEmpty else {
-            writeResult("错误：请提供 --password 或设置 CLOUDDISK_PASSWORD 环境变量", to: resultFile)
+            writeResult("错误：请提供 --password 或设置 TERN_PASSWORD 环境变量", to: resultFile)
             return 1
         }
         do {
@@ -294,7 +294,7 @@ enum CommandLineModes {
         let resultFile = flags["--result"]
         let settings = SettingsStore.shared
         var lines: [String] = []
-        lines.append(CloudDiskInfo.versionDescription)
+        lines.append(TernInfo.versionDescription)
         lines.append("bundle: \(Bundle.main.bundleURL.path)")
         lines.append("executable: \(Bundle.main.executableURL?.path ?? "?")")
         lines.append("macOS: \(ProcessInfo.processInfo.operatingSystemVersionString)")

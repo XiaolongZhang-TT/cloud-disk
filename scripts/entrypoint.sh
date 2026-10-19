@@ -1,5 +1,5 @@
 #!/bin/sh
-# CloudDisk container entrypoint.
+# Tern container entrypoint.
 #
 # 1. Creates the data directories inside the mounted volume.
 # 2. When running as root (the default), fixes ownership of DATA_DIR so the

@@ -145,9 +145,9 @@ export function PublicSharePage() {
   }, [load])
 
   useEffect(() => {
-    if (share?.node.name) document.title = `${share.node.name} · 云屿 CloudDisk`
+    if (share?.node.name) document.title = `${share.node.name} · Tern`
     return () => {
-      document.title = '云屿 CloudDisk'
+      document.title = 'Tern'
     }
   }, [share?.node.name])
 
@@ -189,7 +189,7 @@ export function PublicSharePage() {
   return (
     <div className="public-page">
       <header className="public-topbar">
-        <Link to="/" className="public-brand" aria-label="云屿 CloudDisk 首页">
+        <Link to="/" className="public-brand" aria-label="Tern 首页">
           <Logo size={30} />
         </Link>
         <div className="public-top-actions">
@@ -219,7 +219,7 @@ export function PublicSharePage() {
             <h1>分享不存在或已过期</h1>
             <p>这个链接可能已被删除、已经过期，或者地址不完整。</p>
             <Link className="btn btn-soft" to="/">
-              返回云屿
+              返回 Tern
             </Link>
           </div>
         ) : error ? (
@@ -242,7 +242,7 @@ export function PublicSharePage() {
               <h1>分享已过期</h1>
               <p>这条分享链接已经超过有效期，请联系分享者重新创建一个。</p>
               <Link className="btn btn-soft" to="/">
-                返回云屿
+                返回 Tern
               </Link>
             </div>
           ) : (
@@ -376,7 +376,7 @@ export function PublicSharePage() {
 
       <footer className="public-page-foot">
         <Logo size={22} showWordmark={false} />
-        <span>云屿 CloudDisk · 私有云盘</span>
+        <span>Tern · 私有云盘</span>
         <span className="auth-foot-dot">·</span>
         <Link to="/">登录我的云盘</Link>
       </footer>

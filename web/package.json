@@ -1,19 +1,19 @@
 {
-  "name": "clouddisk-web",
+  "name": "tern-web",
   "private": true,
-  "version": "1.0.0",
+  "version": "1.1.0",
   "type": "module",
-  "description": "云屿 CloudDisk — web client",
+  "description": "Tern — web client",
   "license": "MIT",
-  "author": "CloudDisk contributors",
+  "author": "Tern contributors",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/XiaolongZhang-TT/cloud-disk.git",
+    "url": "git+https://github.com/XiaolongZhang-TT/tern.git",
     "directory": "web"
   },
-  "homepage": "https://github.com/XiaolongZhang-TT/cloud-disk/tree/main/web",
+  "homepage": "https://github.com/XiaolongZhang-TT/tern/tree/main/web",
   "bugs": {
-    "url": "https://github.com/XiaolongZhang-TT/cloud-disk/issues"
+    "url": "https://github.com/XiaolongZhang-TT/tern/issues"
   },
   "scripts": {
     "dev": "vite",

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate macos/Resources/AppIcon.icns for the CloudDisk menu-bar app.
+"""Generate macos/Resources/AppIcon.icns for the Tern menu-bar app.
 
 Run with a Python that has Pillow installed (the bundled DSH runtime does):
 

@@ -1,9 +1,9 @@
 //
 //  MountClient.swift
-//  CloudDisk (云屿) macOS menu-bar client
+//  Tern (Tern) macOS menu-bar client
 //
 //  The macOS client deliberately does not re-implement sync.  It asks macOS
-//  itself to mount the CloudDisk WebDAV endpoint through
+//  itself to mount the Tern WebDAV endpoint through
 //  `NetFSMountURLSync`, so Finder treats the result as a normal network
 //  volume: it appears in /Volumes, in Finder's sidebar under "Locations"
 //  (next to iCloud Drive) and can be dragged to Favorites.
@@ -66,7 +66,7 @@ public enum MountClientError: LocalizedError, Equatable {
     public var errorDescription: String? {
         switch self {
         case .invalidServerURL(let text):
-            return "服务器地址无效：“\(text)”。请输入类似 http://192.168.1.10:8080/CloudDisk 的地址。"
+            return "服务器地址无效：“\(text)”。请输入类似 http://192.168.1.10:8080/Tern 的地址。"
         case .missingCredentials:
             return "缺少用户名或密码。请先在“设置”中填写服务器账号和密码。"
         case .mountFailed(let code, let detail):
@@ -97,9 +97,9 @@ public enum MountClient {
     /// Volume name macOS will use for this WebDAV URL.
     ///
     /// NetFS derives the name of a WebDAV volume from the last component of the
-    /// URL path.  Using `/CloudDisk` therefore gives a volume called
-    /// “CloudDisk”; using `/dav` would give “dav”, which is why the app
-    /// defaults to `/CloudDisk`.
+    /// URL path.  Using `/Tern` therefore gives a volume called
+    /// “Tern”; using `/dav` would give “dav”, which is why the app
+    /// defaults to `/Tern`.
     public static func volumeName(for serverURL: URL) -> String {
         let components = serverURL.pathComponents.filter { $0 != "/" && !$0.isEmpty }
         var name = components.last ?? ""
@@ -110,7 +110,7 @@ public enum MountClient {
                    .replacingOccurrences(of: ":", with: "-")
                    .trimmingCharacters(in: .whitespacesAndNewlines)
         if name.isEmpty {
-            name = serverURL.host ?? "CloudDisk"
+            name = serverURL.host ?? "Tern"
         }
         return name
     }
@@ -149,10 +149,10 @@ public enum MountClient {
         return mountedVolumes().contains { $0.path == target }
     }
 
-    /// Locate the CloudDisk volume for `serverURL`, if it is mounted.
+    /// Locate the Tern volume for `serverURL`, if it is mounted.
     ///
     /// Matching is intentionally forgiving because NetFS is allowed to pick a
-    /// different name (`CloudDisk-1`) when the mount point is taken, and the
+    /// different name (`Tern-1`) when the mount point is taken, and the
     /// remount URL is not always populated for WebDAV volumes.
     public static func findMountedVolume(for serverURL: URL) -> MountedVolume? {
         let expectedPath = expectedMountPath(for: serverURL)
@@ -183,7 +183,7 @@ public enum MountClient {
             }
         }
 
-        // 3. Name match under /Volumes (covers CloudDisk-1 style collisions and
+        // 3. Name match under /Volumes (covers Tern-1 style collisions and
         //    mounts whose remount URL is unavailable).
         if let volume = volumes.first(where: { volume in
             guard volume.isNetwork, volume.path.hasPrefix(defaultMountRoot + "/") else { return false }
@@ -494,7 +494,7 @@ public enum MountClient {
         case EACCES:
             return "认证失败或没有访问权限（EACCES）。请检查用户名和密码，并确认服务器已开启 WebDAV。"
         case ENOENT:
-            return "找不到挂载点或服务器路径（ENOENT）。请确认服务器地址中的路径（应为 /CloudDisk）存在。"
+            return "找不到挂载点或服务器路径（ENOENT）。请确认服务器地址中的路径（应为 /Tern）存在。"
         case EEXIST:
             return "挂载点已存在（EEXIST）。可能已经挂载，请先断开或清理残留挂载点。"
         case EBUSY:
@@ -502,7 +502,7 @@ public enum MountClient {
         case ETIMEDOUT:
             return "连接服务器超时（ETIMEDOUT）。请检查服务器地址、网络和防火墙。"
         case ECONNREFUSED:
-            return "服务器拒绝连接（ECONNREFUSED）。请确认 CloudDisk 服务已启动、端口正确。"
+            return "服务器拒绝连接（ECONNREFUSED）。请确认 Tern 服务已启动、端口正确。"
         case EHOSTUNREACH, ENETUNREACH:
             return "网络不可达（EHOSTUNREACH）。请检查网络连接或 VPN。"
         case ECONNRESET, EPIPE, ENOTCONN:
@@ -510,7 +510,7 @@ public enum MountClient {
         case ENODEV:
             return "WebDAV 文件系统不可用（ENODEV）。请确认当前 macOS 支持 WebDAV 卷（系统自带 webdav.fs）。"
         case EINVAL:
-            return "地址或参数无效（EINVAL）。请确认地址形如 http://host:port/CloudDisk。"
+            return "地址或参数无效（EINVAL）。请确认地址形如 http://host:port/Tern。"
         case 80: // EAUTH
             return "用户名或密码错误，或服务器拒绝认证（EAUTH）。请重新输入密码。"
         case -128:
@@ -530,7 +530,7 @@ public enum MountClient {
         case -6600:
             return "macOS 网络认证内部错误。请重试或重新登录后再试。"
         case -6602:
-            return "挂载失败。请确认服务器地址指向 WebDAV 端点（/CloudDisk），且服务端 WebDAV 实现完整（PROPFIND/LOCK）。"
+            return "挂载失败。请确认服务器地址指向 WebDAV 端点（/Tern），且服务端 WebDAV 实现完整（PROPFIND/LOCK）。"
         case -6003:
             return "服务器没有可用的共享。"
         case -6004:
@@ -538,7 +538,7 @@ public enum MountClient {
         case -6005:
             return "连接已关闭，请重试。"
         default:
-            return "未知错误（\(code)）。可在 ~/Library/Logs/CloudDisk.log 查看详细日志。"
+            return "未知错误（\(code)）。可在 ~/Library/Logs/Tern.log 查看详细日志。"
         }
     }
 }
@@ -571,7 +571,7 @@ public enum HTTPProbe {
         var request = URLRequest(url: serverURL, timeoutInterval: timeout)
         request.httpMethod = "OPTIONS"
         request.setValue("0", forHTTPHeaderField: "Content-Length")
-        request.setValue("CloudDisk-macOS", forHTTPHeaderField: "User-Agent")
+        request.setValue("Tern-macOS", forHTTPHeaderField: "User-Agent")
         if !username.isEmpty {
             let token = Data("\(username):\(password)".utf8).base64EncodedString()
             request.setValue("Basic \(token)", forHTTPHeaderField: "Authorization")
@@ -604,7 +604,7 @@ public enum HTTPProbe {
                 case 401, 403:
                     box.value = .unauthorized
                 case 404:
-                    box.value = .unreachable("服务器返回 404，地址可能不正确（应使用 /CloudDisk）")
+                    box.value = .unreachable("服务器返回 404，地址可能不正确（应使用 /Tern）")
                 case 405:
                     box.value = .online // 服务器可达，只是不允许 OPTIONS
                 default:

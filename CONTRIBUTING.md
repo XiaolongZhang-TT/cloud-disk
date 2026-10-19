@@ -1,6 +1,6 @@
-# Contributing to 云屿 CloudDisk
+# Contributing to Tern
 
-Thanks for your interest in improving CloudDisk. This project is a self-hosted
+Thanks for your interest in improving Tern. This project is a self-hosted
 NAS cloud drive with a Node.js/Express + SQLite backend, a React web client and a
 native macOS SwiftUI menu-bar client.
 
@@ -33,7 +33,7 @@ starting point.
 ```bash
 cd server
 npm ci
-PORT=18080 DATA_DIR=./.data ADMIN_USERNAME=admin ADMIN_PASSWORD=clouddisk123 npm run dev
+PORT=18080 DATA_DIR=./.data ADMIN_USERNAME=admin ADMIN_PASSWORD=tern123 npm run dev
 ```
 
 ### Web client
@@ -43,7 +43,7 @@ PORT=18080 DATA_DIR=./.data ADMIN_USERNAME=admin ADMIN_PASSWORD=clouddisk123 npm
 cd web
 npm ci
 npm run dev
-# http://127.0.0.1:5173, Vite proxies /api and /CloudDisk to :18080
+# http://127.0.0.1:5173, Vite proxies /api and /Tern to :18080
 ```
 
 Production build:
@@ -57,14 +57,14 @@ cd web && npm run build   # outputs web/dist, served by the Node server
 ```bash
 cd macos
 ./build.sh
-open dist/CloudDisk.app
+open dist/Tern.app
 ```
 
 `build.sh` uses `swiftc` directly and needs no Apple Developer account. The
 `mount-smoke` CLI is built alongside the app and can verify WebDAV mounting:
 
 ```bash
-macos/tools/mount-smoke --url http://127.0.0.1:18080/CloudDisk \
+macos/tools/mount-smoke --url http://127.0.0.1:18080/Tern \
   --user admin --password 'your-password'
 ```
 

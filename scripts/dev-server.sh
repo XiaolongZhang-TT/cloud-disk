@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Start the CloudDisk backend locally (no Docker) with the repository-local npm
+# Start the Tern backend locally (no Docker) with the repository-local npm
 # cache, so it also works in sandboxed environments where $HOME is read-only.
 set -euo pipefail
 
@@ -19,7 +19,7 @@ export PORT="${PORT:-8080}"
 export DATA_DIR="${DATA_DIR:-$ROOT_DIR/server/.data}"
 
 mkdir -p "$DATA_DIR"
-echo "[dev] CloudDisk listening on http://127.0.0.1:${PORT} (data: ${DATA_DIR})"
-echo "[dev] WebDAV: http://127.0.0.1:${PORT}/CloudDisk"
+echo "[dev] Tern listening on http://127.0.0.1:${PORT} (data: ${DATA_DIR})"
+echo "[dev] WebDAV: http://127.0.0.1:${PORT}/Tern"
 
 exec node src/index.js

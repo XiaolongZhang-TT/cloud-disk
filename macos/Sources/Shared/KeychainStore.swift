@@ -1,6 +1,6 @@
 //
 //  KeychainStore.swift
-//  CloudDisk (云屿) macOS menu-bar client
+//  Tern (Tern) macOS menu-bar client
 //
 //  Passwords are stored in the login Keychain as generic password items, keyed
 //  by service + "username@host:port".  They are never written to UserDefaults,
@@ -12,10 +12,10 @@ import Security
 
 public enum KeychainStore {
 
-    public static let service = "com.clouddisk.menubar"
+    public static let service = "com.tern.menubar"
 
     /// Stable account key for one server + user pair.  The URL path is
-    /// intentionally ignored so switching between /CloudDisk and /dav (or
+    /// intentionally ignored so switching between /Tern and /dav (or
     /// adding a reverse-proxy prefix) keeps the saved password.
     public static func account(serverURL: URL, username: String) -> String {
         let host = serverURL.host?.lowercased() ?? "unknown-host"
@@ -39,8 +39,8 @@ public enum KeychainStore {
         ]
         let attributes: [String: Any] = [
             kSecValueData as String: data,
-            kSecAttrLabel as String: "CloudDisk 密码（\(account)）",
-            kSecAttrDescription as String: "CloudDisk WebDAV 登录密码",
+            kSecAttrLabel as String: "Tern 密码（\(account)）",
+            kSecAttrDescription as String: "Tern WebDAV 登录密码",
             kSecAttrAccessible as String: kSecAttrAccessibleAfterFirstUnlock,
         ]
 
@@ -112,7 +112,7 @@ public enum KeychainStore {
             kSecAttrService as String: service,
         ]
         SecItemDelete(query as CFDictionary)
-        CDLog.info("keychain: deleted all CloudDisk passwords")
+        CDLog.info("keychain: deleted all Tern passwords")
     }
 }
 
@@ -131,7 +131,7 @@ public enum KeychainError: LocalizedError, Equatable {
 
     public static func describe(_ status: OSStatus) -> String {
         switch status {
-        case errSecAuthFailed: return "认证失败，请允许 CloudDisk 访问钥匙串。"
+        case errSecAuthFailed: return "认证失败，请允许 Tern 访问钥匙串。"
         case errSecUserCanceled: return "操作已取消。"
         case errSecInteractionNotAllowed: return "钥匙串已锁定，请解锁登录钥匙串后重试。"
         case errSecDuplicateItem: return "钥匙串中已存在相同条目。"

@@ -14,7 +14,7 @@ export function LogoMark({ size = 36, className = '' }: LogoMarkProps) {
       viewBox="0 0 64 64"
       className={`logo-mark ${className}`}
       role="img"
-      aria-label="云屿 CloudDisk"
+      aria-label="Tern"
     >
       <defs>
         <linearGradient id={gradientId} x1="0" y1="0" x2="1" y2="1">
@@ -54,8 +54,8 @@ export function Logo({ size = 34, showWordmark = true, className = '' }: LogoPro
       <LogoMark size={size} />
       {showWordmark && (
         <span className="logo-text">
-          <span className="logo-name">云屿</span>
-          <span className="logo-sub">CloudDisk</span>
+          <span className="logo-name">Tern</span>
+          <span className="logo-sub">PRIVATE CLOUD</span>
         </span>
       )}
     </span>

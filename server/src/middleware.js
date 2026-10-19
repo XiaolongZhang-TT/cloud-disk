@@ -66,7 +66,7 @@ export function requireAdmin(req, res, next) {
 export function createDavAuth({ store, config, basicCache }) {
   const failureLimiter = new RateLimiter({ windowMs: config.davAuthWindowMs, max: config.davAuthMaxAttempts });
   const challenge = (res) => {
-    res.setHeader('WWW-Authenticate', 'Basic realm="CloudDisk", charset="UTF-8"');
+    res.setHeader('WWW-Authenticate', 'Basic realm="Tern", charset="UTF-8"');
   };
 
   return (req, res, next) => {

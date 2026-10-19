@@ -30,7 +30,7 @@ function BootErrorScreen({ message, onRetry }: { message: string; onRetry: () =>
       <h1>无法连接到服务器</h1>
       <p>{message}</p>
       <p className="boot-error-hint">
-        请确认 CloudDisk 服务已启动，并且正在监听 <code>18080</code> 端口。
+        请确认 Tern 服务已启动，并且正在监听 <code>18080</code> 端口。
       </p>
       <Button icon={<RefreshCw size={16} />} onClick={onRetry}>
         重试连接

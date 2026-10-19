@@ -325,7 +325,7 @@ export function DrivePage() {
           empty={
             <EmptyState
               icon={folderId ? <FolderOpen size={28} /> : <CloudUpload size={28} />}
-              title={folderId ? '这个文件夹是空的' : '开始使用你的云屿'}
+              title={folderId ? '这个文件夹是空的' : '开始使用 Tern'}
               description={
                 folderId
                   ? '把文件拖到这里，或点击右上角「上传」开始整理。'

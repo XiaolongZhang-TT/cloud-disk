@@ -1,6 +1,6 @@
 //
 //  MenuBarView.swift
-//  CloudDisk (云屿) macOS menu-bar client
+//  Tern (Tern) macOS menu-bar client
 //
 //  The dropdown attached to the menu-bar icon.
 //
@@ -13,7 +13,7 @@ struct MenuBarView: View {
     var body: some View {
         Group {
             // Header
-            Text("云屿 CloudDisk")
+            Text("Tern")
             Text(model.statusHeadline)
                 .font(.headline)
             if let detail = model.statusDetail {
@@ -98,7 +98,7 @@ struct MenuBarView: View {
 
         Divider()
 
-        Button("退出云屿 CloudDisk") {
+        Button("退出Tern") {
             model.quit()
         }
         .keyboardShortcut("q", modifiers: .command)

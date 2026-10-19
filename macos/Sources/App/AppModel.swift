@@ -1,6 +1,6 @@
 //
 //  AppModel.swift
-//  CloudDisk (云屿) macOS menu-bar client
+//  Tern (Tern) macOS menu-bar client
 //
 //  Owns the connection state machine.  Every NetFS / Keychain / launchctl
 //  call is blocking, so it is always executed off the main thread and the
@@ -129,8 +129,8 @@ public final class AppModel: ObservableObject {
     }
 
     private var fallbackURL: URL {
-        (try? SettingsStore.normalize(serverText: CloudDiskDefaults.serverURL))
-            ?? URL(string: CloudDiskDefaults.serverURL)!
+        (try? SettingsStore.normalize(serverText: TernDefaults.serverURL))
+            ?? URL(string: TernDefaults.serverURL)!
     }
 
     private var currentServerURL: URL? {
@@ -142,7 +142,7 @@ public final class AppModel: ObservableObject {
     public func start() {
         guard !started else { return }
         started = true
-        CDLog.info("app: start \(CloudDiskInfo.versionDescription) bundle=\(Bundle.main.bundleURL.path)")
+        CDLog.info("app: start \(TernInfo.versionDescription) bundle=\(Bundle.main.bundleURL.path)")
 
         // Repair a login item whose plist points at an old location after the
         // app was moved (for example into /Applications).
@@ -411,7 +411,7 @@ public final class AppModel: ObservableObject {
             let url = try SettingsStore.normalize(serverText: serverURLText)
             let trimmedUsername = username.trimmingCharacters(in: .whitespacesAndNewlines)
             guard !trimmedUsername.isEmpty else {
-                return "请填写用户名（与 CloudDisk 网页登录账号相同）。"
+                return "请填写用户名（与 Tern 网页登录账号相同）。"
             }
             if let password = password, !password.isEmpty {
                 try KeychainStore.savePassword(password, serverURL: url, username: trimmedUsername)
@@ -584,7 +584,7 @@ public final class AppModel: ObservableObject {
         NSApp.activate(ignoringOtherApps: true)
         NSSound.beep()
         let alert = NSAlert()
-        alert.messageText = "无法连接 CloudDisk"
+        alert.messageText = "无法连接 Tern"
         alert.informativeText = message
         alert.alertStyle = .warning
         alert.addButton(withTitle: "打开设置")

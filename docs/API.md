@@ -1,4 +1,4 @@
-# CloudDisk API Contract (v1)
+# Tern API Contract (v1)
 
 > This document is the source of truth shared by the server, web UI and macOS client.
 > Base URL: `/api`. All request/response bodies are JSON unless noted.
@@ -117,8 +117,8 @@ Folder shares download as ZIP. If a share has a password, content requests requi
 
 ## WebDAV
 
-- Endpoints: `/dav` and `/CloudDisk` (same root; use `/CloudDisk` so Finder names the volume “CloudDisk”).
-- HTTP Basic auth with the same username/password as the web app. Realm `CloudDisk`.
+- Endpoints: `/dav` and `/Tern` (same root; use `/Tern` so Finder names the volume “Tern”).
+- HTTP Basic auth with the same username/password as the web app. Realm `Tern`.
 - Supported methods: `OPTIONS, PROPFIND, PROPPATCH, GET, HEAD, PUT, DELETE, MKCOL, COPY, MOVE, LOCK, UNLOCK`.
 - Read-write Finder mounting requires `DAV: 1, 2` and LOCK support.
 - Virtual root maps to the user's root folder.
@@ -133,7 +133,7 @@ Folder shares download as ZIP. If a share has a password, content requests requi
 |---|---|---|
 | `PORT` | `8080` | Listen port |
 | `DATA_DIR` | `/data` | SQLite DB + file blobs |
-| `SERVER_NAME` | `云屿 CloudDisk` | Brand shown in UI |
+| `SERVER_NAME` | `Tern` | Brand shown in UI |
 | `PUBLIC_BASE_URL` | empty | Absolute share URLs, e.g. `https://disk.example.com` |
 | `ADMIN_USERNAME` | empty | Auto-create admin on first boot when users table is empty |
 | `ADMIN_PASSWORD` | empty | Password for auto-created admin |

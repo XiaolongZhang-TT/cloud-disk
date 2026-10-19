@@ -1,6 +1,6 @@
-# 云屿 CloudDisk · Web
+# Tern · Web
 
-React 19 + TypeScript + Vite single-page app for 云屿 CloudDisk. Chinese UI, no UI
+React 19 + TypeScript + Vite single-page app for Tern. Chinese UI, no UI
 framework, no external fonts/CDNs — everything is bundled and works offline behind a
 NAS reverse proxy.
 
@@ -10,7 +10,7 @@ NAS reverse proxy.
 # install (sandboxed cache lives in ../.npm-cache)
 npm install
 
-# dev server on http://127.0.0.1:5173 with /api, /dav and /CloudDisk proxied to :18080
+# dev server on http://127.0.0.1:5173 with /api, /dav and /Tern proxied to :18080
 npm run dev
 
 # production build → web/dist (served by the Node server at /)
@@ -20,7 +20,7 @@ npm run build
 npm run preview -- --port 15173
 ```
 
-`vite.config.ts` proxies `/api`, `/dav` and `/CloudDisk` to `http://127.0.0.1:18080`.
+`vite.config.ts` proxies `/api`, `/dav` and `/Tern` to `http://127.0.0.1:18080`.
 The API contract lives in `../docs/API.md`.
 
 ## Structure

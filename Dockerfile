@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 #
-# CloudDisk — single-container image serving the REST API, WebDAV endpoint and
+# Tern — single-container image serving the REST API, WebDAV endpoint and
 # the React SPA on one port.
 #
 # Stage 1 builds the web SPA from source, so `docker compose up -d --build`

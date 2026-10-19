@@ -19,7 +19,7 @@ export class ErrorBoundary extends Component<{ children: ReactNode }, ErrorBound
   }
 
   componentDidCatch(error: Error, info: ErrorInfo): void {
-    console.error('[CloudDisk] 界面异常', error, info.componentStack)
+    console.error('[Tern] 界面异常', error, info.componentStack)
   }
 
   render() {

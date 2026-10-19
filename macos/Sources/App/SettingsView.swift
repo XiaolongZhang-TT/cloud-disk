@@ -1,6 +1,6 @@
 //
 //  SettingsView.swift
-//  CloudDisk (云屿) macOS menu-bar client
+//  Tern (Tern) macOS menu-bar client
 //
 
 import SwiftUI
@@ -21,9 +21,9 @@ struct SettingsView: View {
         Form {
             Section {
                 TextField("服务器地址", text: $settings.serverURLText,
-                          prompt: Text("http://192.168.1.10:8080/CloudDisk"))
+                          prompt: Text("http://192.168.1.10:8080/Tern"))
                 TextField("用户名", text: $settings.username,
-                          prompt: Text("与 CloudDisk 网页登录账号相同"))
+                          prompt: Text("与 Tern 网页登录账号相同"))
                 HStack {
                     if showPassword {
                         TextField("密码", text: $password, prompt: Text("输入密码后保存到钥匙串"))
@@ -50,7 +50,7 @@ struct SettingsView: View {
             }
 
             Section {
-                Toggle("登录时自动启动 CloudDisk（LaunchAgent）", isOn: $settings.connectAtLogin)
+                Toggle("登录时自动启动 Tern（LaunchAgent）", isOn: $settings.connectAtLogin)
                 Toggle("启动后自动连接", isOn: $settings.autoConnect)
                 Text("登录启动通过 ~/Library/LaunchAgents/\(LaunchAgentManager.label).plist 实现，适合本地构建、无开发者账号的应用。移动 App 后重新打开会自动修正路径。")
                     .font(.caption)
@@ -67,7 +67,7 @@ struct SettingsView: View {
                     LabeledContent("实际挂载点", value: volumePath)
                 }
                 LabeledContent("服务器在线", value: model.onlineText)
-                Text("卷名取自服务器地址的最后一段路径；使用 /CloudDisk 时卷名为 CloudDisk，并会出现在 Finder 侧边栏的“位置”中。")
+                Text("卷名取自服务器地址的最后一段路径；使用 /Tern 时卷名为 Tern，并会出现在 Finder 侧边栏的“位置”中。")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             } header: {
@@ -103,7 +103,7 @@ struct SettingsView: View {
             }
 
             Section {
-                LabeledContent("版本", value: CloudDiskInfo.versionDescription)
+                LabeledContent("版本", value: TernInfo.versionDescription)
                 LabeledContent("应用路径", value: Bundle.main.bundleURL.path)
                 LabeledContent("登录启动", value: LaunchAgentManager.statusDescription())
                 HStack {
@@ -204,7 +204,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
                               styleMask: [.titled, .closable, .miniaturizable, .resizable],
                               backing: .buffered,
                               defer: false)
-        window.title = "云屿 CloudDisk 设置"
+        window.title = "Tern 设置"
         window.isReleasedWhenClosed = false
         window.center()
         super.init(window: window)

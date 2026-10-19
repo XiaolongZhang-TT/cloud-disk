@@ -1,10 +1,10 @@
 //
 //  Log.swift
-//  CloudDisk (云屿) macOS menu-bar client
+//  Tern (Tern) macOS menu-bar client
 //
 //  Lightweight logger shared by the app, the bundled CLI helpers and the
 //  standalone `mount-smoke` tool.  Logs go to os_log and to
-//  ~/Library/Logs/CloudDisk.log (rotated at ~1 MB) so that users can attach a
+//  ~/Library/Logs/Tern.log (rotated at ~1 MB) so that users can attach a
 //  file to a bug report.  The password is never logged.
 //
 
@@ -12,9 +12,9 @@ import Foundation
 import os
 
 public enum CDLog {
-    public static let subsystem = "com.clouddisk.menubar"
-    private static let osLogger = Logger(subsystem: subsystem, category: "CloudDisk")
-    private static let ioQueue = DispatchQueue(label: "com.clouddisk.menubar.log")
+    public static let subsystem = "com.tern.menubar"
+    private static let osLogger = Logger(subsystem: subsystem, category: "Tern")
+    private static let ioQueue = DispatchQueue(label: "com.tern.menubar.log")
 
     public static var directoryURL: URL {
         FileManager.default.homeDirectoryForCurrentUser
@@ -22,7 +22,7 @@ public enum CDLog {
     }
 
     public static var fileURL: URL {
-        directoryURL.appendingPathComponent("CloudDisk.log")
+        directoryURL.appendingPathComponent("Tern.log")
     }
 
     public static func info(_ message: String) {
@@ -80,7 +80,7 @@ public enum CDLog {
         guard let attrs = try? fm.attributesOfItem(atPath: fileURL.path),
               let size = attrs[.size] as? NSNumber,
               size.intValue > 1_000_000 else { return }
-        let backup = fileURL.deletingLastPathComponent().appendingPathComponent("CloudDisk.previous.log")
+        let backup = fileURL.deletingLastPathComponent().appendingPathComponent("Tern.previous.log")
         try? fm.removeItem(at: backup)
         try? fm.moveItem(at: fileURL, to: backup)
     }

@@ -107,12 +107,12 @@ export function AuthPage({ mode }: AuthPageProps) {
   }
 
   const headline = isSetup
-    ? ['先为这座云屿', '创建一位管理员。']
+    ? ['先为 Tern 创建', '一位管理员。']
     : ['把文件安放在', '属于你自己的云上。']
   const eyebrow = isSetup ? '首次运行' : '私有云盘'
   const lead = isSetup
     ? '这台服务器还没有账户。创建第一个管理员账户后，就可以开始使用了。'
-    : '云屿 CloudDisk 是一个安静、简单的私有云盘。文件只保存在你自己的服务器里。'
+    : 'Tern 是一个安静、简单的私有云盘。文件只保存在你自己的服务器里。'
 
   const cardTitle = isSetup ? '创建管理员账户' : isRegister ? '创建账户' : '欢迎回来'
   const cardDesc = isSetup
@@ -134,7 +134,7 @@ export function AuthPage({ mode }: AuthPageProps) {
         {resolved === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
       </button>
 
-      <section className="auth-hero" aria-label="云屿 CloudDisk 介绍">
+      <section className="auth-hero" aria-label="Tern 介绍">
         <div className="auth-hero-inner">
           <div className="auth-brand">
             <Logo size={42} />
@@ -341,7 +341,7 @@ export function AuthPage({ mode }: AuthPageProps) {
         <p className="auth-panel-foot">
           {isSetup ? '设置完成后即可登录' : '仅供授权用户使用'}
           <span className="auth-foot-dot">·</span>
-          云屿 CloudDisk
+          Tern
         </p>
       </section>
     </div>

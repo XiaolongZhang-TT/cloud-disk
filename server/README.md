@@ -1,6 +1,6 @@
-# CloudDisk server
+# Tern server
 
-The CloudDisk backend: a single Node.js (ESM) process that serves the REST API,
+The Tern backend: a single Node.js (ESM) process that serves the REST API,
 the WebDAV endpoint used by macOS Finder, and the compiled React SPA (when
 `web/dist` exists) on one port.
 
@@ -21,7 +21,7 @@ or manually:
 ```bash
 cd server
 npm ci
-PORT=8080 DATA_DIR=./.data ADMIN_USERNAME=admin ADMIN_PASSWORD=clouddisk123 npm start
+PORT=8080 DATA_DIR=./.data ADMIN_USERNAME=admin ADMIN_PASSWORD=tern123 npm start
 ```
 
 First boot behaviour:
@@ -31,7 +31,7 @@ First boot behaviour:
 - Otherwise the web UI shows the one-time `/api/auth/setup` screen.
 
 Open <http://127.0.0.1:8080> for the SPA (if built), and mount
-`http://127.0.0.1:8080/CloudDisk` from Finder (HTTP Basic auth with the same
+`http://127.0.0.1:8080/Tern` from Finder (HTTP Basic auth with the same
 account). `/dav` is an equivalent WebDAV alias.
 
 ## Configuration

@@ -1,5 +1,5 @@
 name: Bug report
-description: Report a reproducible problem with CloudDisk
+description: Report a reproducible problem with Tern
 title: "[bug] "
 labels: ["bug", "needs-triage"]
 body:
@@ -40,7 +40,7 @@ body:
     attributes:
       label: Version / commit
       description: Output of `git rev-parse --short HEAD`, release tag, or Docker image tag.
-      placeholder: "v1.0.0 / 490a97d"
+      placeholder: "v1.1.0 / <commit>"
     validations:
       required: true
 
@@ -76,7 +76,7 @@ body:
       label: Relevant logs / screenshots
       description: |
         `docker compose logs --tail=200`, browser console errors, or
-        `~/Library/Logs/CloudDisk.log` for the macOS client.
+        `~/Library/Logs/Tern.log` for the macOS client.
         Remove secrets before pasting.
       render: shell
     validations:

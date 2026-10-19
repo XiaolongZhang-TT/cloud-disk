@@ -1,12 +1,12 @@
-name: clouddisk
+name: tern
 
 services:
-  clouddisk:
+  tern:
     build:
       context: .
       dockerfile: Dockerfile
-    image: clouddisk:latest
-    container_name: clouddisk
+    image: tern:latest
+    container_name: tern
     restart: unless-stopped
     ports:
       - "${PORT:-8080}:8080"
@@ -14,7 +14,7 @@ services:
       PORT: "8080"
       DATA_DIR: /data
       STATIC_DIR: /app/public
-      SERVER_NAME: "${SERVER_NAME:-云屿 CloudDisk}"
+      SERVER_NAME: "${SERVER_NAME:-Tern}"
       PUBLIC_BASE_URL: "${PUBLIC_BASE_URL:-}"
       ADMIN_USERNAME: "${ADMIN_USERNAME:-}"
       ADMIN_PASSWORD: "${ADMIN_PASSWORD:-}"

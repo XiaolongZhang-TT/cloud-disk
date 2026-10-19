@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Minimal WebDAV server for testing the CloudDisk macOS mount client.
+"""Minimal WebDAV server for testing the Tern macOS mount client.
 
 This is *not* part of the product. It exists so that `mount-smoke` and the
-menu-bar app can be exercised end-to-end when a real CloudDisk server is not
+menu-bar app can be exercised end-to-end when a real Tern server is not
 available (or before it is started).
 
 It implements just enough of RFC 4918 for macOS `webdavfs` to mount the
@@ -14,8 +14,8 @@ endpoint read-write:
 HTTP Basic auth is required. Files are stored in a scratch directory.
 
 Usage:
-  python3 webdav_stub.py --port 18888 --user admin --password clouddisk
-  # endpoint: http://127.0.0.1:18888/CloudDisk
+  python3 webdav_stub.py --port 18888 --user admin --password tern
+  # endpoint: http://127.0.0.1:18888/Tern
 """
 
 import argparse
@@ -35,7 +35,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import unquote, urlsplit
 
 DAV_NS = "DAV:"
-PREFIX = "/CloudDisk"
+PREFIX = "/Tern"
 
 PROP_NAMES = {
     "displayname": "{DAV:}displayname",
@@ -71,7 +71,7 @@ def etag(path, st):
 
 class Handler(BaseHTTPRequestHandler):
     protocol_version = "HTTP/1.1"
-    server_version = "CloudDisk-WebDAV-Stub/1.0"
+    server_version = "Tern-WebDAV-Stub/1.0"
 
     # ---------- helpers ----------
 
@@ -121,7 +121,7 @@ class Handler(BaseHTTPRequestHandler):
             401,
             "authentication required\n",
             "text/plain; charset=utf-8",
-            {"WWW-Authenticate": 'Basic realm="CloudDisk", charset="UTF-8"'},
+            {"WWW-Authenticate": 'Basic realm="Tern", charset="UTF-8"'},
         )
         return False
 
@@ -183,7 +183,7 @@ class Handler(BaseHTTPRequestHandler):
             rt = "<D:collection/>"
         else:
             rt = ""
-        props.append(f"<D:displayname>{os.path.basename(fs.rstrip('/')) or 'CloudDisk'}</D:displayname>")
+        props.append(f"<D:displayname>{os.path.basename(fs.rstrip('/')) or 'Tern'}</D:displayname>")
         props.append(f"<D:resourcetype>{rt}</D:resourcetype>")
         props.append(f"<D:creationdate>{iso_date(st.st_ctime)}</D:creationdate>")
         props.append(f"<D:getlastmodified>{http_date(st.st_mtime)}</D:getlastmodified>")
@@ -539,15 +539,15 @@ def main():
     ap.add_argument("--port", type=int, default=18888)
     ap.add_argument("--bind", default="127.0.0.1")
     ap.add_argument("--user", default="admin")
-    ap.add_argument("--password", default="clouddisk")
+    ap.add_argument("--password", default="tern")
     ap.add_argument("--root", default="")
     args = ap.parse_args()
 
-    root = args.root or tempfile.mkdtemp(prefix="clouddisk-webdav-")
+    root = args.root or tempfile.mkdtemp(prefix="tern-webdav-")
     os.makedirs(root, exist_ok=True)
     os.makedirs(os.path.join(root, "示例文件夹"), exist_ok=True)
     with open(os.path.join(root, "hello.txt"), "w", encoding="utf-8") as f:
-        f.write("Hello from the CloudDisk WebDAV stub.\n")
+        f.write("Hello from the Tern WebDAV stub.\n")
 
     srv = StubServer((args.bind, args.port), Handler, root, args.user, args.password)
     sys.stderr.write(

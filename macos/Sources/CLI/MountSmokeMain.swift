@@ -1,6 +1,6 @@
 //
 //  MountSmokeMain.swift
-//  CloudDisk (云屿) macOS menu-bar client
+//  Tern (Tern) macOS menu-bar client
 //
 //  Standalone `mount-smoke` CLI.  The heavy lifting lives in
 //  Shared/SmokeRunner.swift so the same logic is also available as the app's
@@ -22,7 +22,7 @@ struct MountSmokeMain {
                 print(SmokeRunner.usageText())
                 exit(0)
             case "__VERSION__":
-                print("\(SmokeRunner.toolName) \(CloudDiskInfo.version)")
+                print("\(SmokeRunner.toolName) \(TernInfo.version)")
                 exit(0)
             default:
                 FileHandle.standardError.write(Data(("错误：\(error.message)\n\n" + SmokeRunner.usageText() + "\n").utf8))
@@ -32,7 +32,7 @@ struct MountSmokeMain {
             if options.password.isEmpty && !options.checkOnly && options.unmountPath == nil {
                 FileHandle.standardError.write(Data("""
                 错误：没有密码。请使用 --password '密码'、--password-stdin、--keychain，
-                或设置环境变量 CLOUDDISK_PASSWORD。
+                或设置环境变量 TERN_PASSWORD。
 
                 """.utf8))
                 FileHandle.standardError.write(Data((SmokeRunner.usageText() + "\n").utf8))

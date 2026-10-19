@@ -1,18 +1,18 @@
 {
-  "name": "clouddisk-server",
-  "version": "1.0.0",
+  "name": "tern-server",
+  "version": "1.1.0",
   "private": true,
-  "description": "CloudDisk / 云屿 — self-hosted personal cloud drive: REST API, WebDAV and SPA hosting in one Node process.",
+  "description": "Tern / Tern — self-hosted personal cloud drive: REST API, WebDAV and SPA hosting in one Node process.",
   "license": "MIT",
-  "author": "CloudDisk contributors",
+  "author": "Tern contributors",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/XiaolongZhang-TT/cloud-disk.git",
+    "url": "git+https://github.com/XiaolongZhang-TT/tern.git",
     "directory": "server"
   },
-  "homepage": "https://github.com/XiaolongZhang-TT/cloud-disk/tree/main/server",
+  "homepage": "https://github.com/XiaolongZhang-TT/tern/tree/main/server",
   "bugs": {
-    "url": "https://github.com/XiaolongZhang-TT/cloud-disk/issues"
+    "url": "https://github.com/XiaolongZhang-TT/tern/issues"
   },
   "type": "module",
   "engines": {

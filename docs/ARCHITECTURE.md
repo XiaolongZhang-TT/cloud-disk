@@ -1,6 +1,6 @@
 # Architecture
 
-CloudDisk / 云屿 is a self-hosted personal cloud drive designed for a home NAS.
+Tern / Tern is a self-hosted personal cloud drive designed for a home NAS.
 
 ```
 ┌──────────────────────┐        HTTPS / HTTP        ┌─────────────────────────────┐
@@ -8,7 +8,7 @@ CloudDisk / 云屿 is a self-hosted personal cloud drive designed for a home NAS
 └──────────────────────┘                            │                             │
 ┌──────────────────────┐        WebDAV (Basic)      │  /api   REST + session      │
 │  macOS Finder        │ ─────────────────────────► │  /dav   WebDAV              │
-│  (mounted volume)    │                            │  /CloudDisk  WebDAV alias   │
+│  (mounted volume)    │                            │  /Tern  WebDAV alias   │
 └──────────────────────┘                            │  /      static SPA          │
                                                     └──────────────┬──────────────┘
                                                                    │
@@ -68,7 +68,7 @@ nodes; trashed nodes are excluded from that constraint.
 ## macOS Finder integration
 
 The client builds a `.app` that lives in the menu bar. On connect it calls
-`NetFSMountURLSync` for `http(s)://host:port/CloudDisk` with the user's credentials; macOS then
+`NetFSMountURLSync` for `http(s)://host:port/Tern` with the user's credentials; macOS then
 mounts it as a normal network volume. WebDAV `LOCK`/`UNLOCK`, `PROPFIND`, Range `GET` and `MOVE`
 are implemented so Finder mounts read-write and Quick Look works.
 

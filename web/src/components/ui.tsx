@@ -56,7 +56,7 @@ export function Avatar({
       style={{
         width: size,
         height: size,
-        background: avatarGradient(name || '云屿'),
+        background: avatarGradient(name || 'Tern'),
         fontSize: Math.round(size * 0.38),
       }}
       aria-hidden="true"

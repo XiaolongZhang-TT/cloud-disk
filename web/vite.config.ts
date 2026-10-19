@@ -6,7 +6,7 @@ const BACKEND = 'http://127.0.0.1:18080'
 const proxy = {
   '/api': { target: BACKEND, changeOrigin: true },
   '/dav': { target: BACKEND, changeOrigin: true },
-  '/CloudDisk': { target: BACKEND, changeOrigin: true },
+  '/Tern': { target: BACKEND, changeOrigin: true },
 }
 
 export default defineConfig({

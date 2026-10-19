@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# build.sh – build CloudDisk.app (menu-bar client) and the mount-smoke CLI.
+# build.sh – build Tern.app (menu-bar client) and the mount-smoke CLI.
 #
 # Works with the macOS Command Line Tools only (no Xcode, no xcodebuild, no
 # Apple Developer account):
@@ -20,8 +20,8 @@ set -euo pipefail
 
 cd "$(dirname "$0")"
 ROOT="$(pwd)"
-APP_NAME="CloudDisk"
-BUNDLE_ID="com.clouddisk.menubar"
+APP_NAME="Tern"
+BUNDLE_ID="com.tern.menubar"
 BUILD_DIR="$ROOT/.build"
 DIST_DIR="$ROOT/dist"
 APP_DIR="$DIST_DIR/$APP_NAME.app"
@@ -30,7 +30,7 @@ TMP_DIR="$BUILD_DIR/tmp"
 CLI_OUT="$ROOT/tools/mount-smoke"
 ARCHS="${ARCHS:-arm64}"
 DEPLOYMENT_TARGET="${DEPLOYMENT_TARGET:-13.0}"
-VERSION="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$ROOT/Resources/Info.plist" 2>/dev/null || echo 1.0.0)"
+VERSION="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$ROOT/Resources/Info.plist" 2>/dev/null || echo 1.1.0)"
 
 info()  { printf '\033[1;34m==>\033[0m %s\n' "$*"; }
 ok()    { printf '\033[1;32m  ✓\033[0m %s\n' "$*"; }
@@ -122,14 +122,14 @@ echo "    version: $VERSION"
 # Swift sources
 # ---------------------------------------------------------------------------
 SHARED_SOURCES=(
-  Sources/Shared/CloudDiskInfo.swift
+  Sources/Shared/TernInfo.swift
   Sources/Shared/Log.swift
   Sources/Shared/KeychainStore.swift
   Sources/Shared/MountClient.swift
   Sources/Shared/SmokeRunner.swift
 )
 APP_SOURCES=(
-  Sources/App/CloudDiskApp.swift
+  Sources/App/TernApp.swift
   Sources/App/AppModel.swift
   Sources/App/SettingsStore.swift
   Sources/App/LaunchAgentManager.swift
@@ -262,4 +262,4 @@ echo
 echo "下一步:"
 echo "    open \"$APP_DIR\"                       # 启动菜单栏应用"
 echo "    \"$CLI_OUT\" --help                      # 查看挂载冒烟测试用法"
-echo "    \"$CLI_OUT\" --url http://127.0.0.1:18080/CloudDisk --user admin --password '***'"
+echo "    \"$CLI_OUT\" --url http://127.0.0.1:18080/Tern --user admin --password '***'"

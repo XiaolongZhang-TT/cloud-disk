@@ -2,7 +2,7 @@
 
 ## Supported versions
 
-CloudDisk is currently maintained on the `main` branch. Security fixes are
+Tern is currently maintained on the `main` branch. Security fixes are
 applied to the latest release line.
 
 | Version | Supported |
@@ -21,7 +21,7 @@ Use GitHub's private vulnerability reporting:
 3. Include: affected version/commit, deployment mode (Docker/bare Node, reverse
    proxy), reproduction steps, impact, and any suggested fix.
 
-Direct link: <https://github.com/XiaolongZhang-TT/cloud-disk/security/advisories/new>
+Direct link: <https://github.com/XiaolongZhang-TT/tern/security/advisories/new>
 
 We will acknowledge reports on a best-effort basis, usually within a few days,
 and coordinate disclosure after a fix is available. Please give us a reasonable
@@ -46,7 +46,7 @@ Out of scope (unless they demonstrate a concrete vulnerability in this project):
 - Reports against unsupported versions or heavily modified forks
 - Denial of service from deliberately resource-exhausting an admin account
 - Social engineering, physical access, or issues in third-party dependencies
-  without a practical exploit path through CloudDisk
+  without a practical exploit path through Tern
 
 ## Security model and deployment expectations
 
@@ -68,7 +68,7 @@ Out of scope (unless they demonstrate a concrete vulnerability in this project):
 
 ## Hardening checklist
 
-- [ ] Put CloudDisk behind HTTPS (Caddy/Nginx/Synology reverse proxy).
+- [ ] Put Tern behind HTTPS (Caddy/Nginx/Synology reverse proxy).
 - [ ] Set a strong `ADMIN_PASSWORD`; never keep the sample password.
 - [ ] Do not publish container port 8080 to the internet.
 - [ ] Keep Docker and the base image updated.

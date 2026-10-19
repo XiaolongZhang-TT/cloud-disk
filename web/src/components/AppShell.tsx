@@ -48,7 +48,7 @@ export function AppShell() {
   )
 }
 
-export function AuthLoadingScreen({ label = '正在连接云屿…' }: { label?: string }) {
+export function AuthLoadingScreen({ label = '正在连接 Tern…' }: { label?: string }) {
   return (
     <div className="boot-screen">
       <div className="boot-logo">

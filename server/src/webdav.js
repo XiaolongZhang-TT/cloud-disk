@@ -20,7 +20,7 @@ import { escapeXml, etagForNode, httpDate, normalizeNodeName, nowIso, readBody, 
 
 const DAV_METHODS = 'OPTIONS, PROPFIND, PROPPATCH, GET, HEAD, PUT, DELETE, MKCOL, COPY, MOVE, LOCK, UNLOCK';
 const XML_DECL = '<?xml version="1.0" encoding="utf-8"?>';
-const ROOT_DISPLAY_NAME = 'CloudDisk';
+const ROOT_DISPLAY_NAME = 'Tern';
 
 // Properties returned by an allprop PROPFIND / included by default.
 const DEFAULT_PROPERTIES = [
@@ -140,7 +140,7 @@ function requestSegments(req) {
   });
 }
 
-const KNOWN_MOUNTS = ['/dav', '/CloudDisk'];
+const KNOWN_MOUNTS = ['/dav', '/Tern'];
 
 /** Parse the `Destination` header of COPY/MOVE relative to this mount. */
 function destinationSegments(req) {
@@ -342,7 +342,7 @@ function renderProps({
 // ---------------------------------------------------------------------------
 
 /**
- * WebDAV endpoint mounted at both `/dav` and `/CloudDisk`.
+ * WebDAV endpoint mounted at `/dav` and `/Tern`.
  *
  * Finder support relies on: DAV class 1+2 advertisement, 207 multistatus with
  * quoted ETags/ISO dates, `getcontentlength`, lock support, Range GET, MOVE

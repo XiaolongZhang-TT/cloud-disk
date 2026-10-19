@@ -15,16 +15,16 @@
 #
 # Usage:
 #   macos/tools/run-outside-sandbox.sh --out /tmp/smoke.log -- \
-#       macos/tools/mount-smoke --url http://127.0.0.1:18080/CloudDisk \
+#       macos/tools/mount-smoke --url http://127.0.0.1:18080/Tern \
 #       --user admin --password '密码'
 #
 #   macos/tools/run-outside-sandbox.sh --out /tmp/app-smoke.log -- \
-#       macos/dist/CloudDisk.app/Contents/MacOS/CloudDisk --smoke \
-#       --url http://127.0.0.1:18080/CloudDisk --user admin --password '密码'
+#       macos/dist/Tern.app/Contents/MacOS/Tern --smoke \
+#       --url http://127.0.0.1:18080/Tern --user admin --password '密码'
 #
 #   macos/tools/run-outside-sandbox.sh --out /tmp/setpw.log -- \
-#       macos/dist/CloudDisk.app/Contents/MacOS/CloudDisk --set-password \
-#       --url http://127.0.0.1:18080/CloudDisk --user admin --password '密码'
+#       macos/dist/Tern.app/Contents/MacOS/Tern --set-password \
+#       --url http://127.0.0.1:18080/Tern --user admin --password '密码'
 #
 # Options:
 #   --out FILE       log file (default: macos/.build/launchservices-run.log)
@@ -35,7 +35,7 @@
 #
 # NOTE: the generated runner script contains the arguments (including any
 # password) so it is created with mode 0700 and deleted afterwards unless
-# --keep is passed.  Prefer --password-stdin / CLOUDDISK_PASSWORD or --keychain
+# --keep is passed.  Prefer --password-stdin / TERN_PASSWORD or --keychain
 # when possible.
 
 set -euo pipefail
@@ -101,8 +101,8 @@ cat > "$APP/Contents/Info.plist" <<'PLIST'
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0"><dict>
 <key>CFBundleExecutable</key><string>Runner</string>
-<key>CFBundleIdentifier</key><string>com.clouddisk.launchservices-runner</string>
-<key>CFBundleName</key><string>CloudDiskRunner</string>
+<key>CFBundleIdentifier</key><string>com.tern.launchservices-runner</string>
+<key>CFBundleName</key><string>TernRunner</string>
 <key>CFBundlePackageType</key><string>APPL</string>
 <key>LSMinimumSystemVersion</key><string>13.0</string>
 <key>LSUIElement</key><true/>

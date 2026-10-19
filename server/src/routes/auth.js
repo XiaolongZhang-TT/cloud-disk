@@ -14,7 +14,7 @@ import { publicConfig, serializeUser } from '../services/users.js';
 
 // Verifying against a dummy hash when the user does not exist keeps login
 // timing independent of account existence.
-const DUMMY_HASH = hashPassword('clouddisk-timing-equaliser');
+const DUMMY_HASH = hashPassword('tern-timing-equaliser');
 
 function setSessionCookie(req, res, config, token, ttlMs) {
   res.setHeader(

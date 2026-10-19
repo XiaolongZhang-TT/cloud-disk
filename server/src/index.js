@@ -15,9 +15,9 @@ server.on('error', (error) => {
 server.listen(config.port, () => {
   const address = server.address();
   const port = typeof address === 'object' && address ? address.port : config.port;
-  console.log(`CloudDisk v${config.version} listening on http://0.0.0.0:${port}`);
+  console.log(`Tern v${config.version} listening on http://0.0.0.0:${port}`);
   console.log(`  REST API : http://127.0.0.1:${port}/api`);
-  console.log(`  WebDAV   : http://127.0.0.1:${port}/CloudDisk (alias /dav)`);
+  console.log(`  WebDAV   : http://127.0.0.1:${port}/Tern (alias /dav)`);
   console.log(`  Data dir : ${config.dataDir}`);
   if (config.allowRegistration) console.log('  Registration is OPEN');
 });

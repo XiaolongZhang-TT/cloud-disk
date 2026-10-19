@@ -26,8 +26,8 @@ const AuthContext = createContext<AuthContextValue | null>(null)
 const FALLBACK: AuthStatus = {
   authenticated: false,
   setupRequired: false,
-  serverName: '云屿 CloudDisk',
-  version: '1.0.0',
+  serverName: 'Tern',
+  version: '1.1.0',
   allowRegistration: false,
   maxUploadBytes: 0,
 }

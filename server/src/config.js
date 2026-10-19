@@ -43,7 +43,7 @@ export function loadConfig(overrides = {}) {
     dbFile: path.join(dataDir, 'cloud.db'),
 
     port: overrides.port ?? int(env.PORT, 8080),
-    serverName: overrides.serverName ?? env.SERVER_NAME ?? '云屿 CloudDisk',
+    serverName: overrides.serverName ?? env.SERVER_NAME ?? 'Tern',
     staticDir: path.resolve(
       overrides.staticDir ?? env.STATIC_DIR ?? path.join(SERVER_ROOT, '..', 'web', 'dist'),
     ),
