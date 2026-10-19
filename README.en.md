@@ -112,8 +112,8 @@ docker run -d --name tern --restart unless-stopped \
   acc110789/tern:latest
 ```
 
-Open `http://<NAS-IP>:8080`. Reverse-proxy and upload settings are the same as
-the source-build deployment.
+Open `http://<NAS-IP>:8080`. Login, uploads and WebDAV behave the same as in the
+source-build deployment.
 
 Or use the dedicated Compose file:
 

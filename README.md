@@ -98,8 +98,7 @@ docker run -d --name tern --restart unless-stopped \
   acc110789/tern:latest
 ```
 
-打开 `http://<NAS-IP>:8080` 即可。上传大小、反向代理的 `client_max_body_size`
-等配置与源码构建方式完全相同。
+打开 `http://<NAS-IP>:8080` 即可。登录、上传和 WebDAV 行为与源码构建方式相同。
 
 也可以使用专门的镜像版 Compose 文件：
 

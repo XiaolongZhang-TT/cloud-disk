@@ -191,7 +191,7 @@ docker compose pull && docker compose up -d --build
 ## 7. 常见问题
 
 **上传大文件失败**
-- 检查反向代理的 `client_max_body_size`、超时设置；
+- 如果前面还有 Nginx 反向代理，检查它的 `client_max_body_size` 和超时设置；
 - 检查 `MAX_UPLOAD_BYTES` 是否足够；
 - NAS 磁盘空间与用户配额。
 
