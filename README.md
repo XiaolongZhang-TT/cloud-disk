@@ -2,11 +2,11 @@
 
 [English](README.en.md) | **简体中文**
 
-[![CI](https://github.com/XiaolongZhang-TT/tern/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/XiaolongZhang-TT/tern/actions/workflows/ci.yml)
-[![Docker Publish](https://github.com/XiaolongZhang-TT/tern/actions/workflows/docker-publish.yml/badge.svg?branch=main)](https://github.com/XiaolongZhang-TT/tern/actions/workflows/docker-publish.yml)
+[![CI](https://github.com/XiaolongZhang-dev/tern/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/XiaolongZhang-dev/tern/actions/workflows/ci.yml)
+[![Docker Publish](https://github.com/XiaolongZhang-dev/tern/actions/workflows/docker-publish.yml/badge.svg?branch=main)](https://github.com/XiaolongZhang-dev/tern/actions/workflows/docker-publish.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Latest release](https://img.shields.io/github/v/release/XiaolongZhang-TT/tern)](https://github.com/XiaolongZhang-TT/tern/releases)
-[![GitHub stars](https://img.shields.io/github/stars/XiaolongZhang-TT/tern?style=flat)](https://github.com/XiaolongZhang-TT/tern/stargazers)
+[![Latest release](https://img.shields.io/github/v/release/XiaolongZhang-dev/tern)](https://github.com/XiaolongZhang-dev/tern/releases)
+[![GitHub stars](https://img.shields.io/github/stars/XiaolongZhang-dev/tern?style=flat)](https://github.com/XiaolongZhang-dev/tern/stargazers)
 
 一个可以部署在 NAS 上的私有网盘：**Docker 一键部署**，网页端界面简洁美观，macOS 客户端可把网盘挂载到 Finder 的「位置」中，与 iCloud 云盘并排显示。
 
@@ -123,7 +123,7 @@ docker compose -f docker-compose.hub.yml up -d
 
 > 维护者：在仓库 **Settings → Secrets and variables → Actions** 中添加
 > `DOCKERHUB_USERNAME` 和 `DOCKERHUB_TOKEN`，然后手动运行一次（发布 `latest` + `edge`），或为新版本推送 `v*` tag。
-> [Docker Publish](https://github.com/XiaolongZhang-TT/tern/actions/workflows/docker-publish.yml)。
+> [Docker Publish](https://github.com/XiaolongZhang-dev/tern/actions/workflows/docker-publish.yml)。
 > Docker Hub token 只需要 Read & Write 权限。
 
 ## macOS 客户端（挂载到 Finder）
@@ -132,7 +132,7 @@ docker compose -f docker-compose.hub.yml up -d
 
 **方式 A：使用仓库中构建好的应用（Apple Silicon / arm64）**
 
-解压 [`macos/dist/Tern-1.1.1.zip`](macos/dist/Tern-1.1.1.zip)（也可从 [Releases](https://github.com/XiaolongZhang-TT/tern/releases) 下载），把其中的 `Tern.app` 拖到「应用程序」。校验下载文件：
+解压 [`macos/dist/Tern-1.1.1.zip`](macos/dist/Tern-1.1.1.zip)（也可从 [Releases](https://github.com/XiaolongZhang-dev/tern/releases) 下载），把其中的 `Tern.app` 拖到「应用程序」。校验下载文件：
 
 ```bash
 cd macos/dist && shasum -a 256 -c Tern-1.1.1.zip.sha256
@@ -240,7 +240,7 @@ cd macos && ./build.sh     # 菜单栏应用 + 挂载 CLI
 这是一个开源项目，欢迎提交 Issue、改进文档、翻译或代码：
 
 - 先阅读 [CONTRIBUTING.md](CONTRIBUTING.md) 和 [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)
-- 功能建议和缺陷请使用 [Issues](https://github.com/XiaolongZhang-TT/tern/issues)
+- 功能建议和缺陷请使用 [Issues](https://github.com/XiaolongZhang-dev/tern/issues)
 - 安全问题请**不要**公开提 Issue，按 [SECURITY.md](SECURITY.md) 私下报告
 - 想参与但不知道从哪开始，可以看 [ROADMAP.md](ROADMAP.md) 或 `good first issue`
 

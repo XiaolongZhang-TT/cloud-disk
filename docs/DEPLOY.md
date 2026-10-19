@@ -232,11 +232,11 @@ docker compose pull && docker compose up -d --build
 创建 token：Docker Hub → Account settings → Security → New access token。
 
 ```bash
-gh secret set DOCKERHUB_USERNAME --body 'yourname' -R XiaolongZhang-TT/tern
-gh secret set DOCKERHUB_TOKEN --body 'dckr_pat_xxx' -R XiaolongZhang-TT/tern
+gh secret set DOCKERHUB_USERNAME --body 'yourname' -R XiaolongZhang-dev/tern
+gh secret set DOCKERHUB_TOKEN --body 'dckr_pat_xxx' -R XiaolongZhang-dev/tern
 
 # 手动构建：会发布 latest 和 edge（适合第一次验证）
-gh workflow run docker-publish.yml -R XiaolongZhang-TT/tern
+gh workflow run docker-publish.yml -R XiaolongZhang-dev/tern
 
 # 正式版本：先更新版本号，再推送新的 v* tag，例如 v1.1.2
 git tag v1.1.2

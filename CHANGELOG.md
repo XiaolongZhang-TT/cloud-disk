@@ -81,6 +81,6 @@ release.
 - macOS AppleDouble/metadata files are hidden from REST listings while remaining
   available to Finder over WebDAV.
 
-[Unreleased]: https://github.com/XiaolongZhang-TT/tern/compare/v1.1.1...HEAD
-[1.1.1]: https://github.com/XiaolongZhang-TT/tern/releases/tag/v1.1.1
-[1.1.0]: https://github.com/XiaolongZhang-TT/tern/releases/tag/v1.1.0
+[Unreleased]: https://github.com/XiaolongZhang-dev/tern/compare/v1.1.1...HEAD
+[1.1.1]: https://github.com/XiaolongZhang-dev/tern/releases/tag/v1.1.1
+[1.1.0]: https://github.com/XiaolongZhang-dev/tern/releases/tag/v1.1.0

@@ -57,7 +57,7 @@ the project in public spaces.
 Reports of abusive, harassing, or otherwise unacceptable behavior may be sent
 privately to the maintainers via GitHub. You can use the repository's
 **Security → Report a vulnerability** flow for a private channel, or contact
-[@XiaolongZhang-TT](https://github.com/XiaolongZhang-TT) directly.
+[@XiaolongZhang-dev](https://github.com/XiaolongZhang-dev) directly.
 
 All complaints will be reviewed and investigated promptly and fairly. Maintainers
 are obligated to respect the privacy and security of the reporter.

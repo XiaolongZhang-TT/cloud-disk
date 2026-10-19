@@ -8,12 +8,12 @@
   "author": "Tern contributors",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/XiaolongZhang-TT/tern.git",
+    "url": "git+https://github.com/XiaolongZhang-dev/tern.git",
     "directory": "web"
   },
-  "homepage": "https://github.com/XiaolongZhang-TT/tern/tree/main/web",
+  "homepage": "https://github.com/XiaolongZhang-dev/tern/tree/main/web",
   "bugs": {
-    "url": "https://github.com/XiaolongZhang-TT/tern/issues"
+    "url": "https://github.com/XiaolongZhang-dev/tern/issues"
   },
   "scripts": {
     "dev": "vite",

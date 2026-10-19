@@ -1,11 +1,11 @@
 blank_issues_enabled: false
 contact_links:
   - name: Security vulnerability
-    url: https://github.com/XiaolongZhang-TT/tern/security/advisories/new
+    url: https://github.com/XiaolongZhang-dev/tern/security/advisories/new
     about: Report security issues privately. Do not open a public issue.
   - name: Deployment and macOS documentation
-    url: https://github.com/XiaolongZhang-TT/tern/tree/main/docs
+    url: https://github.com/XiaolongZhang-dev/tern/tree/main/docs
     about: Check the deployment, macOS and API guides first.
   - name: Questions and ideas
-    url: https://github.com/XiaolongZhang-TT/tern/discussions
+    url: https://github.com/XiaolongZhang-dev/tern/discussions
     about: Ask usage questions or discuss ideas (enable Discussions in Settings if needed).

@@ -7,12 +7,12 @@
   "author": "Tern contributors",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/XiaolongZhang-TT/tern.git",
+    "url": "git+https://github.com/XiaolongZhang-dev/tern.git",
     "directory": "server"
   },
-  "homepage": "https://github.com/XiaolongZhang-TT/tern/tree/main/server",
+  "homepage": "https://github.com/XiaolongZhang-dev/tern/tree/main/server",
   "bugs": {
-    "url": "https://github.com/XiaolongZhang-TT/tern/issues"
+    "url": "https://github.com/XiaolongZhang-dev/tern/issues"
   },
   "type": "module",
   "engines": {

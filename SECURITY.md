@@ -21,7 +21,7 @@ Use GitHub's private vulnerability reporting:
 3. Include: affected version/commit, deployment mode (Docker/bare Node, reverse
    proxy), reproduction steps, impact, and any suggested fix.
 
-Direct link: <https://github.com/XiaolongZhang-TT/tern/security/advisories/new>
+Direct link: <https://github.com/XiaolongZhang-dev/tern/security/advisories/new>
 
 We will acknowledge reports on a best-effort basis, usually within a few days,
 and coordinate disclosure after a fix is available. Please give us a reasonable

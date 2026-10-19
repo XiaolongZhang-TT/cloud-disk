@@ -63,7 +63,7 @@ jobs:
             org.opencontainers.image.title=Tern
             org.opencontainers.image.description=Tern — a private cloud drive for your NAS
             org.opencontainers.image.licenses=MIT
-            org.opencontainers.image.url=https://github.com/XiaolongZhang-TT/tern
+            org.opencontainers.image.url=https://github.com/XiaolongZhang-dev/tern
 
       - name: Build and push
         uses: docker/build-push-action@v7

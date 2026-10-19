@@ -1,10 +1,10 @@
 # Tern
 
-[![CI](https://github.com/XiaolongZhang-TT/tern/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/XiaolongZhang-TT/tern/actions/workflows/ci.yml)
-[![Docker Publish](https://github.com/XiaolongZhang-TT/tern/actions/workflows/docker-publish.yml/badge.svg?branch=main)](https://github.com/XiaolongZhang-TT/tern/actions/workflows/docker-publish.yml)
+[![CI](https://github.com/XiaolongZhang-dev/tern/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/XiaolongZhang-dev/tern/actions/workflows/ci.yml)
+[![Docker Publish](https://github.com/XiaolongZhang-dev/tern/actions/workflows/docker-publish.yml/badge.svg?branch=main)](https://github.com/XiaolongZhang-dev/tern/actions/workflows/docker-publish.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Latest release](https://img.shields.io/github/v/release/XiaolongZhang-TT/tern)](https://github.com/XiaolongZhang-TT/tern/releases)
-[![GitHub stars](https://img.shields.io/github/stars/XiaolongZhang-TT/tern?style=flat)](https://github.com/XiaolongZhang-TT/tern/stargazers)
+[![Latest release](https://img.shields.io/github/v/release/XiaolongZhang-dev/tern)](https://github.com/XiaolongZhang-dev/tern/releases)
+[![GitHub stars](https://img.shields.io/github/stars/XiaolongZhang-dev/tern?style=flat)](https://github.com/XiaolongZhang-dev/tern/stargazers)
 
 **English** | [简体中文](README.md)
 
@@ -135,7 +135,7 @@ docker compose -f docker-compose.hub.yml up -d
 
 > Maintainers: add `DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN` under
 > **Settings → Secrets and variables → Actions**, then run
-> [Docker Publish](https://github.com/XiaolongZhang-TT/tern/actions/workflows/docker-publish.yml)
+> [Docker Publish](https://github.com/XiaolongZhang-dev/tern/actions/workflows/docker-publish.yml)
 > once (publishes `latest` + `edge`) or push a new `v*` tag. The Docker Hub token
 > needs Read & Write permission.
 
@@ -150,7 +150,7 @@ account required.
 
 Download
 [`macos/dist/Tern-1.1.1.zip`](macos/dist/Tern-1.1.1.zip) (or from
-[Releases](https://github.com/XiaolongZhang-TT/tern/releases)) and move
+[Releases](https://github.com/XiaolongZhang-dev/tern/releases)) and move
 `Tern.app` to `/Applications`. Verify the download:
 
 ```bash
@@ -279,7 +279,7 @@ Tern is an open-source project and contributions are welcome:
 
 - Read [CONTRIBUTING.md](CONTRIBUTING.md) and
   [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md).
-- Use [Issues](https://github.com/XiaolongZhang-TT/tern/issues) for bugs and
+- Use [Issues](https://github.com/XiaolongZhang-dev/tern/issues) for bugs and
   feature requests.
 - Report security issues privately following [SECURITY.md](SECURITY.md); do not
   open a public issue.
