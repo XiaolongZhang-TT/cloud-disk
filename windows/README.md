@@ -20,6 +20,13 @@ Outputs:
 ```text
 windows\dist\Tern.exe
 windows\Tern-Windows-x64.zip
+windows\Tern-Windows-Setup.exe
+```
+
+Build the installer with Inno Setup:
+
+```powershell
+& "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" Tern.iss
 ```
 
 CI builds the same artifact on `windows-latest` in

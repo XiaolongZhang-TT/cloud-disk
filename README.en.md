@@ -76,7 +76,7 @@ After connecting, **Tern** appears in Finder's **Locations** sidebar; drag it to
 
 A Windows 10/11 x64 tray app that maps the drive as **`Tern (T:)`** in **This PC**.
 
-Download `Tern-Windows-x64.zip` from [Releases](https://github.com/XiaolongZhang-dev/tern/releases/download/v1.1.1/Tern-Windows-x64.zip) (or run `windows/build.ps1`), extract it and run `Tern.exe`:
+Download `Tern-Windows-Setup.exe` from [Releases](https://github.com/XiaolongZhang-dev/tern/releases/tag/v1.1.1) (or use the portable `Tern-Windows-x64.zip`; build with `windows/build.ps1`), install and run `Tern.exe`:
 
 1. Tray icon → **Settings**;
 2. enter `https://<NAS-IP>:8080/Tern`, username, password and drive letter;

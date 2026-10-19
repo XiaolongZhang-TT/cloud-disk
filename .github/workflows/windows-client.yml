@@ -46,14 +46,29 @@ jobs:
           -p:IncludeNativeLibrariesForSelfExtract=true
           -o windows/dist
 
-      - name: Package
+      - name: Package portable zip
         run: Compress-Archive -Path windows/dist/* -DestinationPath Tern-Windows-x64.zip -Force
 
-      - name: Upload artifact
+      - name: Install Inno Setup
+        shell: powershell
+        run: choco install innosetup --no-progress -y
+
+      - name: Build installer
+        shell: powershell
+        working-directory: windows
+        run: |
+          $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
+          if (!(Test-Path $iscc)) { throw "Inno Setup compiler not found: $iscc" }
+          & $iscc Tern.iss
+          Copy-Item "dist\Tern-Windows-Setup.exe" "..\Tern-Windows-Setup.exe" -Force
+
+      - name: Upload artifacts
         uses: actions/upload-artifact@v7
         with:
           name: Tern-Windows-x64
-          path: Tern-Windows-x64.zip
+          path: |
+            Tern-Windows-x64.zip
+            Tern-Windows-Setup.exe
           retention-days: 30
 
   release:
@@ -75,9 +90,9 @@ jobs:
           set -euo pipefail
           TAG="${{ inputs.release_tag }}"
           if gh release view "$TAG" -R "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
-            gh release upload "$TAG" dist/Tern-Windows-x64.zip --clobber -R "$GITHUB_REPOSITORY"
+            gh release upload "$TAG" dist/Tern-Windows-x64.zip dist/Tern-Windows-Setup.exe --clobber -R "$GITHUB_REPOSITORY"
           else
-            gh release create "$TAG" dist/Tern-Windows-x64.zip \
+            gh release create "$TAG" dist/Tern-Windows-x64.zip dist/Tern-Windows-Setup.exe \
               --title "Tern for Windows $TAG" \
               --notes "Tern for Windows client. See docs/WINDOWS.md for setup." \
               -R "$GITHUB_REPOSITORY"

@@ -76,7 +76,7 @@ docker compose up -d --build
 
 Windows 10/11 x64 托盘客户端，把网盘映射为 **`Tern (T:)`**，在「此电脑」里像网络盘一样使用。
 
-从 [Releases](https://github.com/XiaolongZhang-dev/tern/releases/download/v1.1.1/Tern-Windows-x64.zip) 下载 `Tern-Windows-x64.zip`（或运行 `windows/build.ps1` 构建），解压后运行 `Tern.exe`：
+从 [Releases](https://github.com/XiaolongZhang-dev/tern/releases/tag/v1.1.1) 下载 `Tern-Windows-Setup.exe` 安装（便携版为 `Tern-Windows-x64.zip`），或运行 `windows/build.ps1` 构建。安装后运行 `Tern.exe`：
 
 1. 托盘 Tern →「设置」；
 2. 填 `https://<NAS-IP>:8080/Tern`、用户名、密码，选择盘符；

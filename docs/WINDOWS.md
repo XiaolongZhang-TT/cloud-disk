@@ -14,7 +14,7 @@ Tern (T:)
 
 ## 1. 安装
 
-从 Releases 下载 `Tern-Windows-x64.zip`，解压后运行 `Tern.exe`。
+从 Releases 下载 `Tern-Windows-Setup.exe` 安装（推荐），或下载 `Tern-Windows-x64.zip` 解压后运行 `Tern.exe`。
 
 当前构建未做代码签名，Windows SmartScreen 可能提示「Windows 已保护你的电脑」。
 选择「更多信息 → 仍要运行」即可。
@@ -128,7 +128,7 @@ cd windows
 powershell -ExecutionPolicy Bypass -File .\build.ps1
 ```
 
-生成 `windows\Tern-Windows-x64.zip`。
+生成 `windows\Tern-Windows-x64.zip`；安装 Inno Setup 6 后还会生成 `windows\Tern-Windows-Setup.exe`。
 
 ## 10. 已知限制
 
