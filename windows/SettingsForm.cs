@@ -33,13 +33,14 @@ public sealed class SettingsForm : Form
 
         Text = firstRun ? "连接 Tern" : "Tern 设置";
         StartPosition = FormStartPosition.CenterScreen;
-        FormBorderStyle = FormBorderStyle.FixedDialog;
+        FormBorderStyle = FormBorderStyle.Sizable;
         MaximizeBox = false;
         MinimizeBox = false;
         ShowInTaskbar = true;
         AutoScaleMode = AutoScaleMode.Dpi;
         Font = new Font("Segoe UI", 9F);
-        ClientSize = new Size(600, 650);
+        ClientSize = new Size(640, 660);
+        MinimumSize = new Size(620, 560);
         BackColor = Color.FromArgb(248, 247, 244);
 
         BuildUi(firstRun);
@@ -49,19 +50,38 @@ public sealed class SettingsForm : Form
 
     private void BuildUi(bool firstRun)
     {
-        var layout = new TableLayoutPanel
+        var root = new TableLayoutPanel
         {
             Dock = DockStyle.Fill,
-            Padding = new Padding(26, 22, 26, 18),
+            ColumnCount = 1,
+            RowCount = 2,
+            Margin = new Padding(0),
+            Padding = new Padding(0),
+        };
+        root.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 64));
+
+        // The form body scrolls; the action bar is fixed at the bottom so text
+        // can never cover the buttons again.
+        var content = new Panel
+        {
+            Dock = DockStyle.Fill,
+            AutoScroll = true,
+            Padding = new Padding(26, 22, 26, 10),
+        };
+
+        var layout = new TableLayoutPanel
+        {
+            Dock = DockStyle.Top,
+            AutoSize = true,
             ColumnCount = 2,
-            RowCount = 14,
-            AutoSize = false,
+            RowCount = 11,
+            Margin = new Padding(0),
+            Padding = new Padding(0),
         };
         layout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 108));
         layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-        for (var i = 0; i < 12; i++) layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-        layout.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
-        layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        for (var i = 0; i < 11; i++) layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
 
         var title = new Label
         {
@@ -76,17 +96,19 @@ public sealed class SettingsForm : Form
         var subtitle = new Label
         {
             Text = firstRun
-                ? "连接你的私有网盘。连接后，Tern 会作为 T 盘出现在“此电脑”中。"
-                : "修改连接信息、盘符和启动行为。",
+                ? "连接你的私有网盘，连接后会作为 T 盘出现在“此电脑”中。"
+                : "修改连接信息和启动行为。",
             ForeColor = Color.FromArgb(105, 101, 116),
             AutoSize = true,
-            Margin = new Padding(0, 0, 0, 16),
+            MaximumSize = new Size(540, 0),
+            Margin = new Padding(0, 0, 0, 14),
         };
         layout.Controls.Add(subtitle, 0, 1);
         layout.SetColumnSpan(subtitle, 2);
 
         AddRow(layout, 2, "服务器地址", _serverBox);
         _serverBox.PlaceholderText = "https://your-nas:8080/Tern";
+
         AddRow(layout, 3, "用户名", _usernameBox);
         _usernameBox.PlaceholderText = "与网页端账号相同";
 
@@ -94,7 +116,7 @@ public sealed class SettingsForm : Form
         _passwordBox.UseSystemPasswordChar = true;
         _passwordBox.PlaceholderText = _savedPassword is null
             ? "输入网页端密码"
-            : "已保存在 Windows 凭据管理器，留空保持不变";
+            : "已保存，留空保持不变";
 
         AddRow(layout, 5, "盘符", _driveBox);
         _driveBox.DropDownStyle = ComboBoxStyle.DropDownList;
@@ -111,7 +133,6 @@ public sealed class SettingsForm : Form
         layout.Controls.Add(_autoConnect, 1, 7);
 
         _serviceLabel.AutoSize = true;
-        _serviceLabel.MaximumSize = new Size(380, 40);
         _serviceLabel.Margin = new Padding(0, 4, 12, 2);
 
         _startServiceButton.Text = "启动服务";
@@ -131,8 +152,10 @@ public sealed class SettingsForm : Form
         layout.Controls.Add(serviceRow, 0, 8);
         layout.SetColumnSpan(serviceRow, 2);
 
-        _limitLabel.AutoSize = true;
-        _limitLabel.MaximumSize = new Size(540, 40);
+        _limitLabel.AutoSize = false;
+        _limitLabel.Dock = DockStyle.Fill;
+        _limitLabel.Height = 22;
+        _limitLabel.AutoEllipsis = true;
         _limitLabel.Margin = new Padding(0, 2, 0, 2);
         layout.Controls.Add(_limitLabel, 0, 9);
         layout.SetColumnSpan(_limitLabel, 2);
@@ -147,43 +170,63 @@ public sealed class SettingsForm : Form
         layout.Controls.Add(helpLink, 0, 10);
         layout.SetColumnSpan(helpLink, 2);
 
-        _statusLabel.AutoSize = true;
-        _statusLabel.MaximumSize = new Size(540, 44);
+        content.Controls.Add(layout);
+
+        var bottom = new TableLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            ColumnCount = 2,
+            RowCount = 1,
+            Padding = new Padding(26, 8, 26, 12),
+            BackColor = Color.FromArgb(248, 247, 244),
+        };
+        bottom.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 40));
+        bottom.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 60));
+        bottom.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+
+        _statusLabel.AutoSize = false;
+        _statusLabel.Dock = DockStyle.Fill;
+        _statusLabel.AutoEllipsis = true;
+        _statusLabel.TextAlign = ContentAlignment.MiddleLeft;
         _statusLabel.ForeColor = Color.FromArgb(105, 101, 116);
-        _statusLabel.Margin = new Padding(0, 8, 0, 4);
-        layout.Controls.Add(_statusLabel, 0, 11);
-        layout.SetColumnSpan(_statusLabel, 2);
+        _statusLabel.Margin = new Padding(0, 0, 12, 0);
+        _statusLabel.Text = "未连接";
 
         var buttons = new FlowLayoutPanel
         {
-            Dock = DockStyle.Bottom,
+            Dock = DockStyle.Fill,
             FlowDirection = FlowDirection.RightToLeft,
-            AutoSize = true,
-            Margin = new Padding(0, 10, 0, 0),
+            WrapContents = false,
+            AutoSize = false,
+            Margin = new Padding(0),
         };
 
         _saveButton.Text = "保存并连接";
-        _saveButton.Width = 132;
+        _saveButton.Width = 124;
         _saveButton.Height = 34;
         _saveButton.Click += async (_, _) => await SaveAndConnectAsync();
 
         _cancelButton.Text = "取消";
-        _cancelButton.Width = 88;
+        _cancelButton.Width = 80;
         _cancelButton.Height = 34;
         _cancelButton.Click += (_, _) => { DialogResult = DialogResult.Cancel; Close(); };
 
         _testButton.Text = "测试连接";
-        _testButton.Width = 108;
+        _testButton.Width = 96;
         _testButton.Height = 34;
         _testButton.Click += async (_, _) => await TestAsync();
 
         buttons.Controls.Add(_saveButton);
         buttons.Controls.Add(_cancelButton);
         buttons.Controls.Add(_testButton);
-        layout.Controls.Add(buttons, 0, 13);
-        layout.SetColumnSpan(buttons, 2);
 
-        Controls.Add(layout);
+        bottom.Controls.Add(_statusLabel, 0, 0);
+        bottom.Controls.Add(buttons, 1, 0);
+
+        root.Controls.Add(content, 0, 0);
+        root.Controls.Add(bottom, 0, 1);
+
+        Controls.Add(root);
         AcceptButton = _saveButton;
         CancelButton = _cancelButton;
     }
@@ -407,9 +450,10 @@ public sealed class SettingsForm : Form
 
     private void SetStatus(string message, bool error)
     {
-        if (message.Length > 160) message = message[..157] + "…";
+        if (message.Length > 90) message = message[..87] + "…";
         _statusLabel.Text = message;
         _statusLabel.ForeColor = error ? Color.FromArgb(180, 45, 55) : Color.FromArgb(35, 117, 82);
+        if (error) Log.Warn($"设置页：{message}");
     }
 
     private static void OpenHelp()
