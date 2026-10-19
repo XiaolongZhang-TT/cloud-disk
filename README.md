@@ -196,6 +196,6 @@ cd macos && ./build.sh     # 菜单栏应用 + 挂载 CLI
 
 ## License
 
-[MIT](LICENSE) © 2026 Tern / Tern contributors
+[MIT](LICENSE) © 2026 Tern contributors
 
 第三方依赖的许可证信息以其各自仓库为准。macOS 客户端使用 Apple 系统框架，分发时请遵守 Apple 的相关条款。
