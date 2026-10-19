@@ -62,6 +62,10 @@ jobs:
           & $iscc Tern.iss
           Copy-Item "dist\Tern-Windows-Setup.exe" "..\Tern-Windows-Setup.exe" -Force
 
+      - name: Render settings UI
+        shell: powershell
+        run: Start-Process -FilePath "windows/dist/Tern.exe" -ArgumentList "--screenshot","settings.png" -Wait
+
       - name: Upload artifacts
         uses: actions/upload-artifact@v7
         with:
@@ -69,6 +73,7 @@ jobs:
           path: |
             Tern-Windows-x64.zip
             Tern-Windows-Setup.exe
+            settings.png
           retention-days: 30
 
   release:
