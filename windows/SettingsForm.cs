@@ -39,10 +39,11 @@ public sealed class SettingsForm : Form
         ShowInTaskbar = true;
         AutoScaleMode = AutoScaleMode.Dpi;
         Font = new Font("Segoe UI", 9F);
-        ClientSize = new Size(640, 570);
-        MinimumSize = new Size(620, 520);
+        ClientSize = new Size(640, 600);
+        MinimumSize = new Size(620, 540);
         BackColor = Color.FromArgb(248, 247, 244);
 
+        FormClosing += (_, _) => Log.Info("设置窗口关闭");
         BuildUi(firstRun);
         LoadValues();
         UpdateDiagnostics();
@@ -59,7 +60,7 @@ public sealed class SettingsForm : Form
             Padding = new Padding(0),
         };
         root.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
-        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 64));
+        root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
 
         // The form body scrolls; the action bar is fixed at the bottom so text
         // can never cover the buttons again.
@@ -175,21 +176,23 @@ public sealed class SettingsForm : Form
         var bottom = new TableLayoutPanel
         {
             Dock = DockStyle.Fill,
-            ColumnCount = 2,
-            RowCount = 1,
-            Padding = new Padding(26, 8, 26, 12),
+            ColumnCount = 1,
+            RowCount = 2,
+            AutoSize = true,
+            Padding = new Padding(26, 8, 26, 10),
             BackColor = Color.FromArgb(248, 247, 244),
         };
-        bottom.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 40));
-        bottom.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 60));
-        bottom.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+        bottom.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+        bottom.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        bottom.RowStyles.Add(new RowStyle(SizeType.AutoSize));
 
         _statusLabel.AutoSize = false;
+        _statusLabel.Height = 22;
         _statusLabel.Dock = DockStyle.Fill;
         _statusLabel.AutoEllipsis = true;
         _statusLabel.TextAlign = ContentAlignment.MiddleLeft;
         _statusLabel.ForeColor = Color.FromArgb(105, 101, 116);
-        _statusLabel.Margin = new Padding(0, 0, 12, 0);
+        _statusLabel.Margin = new Padding(0, 0, 0, 2);
         _statusLabel.Text = "未连接";
 
         var buttons = new FlowLayoutPanel
@@ -197,23 +200,30 @@ public sealed class SettingsForm : Form
             Dock = DockStyle.Fill,
             FlowDirection = FlowDirection.RightToLeft,
             WrapContents = false,
-            AutoSize = false,
+            AutoSize = true,
+            AutoSizeMode = AutoSizeMode.GrowAndShrink,
             Margin = new Padding(0),
         };
 
         _saveButton.Text = "保存并连接";
-        _saveButton.Width = 124;
-        _saveButton.Height = 34;
+        _saveButton.AutoSize = true;
+        _saveButton.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+        _saveButton.MinimumSize = new Size(110, 36);
+        _saveButton.Padding = new Padding(10, 3, 10, 3);
         _saveButton.Click += async (_, _) => await SaveAndConnectAsync();
 
         _cancelButton.Text = "取消";
-        _cancelButton.Width = 80;
-        _cancelButton.Height = 34;
+        _cancelButton.AutoSize = true;
+        _cancelButton.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+        _cancelButton.MinimumSize = new Size(76, 36);
+        _cancelButton.Padding = new Padding(10, 3, 10, 3);
         _cancelButton.Click += (_, _) => { DialogResult = DialogResult.Cancel; Close(); };
 
         _testButton.Text = "测试连接";
-        _testButton.Width = 96;
-        _testButton.Height = 34;
+        _testButton.AutoSize = true;
+        _testButton.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+        _testButton.MinimumSize = new Size(96, 36);
+        _testButton.Padding = new Padding(10, 3, 10, 3);
         _testButton.Click += async (_, _) => await TestAsync();
 
         buttons.Controls.Add(_saveButton);
@@ -221,7 +231,7 @@ public sealed class SettingsForm : Form
         buttons.Controls.Add(_testButton);
 
         bottom.Controls.Add(_statusLabel, 0, 0);
-        bottom.Controls.Add(buttons, 1, 0);
+        bottom.Controls.Add(buttons, 0, 1);
 
         root.Controls.Add(content, 0, 0);
         root.Controls.Add(bottom, 0, 1);
@@ -380,7 +390,7 @@ public sealed class SettingsForm : Form
                 if (oldLetter != driveLetter)
                 {
                     var oldRemote = DriveMapper.GetMappedRemote(oldLetter);
-                    if (oldRemote is not null && ServerUrl.AreSame(oldRemote, serverUrl))
+                    if (oldRemote is not null && ServerUrl.MatchesRemote(oldRemote, serverUrl))
                     {
                         DriveMapper.Unmap(oldLetter);
                     }
@@ -399,8 +409,7 @@ public sealed class SettingsForm : Form
             {
                 if (!CredentialStore.Save(serverUrl, username, password))
                 {
-                    SetStatus("无法保存密码到 Windows 凭据管理器。", true);
-                    return;
+                    Log.Warn("无法保存密码到 Windows 凭据管理器；本次连接仍然有效。");
                 }
             }
 
@@ -425,9 +434,9 @@ public sealed class SettingsForm : Form
             _store.Save(updated);
             Saved = true;
             _passwordBox.Clear();
+            Log.Info($"设置已保存，准备关闭设置窗口：{driveLetter}:");
             SetStatus($"已连接：{driveLetter}:", false);
-            DialogResult = DialogResult.OK;
-            Close();
+            CloseFromSuccess();
         }
         catch (Exception ex)
         {
@@ -438,6 +447,20 @@ public sealed class SettingsForm : Form
         {
             SetBusy(false);
         }
+    }
+
+    private void CloseFromSuccess()
+    {
+        // Setting DialogResult normally closes a modal form, but do it on the
+        // next message loop iteration so any pending layout/paint completes.
+        void Finish()
+        {
+            DialogResult = DialogResult.OK;
+            Close();
+        }
+
+        if (IsHandleCreated) BeginInvoke(new Action(Finish));
+        else Finish();
     }
 
     private void SetBusy(bool busy)

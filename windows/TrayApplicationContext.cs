@@ -121,8 +121,7 @@ public sealed class TrayApplicationContext : ApplicationContext
 
     private bool IsConnected()
     {
-        var remote = DriveMapper.GetMappedRemote(_settings.DriveLetter);
-        return remote is not null && ServerUrl.AreSame(remote, _settings.ServerUrl);
+        return DriveMapper.IsMappedToServer(_settings.DriveLetter, _settings.ServerUrl);
     }
 
     private void RefreshState() => UpdateMenu();

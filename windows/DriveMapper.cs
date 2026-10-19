@@ -76,6 +76,9 @@ public static class DriveMapper
 
     public static bool IsMapped(string driveLetter) => GetMappedRemote(driveLetter) is not null;
 
+    public static bool IsMappedToServer(string driveLetter, string serverUrl) =>
+        GetMappedRemote(driveLetter) is { } remote && ServerUrl.MatchesRemote(remote, serverUrl);
+
     public static DriveMapResult Map(string serverUrl, string username, string password, string driveLetter)
     {
         var letter = NormalizeDriveLetter(driveLetter);
@@ -84,7 +87,7 @@ public static class DriveMapper
         var existing = GetMappedRemote(letter);
         if (existing is not null)
         {
-            if (ServerUrl.AreSame(existing, serverUrl))
+            if (ServerUrl.MatchesRemote(existing, serverUrl))
             {
                 return new DriveMapResult(letter, existing);
             }
@@ -120,8 +123,9 @@ public static class DriveMapper
 
         if (!Directory.Exists(localName + "\\"))
         {
-            throw new InvalidOperationException(
-                $"{localName} 已映射，但暂时无法访问。\n请确认 Windows 的 WebClient 服务已启动，并检查 HTTPS 证书。");
+            // The mapping itself succeeded. WebDAV can take a few seconds to
+            // become browsable, so don't fail the whole setup here.
+            Log.Warn($"{localName} 已映射，但目录暂时不可访问（WebDAV 可能仍在初始化）。");
         }
 
         return new DriveMapResult(letter, serverUrl);
