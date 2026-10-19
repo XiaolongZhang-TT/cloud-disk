@@ -1,0 +1,384 @@
+using System.Diagnostics;
+using System.Drawing;
+using System.Windows.Forms;
+
+namespace Tern.Windows;
+
+public sealed class SettingsForm : Form
+{
+    private readonly AppSettings _initial;
+    private readonly string? _savedPassword;
+    private readonly SettingsStore _store = new();
+
+    private readonly TextBox _serverBox = new();
+    private readonly TextBox _usernameBox = new();
+    private readonly TextBox _passwordBox = new();
+    private readonly ComboBox _driveBox = new();
+    private readonly CheckBox _launchAtLogin = new();
+    private readonly CheckBox _autoConnect = new();
+    private readonly Label _statusLabel = new();
+    private readonly Label _serviceLabel = new();
+    private readonly Label _limitLabel = new();
+    private readonly Button _testButton = new();
+    private readonly Button _saveButton = new();
+    private readonly Button _cancelButton = new();
+
+    public bool Saved { get; private set; }
+
+    public SettingsForm(AppSettings settings, string? savedPassword, bool firstRun = false)
+    {
+        _initial = settings.Clone();
+        _savedPassword = savedPassword;
+
+        Text = firstRun ? "连接 Tern" : "Tern 设置";
+        StartPosition = FormStartPosition.CenterScreen;
+        FormBorderStyle = FormBorderStyle.FixedDialog;
+        MaximizeBox = false;
+        MinimizeBox = false;
+        ShowInTaskbar = true;
+        AutoScaleMode = AutoScaleMode.Dpi;
+        Font = new Font("Segoe UI", 9F);
+        ClientSize = new Size(600, 610);
+        BackColor = Color.FromArgb(248, 247, 244);
+
+        BuildUi(firstRun);
+        LoadValues();
+        UpdateDiagnostics();
+    }
+
+    private void BuildUi(bool firstRun)
+    {
+        var layout = new TableLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            Padding = new Padding(26, 22, 26, 18),
+            ColumnCount = 2,
+            RowCount = 14,
+            AutoSize = false,
+        };
+        layout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 108));
+        layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+        for (var i = 0; i < 12; i++) layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        layout.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+        layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+
+        var title = new Label
+        {
+            Text = "Tern",
+            Font = new Font("Segoe UI Semibold", 20F),
+            AutoSize = true,
+            Margin = new Padding(0, 0, 0, 2),
+        };
+        layout.Controls.Add(title, 0, 0);
+        layout.SetColumnSpan(title, 2);
+
+        var subtitle = new Label
+        {
+            Text = firstRun
+                ? "连接你的私有网盘。连接后，Tern 会作为 T 盘出现在“此电脑”中。"
+                : "修改连接信息、盘符和启动行为。",
+            ForeColor = Color.FromArgb(105, 101, 116),
+            AutoSize = true,
+            Margin = new Padding(0, 0, 0, 16),
+        };
+        layout.Controls.Add(subtitle, 0, 1);
+        layout.SetColumnSpan(subtitle, 2);
+
+        AddRow(layout, 2, "服务器地址", _serverBox);
+        _serverBox.PlaceholderText = "https://your-nas:8080/Tern";
+        AddRow(layout, 3, "用户名", _usernameBox);
+        _usernameBox.PlaceholderText = "与网页端账号相同";
+
+        AddRow(layout, 4, "密码", _passwordBox);
+        _passwordBox.UseSystemPasswordChar = true;
+        _passwordBox.PlaceholderText = _savedPassword is null
+            ? "输入网页端密码"
+            : "已保存在 Windows 凭据管理器，留空保持不变";
+
+        AddRow(layout, 5, "盘符", _driveBox);
+        _driveBox.DropDownStyle = ComboBoxStyle.DropDownList;
+        _driveBox.Width = 120;
+
+        _launchAtLogin.Text = "登录 Windows 时自动启动 Tern";
+        _launchAtLogin.AutoSize = true;
+        _launchAtLogin.Margin = new Padding(0, 8, 0, 2);
+        layout.Controls.Add(_launchAtLogin, 1, 6);
+
+        _autoConnect.Text = "启动后自动连接";
+        _autoConnect.AutoSize = true;
+        _autoConnect.Margin = new Padding(0, 2, 0, 8);
+        layout.Controls.Add(_autoConnect, 1, 7);
+
+        _serviceLabel.AutoSize = true;
+        _serviceLabel.Margin = new Padding(0, 4, 0, 2);
+        layout.Controls.Add(_serviceLabel, 0, 8);
+        layout.SetColumnSpan(_serviceLabel, 2);
+
+        _limitLabel.AutoSize = true;
+        _limitLabel.Margin = new Padding(0, 2, 0, 2);
+        layout.Controls.Add(_limitLabel, 0, 9);
+        layout.SetColumnSpan(_limitLabel, 2);
+
+        var helpLink = new LinkLabel
+        {
+            Text = "Windows 客户端说明 / 大文件限制",
+            AutoSize = true,
+            Margin = new Padding(0, 2, 0, 8),
+        };
+        helpLink.LinkClicked += (_, _) => OpenHelp();
+        layout.Controls.Add(helpLink, 0, 10);
+        layout.SetColumnSpan(helpLink, 2);
+
+        _statusLabel.AutoSize = true;
+        _statusLabel.ForeColor = Color.FromArgb(105, 101, 116);
+        _statusLabel.Margin = new Padding(0, 8, 0, 4);
+        layout.Controls.Add(_statusLabel, 0, 11);
+        layout.SetColumnSpan(_statusLabel, 2);
+
+        var buttons = new FlowLayoutPanel
+        {
+            Dock = DockStyle.Bottom,
+            FlowDirection = FlowDirection.RightToLeft,
+            AutoSize = true,
+            Margin = new Padding(0, 10, 0, 0),
+        };
+
+        _saveButton.Text = "保存并连接";
+        _saveButton.Width = 132;
+        _saveButton.Height = 34;
+        _saveButton.Click += async (_, _) => await SaveAndConnectAsync();
+
+        _cancelButton.Text = "取消";
+        _cancelButton.Width = 88;
+        _cancelButton.Height = 34;
+        _cancelButton.Click += (_, _) => { DialogResult = DialogResult.Cancel; Close(); };
+
+        _testButton.Text = "测试连接";
+        _testButton.Width = 108;
+        _testButton.Height = 34;
+        _testButton.Click += async (_, _) => await TestAsync();
+
+        buttons.Controls.Add(_saveButton);
+        buttons.Controls.Add(_cancelButton);
+        buttons.Controls.Add(_testButton);
+        layout.Controls.Add(buttons, 0, 13);
+        layout.SetColumnSpan(buttons, 2);
+
+        Controls.Add(layout);
+        AcceptButton = _saveButton;
+        CancelButton = _cancelButton;
+    }
+
+    private static void AddRow(TableLayoutPanel layout, int row, string label, Control control)
+    {
+        var text = new Label
+        {
+            Text = label,
+            AutoSize = true,
+            TextAlign = ContentAlignment.MiddleLeft,
+            Margin = new Padding(0, 7, 10, 3),
+        };
+        control.Dock = DockStyle.Fill;
+        control.Margin = new Padding(0, 3, 0, 3);
+        layout.Controls.Add(text, 0, row);
+        layout.Controls.Add(control, 1, row);
+    }
+
+    private void LoadValues()
+    {
+        _serverBox.Text = _initial.ServerUrl;
+        _usernameBox.Text = _initial.Username;
+
+        var letters = DriveMapper.AvailableDriveLetters().ToList();
+        var current = DriveMapper.NormalizeDriveLetter(_initial.DriveLetter);
+        if (!letters.Contains(current)) letters.Insert(0, current);
+        _driveBox.Items.Clear();
+        foreach (var letter in letters) _driveBox.Items.Add(letter + ":");
+        _driveBox.SelectedItem = current + ":";
+        if (_driveBox.SelectedIndex < 0) _driveBox.SelectedIndex = 0;
+
+        _launchAtLogin.Checked = StartupManager.IsEnabled();
+        _autoConnect.Checked = _initial.AutoConnect;
+    }
+
+    private void UpdateDiagnostics()
+    {
+        var running = DriveMapper.IsWebClientServiceRunning();
+        _serviceLabel.Text = running
+            ? "WebClient 服务：运行中"
+            : "WebClient 服务：未运行（连接可能失败，请先启动 Windows WebClient 服务）";
+        _serviceLabel.ForeColor = running ? Color.FromArgb(35, 117, 82) : Color.FromArgb(180, 95, 25);
+
+        var limit = WindowsWebClient.FileSizeLimitBytes();
+        _limitLabel.Text = "Windows WebDAV 文件大小限制：" + WindowsWebClient.LimitDescription();
+        _limitLabel.ForeColor = limit is null || limit < 100L * 1024 * 1024
+            ? Color.FromArgb(180, 95, 25)
+            : Color.FromArgb(105, 101, 116);
+    }
+
+    private bool TryReadInputs(out string serverUrl, out string username, out string password, out string driveLetter, out string error)
+    {
+        serverUrl = username = password = driveLetter = "";
+        error = "";
+
+        if (!ServerUrl.TryNormalize(_serverBox.Text, out serverUrl, out error)) return false;
+        username = _usernameBox.Text.Trim();
+        if (username.Length == 0)
+        {
+            error = "请输入用户名。";
+            return false;
+        }
+
+        password = _passwordBox.Text.Length > 0 ? _passwordBox.Text : (_savedPassword ?? "");
+        if (password.Length == 0)
+        {
+            error = "请输入密码。";
+            return false;
+        }
+
+        driveLetter = DriveMapper.NormalizeDriveLetter(
+            (_driveBox.SelectedItem?.ToString() ?? "T:").TrimEnd(':'));
+        return true;
+    }
+
+    private async Task TestAsync()
+    {
+        if (!TryReadInputs(out var serverUrl, out var username, out var password, out _, out var error))
+        {
+            SetStatus(error, true);
+            return;
+        }
+
+        SetBusy(true);
+        SetStatus("正在测试连接…", false);
+        try
+        {
+            var result = await WebDavProbe.ProbeAsync(new Uri(serverUrl), username, password);
+            SetStatus(result.Message, !result.Ok);
+        }
+        catch (Exception ex)
+        {
+            SetStatus($"测试失败：{ex.Message}", true);
+        }
+        finally
+        {
+            SetBusy(false);
+        }
+    }
+
+    private async Task SaveAndConnectAsync()
+    {
+        if (!TryReadInputs(out var serverUrl, out var username, out var password, out var driveLetter, out var error))
+        {
+            SetStatus(error, true);
+            return;
+        }
+
+        SetBusy(true);
+        SetStatus("正在验证服务器…", false);
+        try
+        {
+            var probe = await WebDavProbe.ProbeAsync(new Uri(serverUrl), username, password);
+            if (!probe.Ok)
+            {
+                SetStatus(probe.Message, true);
+                return;
+            }
+
+            SetStatus("正在连接 T 盘…", false);
+            try
+            {
+                var oldLetter = DriveMapper.NormalizeDriveLetter(_initial.DriveLetter);
+                if (oldLetter != driveLetter)
+                {
+                    var oldRemote = DriveMapper.GetMappedRemote(oldLetter);
+                    if (oldRemote is not null && ServerUrl.AreSame(oldRemote, serverUrl))
+                    {
+                        DriveMapper.Unmap(oldLetter);
+                    }
+                }
+
+                DriveMapper.Map(serverUrl, username, password, driveLetter);
+            }
+            catch (Exception ex)
+            {
+                SetStatus(ex.Message, true);
+                Log.Error($"映射网络驱动器失败：{ex.Message}");
+                return;
+            }
+
+            if (_passwordBox.Text.Length > 0 || !CredentialStore.Has(serverUrl, username))
+            {
+                if (!CredentialStore.Save(serverUrl, username, password))
+                {
+                    SetStatus("无法保存密码到 Windows 凭据管理器。", true);
+                    return;
+                }
+            }
+
+            var updated = new AppSettings
+            {
+                ServerUrl = serverUrl,
+                Username = username,
+                DriveLetter = driveLetter,
+                AutoConnect = _autoConnect.Checked,
+                LaunchAtLogin = _launchAtLogin.Checked,
+            };
+
+            try
+            {
+                StartupManager.SetEnabled(updated.LaunchAtLogin);
+            }
+            catch (Exception ex)
+            {
+                Log.Warn($"设置开机启动失败：{ex.Message}");
+            }
+
+            _store.Save(updated);
+            Saved = true;
+            _passwordBox.Clear();
+            SetStatus($"已连接：{driveLetter}:", false);
+            DialogResult = DialogResult.OK;
+            Close();
+        }
+        catch (Exception ex)
+        {
+            SetStatus($"连接失败：{ex.Message}", true);
+            Log.Error($"保存并连接失败：{ex.Message}");
+        }
+        finally
+        {
+            SetBusy(false);
+        }
+    }
+
+    private void SetBusy(bool busy)
+    {
+        _testButton.Enabled = !busy;
+        _saveButton.Enabled = !busy;
+        _cancelButton.Enabled = !busy;
+        Cursor = busy ? Cursors.WaitCursor : Cursors.Default;
+    }
+
+    private void SetStatus(string message, bool error)
+    {
+        _statusLabel.Text = message;
+        _statusLabel.ForeColor = error ? Color.FromArgb(180, 45, 55) : Color.FromArgb(35, 117, 82);
+    }
+
+    private static void OpenHelp()
+    {
+        try
+        {
+            Process.Start(new ProcessStartInfo(
+                "https://github.com/XiaolongZhang-dev/tern/blob/main/docs/WINDOWS.md")
+            {
+                UseShellExecute = true,
+            });
+        }
+        catch
+        {
+            // Ignore browser launch failures.
+        }
+    }
+}

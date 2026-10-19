@@ -1,0 +1,52 @@
+name: Windows Client
+
+on:
+  push:
+    paths:
+      - "windows/**"
+      - ".github/workflows/windows-client.yml"
+  pull_request:
+    paths:
+      - "windows/**"
+      - ".github/workflows/windows-client.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build Windows x64 client
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Restore
+        run: dotnet restore windows/Tern.Windows.csproj
+
+      - name: Build
+        run: dotnet build windows/Tern.Windows.csproj -c Release --no-restore
+
+      - name: Publish self-contained exe
+        run: >
+          dotnet publish windows/Tern.Windows.csproj
+          -c Release
+          -r win-x64
+          --self-contained true
+          -p:PublishSingleFile=true
+          -p:IncludeNativeLibrariesForSelfExtract=true
+          -o windows/dist
+
+      - name: Package
+        run: Compress-Archive -Path windows/dist/* -DestinationPath Tern-Windows-x64.zip -Force
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: Tern-Windows-x64
+          path: Tern-Windows-x64.zip
+          retention-days: 30

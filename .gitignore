@@ -32,3 +32,9 @@ server/.data/
 
 # local gh cache used in sandboxed development
 .gh-cache/
+
+# Windows client build output
+windows/bin/
+windows/obj/
+windows/dist/
+windows/*.user
