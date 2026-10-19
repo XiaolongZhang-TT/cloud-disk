@@ -90,9 +90,14 @@ public sealed class TrayApplicationContext : ApplicationContext
     {
         try
         {
-            if (_settings.LaunchAtLogin != StartupManager.IsEnabled())
+            if (_settings.LaunchAtLogin)
             {
-                StartupManager.SetEnabled(_settings.LaunchAtLogin);
+                if (!StartupManager.IsEnabled()) StartupManager.SetEnabled(true);
+            }
+            else
+            {
+                // Also removes a stale value left by an older install path.
+                StartupManager.SetEnabled(false);
             }
         }
         catch (Exception ex)
@@ -139,7 +144,7 @@ public sealed class TrayApplicationContext : ApplicationContext
             _lastConnected = connected;
         }
 
-        _statusItem.Text = connected ? $"已连接 · {drive} · 在线" : "未连接";
+        _statusItem.Text = connected ? $"已连接 · {drive}" : "未连接";
         _connectItem.Text = connected ? "断开连接" : "连接";
         _connectItem.Enabled = !_busy;
         _openItem.Enabled = connected;
@@ -260,7 +265,8 @@ public sealed class TrayApplicationContext : ApplicationContext
     {
         try
         {
-            if (IsConnected())
+            var mappedToUs = DriveMapper.IsMappedToServer(_settings.DriveLetter, _settings.ServerUrl);
+            if (mappedToUs)
             {
                 var result = MessageBox.Show(
                     $"退出并断开 {_settings.DriveLetter}: 吗？",

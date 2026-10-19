@@ -1,5 +1,5 @@
 #define MyAppName "Tern"
-#define MyAppVersion "1.0.3"
+#define MyAppVersion "1.0.4"
 #define MyAppPublisher "Tern contributors"
 #define MyAppExeName "Tern.exe"
 
@@ -38,6 +38,12 @@ Source: "dist\Tern.exe"; DestDir: "{app}"; Flags: ignoreversion
 [Icons]
 Name: "{group}\Tern"; Filename: "{app}\{#MyAppExeName}"; Tasks: startmenu
 Name: "{userdesktop}\Tern"; Filename: "{app}\{#MyAppExeName}"; Tasks: desktopicon
+
+[UninstallRun]
+Filename: "{sys}\reg.exe"; Parameters: "delete ""HKCU\Software\Microsoft\Windows\CurrentVersion\Run"" /v Tern /f"; Flags: runhidden; RunOnceId: "RemoveTernStartup"
+
+[UninstallDelete]
+Type: filesandordirs; Name: "{localappdata}\Tern"
 
 [Run]
 Filename: "{app}\{#MyAppExeName}"; Description: "启动 Tern"; Flags: nowait postinstall skipifsilent

@@ -134,7 +134,7 @@ public static class DriveMapper
     public static void Unmap(string driveLetter, bool force = true)
     {
         var letter = NormalizeDriveLetter(driveLetter);
-        var result = WNetCancelConnection2(letter + ":", 0, force);
+        var result = WNetCancelConnection2(letter + ":", ConnectUpdateProfile, force);
         if (result != 0 && result != 2250)
         {
             throw new InvalidOperationException(FormatError(result, null));

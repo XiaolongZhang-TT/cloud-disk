@@ -112,6 +112,10 @@ Windows WebDAV 推荐使用 HTTPS：
 
 ## 8. 卸载
 
+**安装版：** 设置 → 应用 → Tern → 卸载。卸载程序会删除程序目录、`%LOCALAPPDATA%\Tern` 和开始菜单项，同时清理开机启动注册表项。
+
+**便携版：**
+
 1. 托盘菜单 → **退出 Tern**；
 2. 删除 `Tern.exe` 所在文件夹；
 3. 删除 `%LOCALAPPDATA%\Tern`；
@@ -121,7 +125,7 @@ Windows WebDAV 推荐使用 HTTPS：
 reg delete "HKCU\Software\Microsoft\Windows\CurrentVersion\Run" /v Tern /f
 ```
 
-5. 可选：在「凭据管理器 → Windows 凭据」中删除 `Tern:` 开头的条目。
+可选：在「凭据管理器 → Windows 凭据」中删除 `Tern:` 开头的条目。
 
 ## 9. 从源码构建
 

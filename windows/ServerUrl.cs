@@ -90,6 +90,7 @@ public static class ServerUrl
 
         var normalized = path.Replace("DavWWWRoot", "", StringComparison.OrdinalIgnoreCase)
             .Trim('\\', '/');
+        if (normalized.Length == 0) return true;
         return normalized.Equals(targetPath, StringComparison.OrdinalIgnoreCase)
             || normalized.EndsWith("/" + targetPath, StringComparison.OrdinalIgnoreCase)
             || normalized.EndsWith("\\" + targetPath, StringComparison.OrdinalIgnoreCase);

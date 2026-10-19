@@ -14,7 +14,7 @@ internal static class Program
             return;
         }
 
-        using var mutex = new Mutex(true, @"Global\TernWindowsClient", out var createdNew);
+        using var mutex = new Mutex(true, @"Local\TernWindowsClient", out var createdNew);
         if (!createdNew)
         {
             MessageBox.Show(
@@ -28,6 +28,20 @@ internal static class Program
         Application.SetHighDpiMode(HighDpiMode.PerMonitorV2);
         Application.EnableVisualStyles();
         Application.SetCompatibleTextRenderingDefault(false);
+
+        Application.ThreadException += (_, e) =>
+        {
+            Log.Error($"UI 线程异常：{e.Exception}");
+            MessageBox.Show(
+                $"Tern 遇到一个错误：\n{e.Exception.Message}\n\n详细信息已写入日志。",
+                "Tern",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Error);
+        };
+        AppDomain.CurrentDomain.UnhandledException += (_, e) =>
+        {
+            if (e.ExceptionObject is Exception ex) Log.Error($"未处理异常：{ex}");
+        };
 
         Application.Run(new TrayApplicationContext(args));
     }
