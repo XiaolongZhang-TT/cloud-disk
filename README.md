@@ -76,13 +76,16 @@ docker compose up -d --build
 
 客户端用 `NetFS` 把服务端 WebDAV 挂载成真正的 macOS 网络卷：在 Finder 侧边栏的 **位置（Locations）** 中与 iCloud Drive 并列，可直接读写、拖拽、Quick Look，无需 Apple 开发者账号。
 
-**方式 A：使用仓库中构建好的应用**
+**方式 A：使用仓库中构建好的应用（Apple Silicon / arm64）**
 
 解压 [`macos/dist/CloudDisk-1.0.0.zip`](macos/dist/CloudDisk-1.0.0.zip)（也可从 [Releases](https://github.com/XiaolongZhang-TT/cloud-disk/releases) 下载），把其中的 `CloudDisk.app` 拖到「应用程序」。校验下载文件：
 
 ```bash
 cd macos/dist && shasum -a 256 -c CloudDisk-1.0.0.zip.sha256
 ```
+
+> 预构建包为 Apple Silicon（arm64）；Intel Mac 请使用方式 B 构建：
+> `cd macos && ARCHS=x86_64 ./build.sh`。
 
 若从网络传输后被 Gatekeeper 拦截，请右键 →「打开」，或执行：
 
