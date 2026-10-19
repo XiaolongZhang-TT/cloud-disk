@@ -1,5 +1,7 @@
 # Windows 客户端（Tern for Windows）
 
+![Tern for Windows 设置](screenshots/windows-settings.png)
+
 Tern for Windows 是一个托盘应用。它把 Tern 服务端的 WebDAV 端点映射为本地盘符，
 所以在「此电脑」里看到的不是一个网页，而是：
 
