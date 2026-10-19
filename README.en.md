@@ -134,9 +134,10 @@ docker compose -f docker-compose.hub.yml up -d
 | `edge` | Manual `workflow_dispatch` test build |
 
 > Maintainers: add `DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN` under
-> **Settings → Secrets and variables → Actions**, then run the workflow once (publishes `latest` + `edge`) or push a new `v*` tag.
+> **Settings → Secrets and variables → Actions**, then run
 > [Docker Publish](https://github.com/XiaolongZhang-TT/tern/actions/workflows/docker-publish.yml)
-> manually. The Docker Hub token needs Read & Write permission.
+> once (publishes `latest` + `edge`) or push a new `v*` tag. The Docker Hub token
+> needs Read & Write permission.
 
 ## macOS client (Finder mount)
 
