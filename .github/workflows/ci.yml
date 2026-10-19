@@ -126,13 +126,13 @@ jobs:
       - name: Verify signed bundle
         run: |
           codesign --verify --deep --strict --verbose=2 dist/Tern.app
-          unzip -t dist/Tern-1.1.0.zip
+          unzip -t dist/Tern-1.1.1.zip
 
       - name: Upload macOS build
         uses: actions/upload-artifact@v7
         with:
           name: macos-client
           path: |
-            macos/dist/Tern-1.1.0.zip
-            macos/dist/Tern-1.1.0.zip.sha256
+            macos/dist/Tern-1.1.1.zip
+            macos/dist/Tern-1.1.1.zip.sha256
           retention-days: 7

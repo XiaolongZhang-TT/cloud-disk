@@ -9,7 +9,7 @@ approach. Items marked **good first issue** are usually small and self-contained
 
 ## Current limitations
 
-These are known and accepted for v1.1.0:
+These are known and accepted for v1.1.1:
 
 - **No offline sync / File Provider.** The macOS client mounts a WebDAV network
   volume. It appears in Finder's *Locations* next to iCloud Drive, but unlike

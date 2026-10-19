@@ -161,37 +161,19 @@ struct SettingsView: View {
 
 // MARK: - Settings window
 
-/// Opens the SwiftUI `Settings` scene when possible and falls back to a real
-/// AppKit window if the private `showSettingsWindow:` action is unavailable
-/// (behaviour has varied between macOS releases).
+/// Opens a real AppKit settings window.
+///
+/// We deliberately do **not** rely on the private `showSettingsWindow:` action:
+/// on recent macOS releases it can return `true` without actually showing the
+/// SwiftUI Settings scene (especially for LSUIElement/menu-bar-only apps), which
+/// made the menu item appear to do nothing. A dedicated NSWindow is predictable
+/// across macOS 13–27 and can always be brought to the front.
 @MainActor
 enum SettingsWindowHelper {
 
     static func openSettings() {
-        NSApp.activate(ignoringOtherApps: true)
-
-        if NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil) {
-            bringSettingsWindowForward()
-            return
-        }
-        if NSApp.sendAction(Selector(("showPreferencesWindow:")), to: nil, from: nil) {
-            bringSettingsWindowForward()
-            return
-        }
+        CDLog.info("settings: opening settings window")
         SettingsWindowController.shared.show()
-    }
-
-    private static func bringSettingsWindowForward() {
-        // The Settings scene creates a window lazily; activate it on the next
-        // runloop pass so it is not ordered behind other apps.
-        DispatchQueue.main.async {
-            for window in NSApp.windows where window.canBecomeMain && !window.isMiniaturized {
-                if window.title.localizedCaseInsensitiveContains("设置")
-                    || window.title.localizedCaseInsensitiveContains("settings") {
-                    window.makeKeyAndOrderFront(nil)
-                }
-            }
-        }
     }
 }
 
@@ -221,9 +203,11 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
     }
 
     func show() {
+        NSApp.activate(ignoringOtherApps: true)
         showWindow(nil)
         window?.center()
         window?.makeKeyAndOrderFront(nil)
-        NSApp.activate(ignoringOtherApps: true)
+        window?.orderFrontRegardless()
+        CDLog.info("settings: window visible=\(window?.isVisible ?? false)")
     }
 }

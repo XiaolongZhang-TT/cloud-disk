@@ -40,7 +40,7 @@ body:
     attributes:
       label: Version / commit
       description: Output of `git rev-parse --short HEAD`, release tag, or Docker image tag.
-      placeholder: "v1.1.0 / <commit>"
+      placeholder: "v1.1.1 / <commit>"
     validations:
       required: true
 

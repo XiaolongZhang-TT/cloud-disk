@@ -98,12 +98,12 @@ account required.
 **Option A: use the prebuilt app (Apple Silicon / arm64)**
 
 Download
-[`macos/dist/Tern-1.1.0.zip`](macos/dist/Tern-1.1.0.zip) (or from
+[`macos/dist/Tern-1.1.1.zip`](macos/dist/Tern-1.1.1.zip) (or from
 [Releases](https://github.com/XiaolongZhang-TT/tern/releases)) and move
 `Tern.app` to `/Applications`. Verify the download:
 
 ```bash
-cd macos/dist && shasum -a 256 -c Tern-1.1.0.zip.sha256
+cd macos/dist && shasum -a 256 -c Tern-1.1.1.zip.sha256
 ```
 
 If Gatekeeper blocks the app, right-click → **Open**, or run:

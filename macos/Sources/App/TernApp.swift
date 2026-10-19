@@ -45,10 +45,6 @@ struct TernApp: App {
             MenuBarLabel(model: AppModel.shared)
         }
         .menuBarExtraStyle(.menu)
-
-        Settings {
-            SettingsView(model: AppModel.shared, settings: SettingsStore.shared)
-        }
     }
 }
 

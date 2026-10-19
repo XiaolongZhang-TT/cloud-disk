@@ -45,8 +45,8 @@ SDK_PATH=/Library/Developer/CommandLineTools/SDKs/MacOSX14.5.sdk ./build.sh   # 
 
 ```text
 macos/dist/Tern.app                 # 可直接运行的菜单栏应用
-macos/dist/Tern-1.1.0.zip           # 分发包（ditto 打包，保留符号链接与权限）
-macos/dist/Tern-1.1.0.zip.sha256    # 校验和
+macos/dist/Tern-1.1.1.zip           # 分发包（ditto 打包，保留符号链接与权限）
+macos/dist/Tern-1.1.1.zip.sha256    # 校验和
 macos/dist/mount-smoke                   # CLI 副本
 macos/tools/mount-smoke                  # CLI 测试工具
 ```
@@ -56,7 +56,7 @@ macos/tools/mount-smoke                  # CLI 测试工具
 ```text
 ==> 构建完成
     应用:      /…/macos/dist/Tern.app (1.1M)
-    Zip:       /…/macos/dist/Tern-1.1.0.zip (524K)
+    Zip:       /…/macos/dist/Tern-1.1.1.zip (524K)
     签名:      ad-hoc（com.tern.menubar）
 ```
 
@@ -225,7 +225,7 @@ TERN_PASSWORD='密码' ./tools/mount-smoke --url FULL_URL --user admin
 成功输出示例（针对真实服务端验证）：
 
 ```text
-== Tern mount-smoke 1.1.0 ==
+== Tern mount-smoke 1.1.1 ==
 url: http://127.0.0.1:18080/Tern
 user: admin
 volume: Tern
@@ -390,9 +390,9 @@ launchctl print gui/$(id -u)/com.tern.menubar
 - 密码只保存在 **登录钥匙串**（generic password，service `com.tern.menubar`，账号形如 `用户名@主机:端口`），不写入 `UserDefaults`、不进入日志、不出现在应用命令行中。
 - 应用不申请任何特权、不安装内核扩展、不静默修改系统设置；登录启动仅是一个可删除的 per-user LaunchAgent。
 - 挂载使用 WebDAV Basic 认证；局域网 HTTP 可接受，公网请务必 HTTPS。
-- ad-hoc 签名意味着无法校验发布者身份；请只从可信来源获取 `Tern-1.1.0.zip`，并用随附的 `.sha256` 校验：
+- ad-hoc 签名意味着无法校验发布者身份；请只从可信来源获取 `Tern-1.1.1.zip`，并用随附的 `.sha256` 校验：
   ```bash
-  shasum -a 256 -c Tern-1.1.0.zip.sha256
+  shasum -a 256 -c Tern-1.1.1.zip.sha256
   ```
 - 卸载卷不会删除服务器数据；服务端软删除/回收站策略见 `docs/API.md`。
 

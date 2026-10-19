@@ -10,6 +10,17 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 See [ROADMAP.md](ROADMAP.md) for the prioritized backlog.
 
+## [1.1.1] - 2026-10-19
+
+### Fixed
+
+- macOS: clicking **Settings…** in the menu bar now always opens a dedicated
+  AppKit settings window. The previous implementation relied on a private
+  SwiftUI `showSettingsWindow:` action that could return success without showing
+  a window on recent macOS releases.
+- macOS: the settings window is explicitly activated and ordered to the front
+  when opened.
+
 ## [1.1.0] - 2026-10-19
 
 Tern is the new name of the project. This release is the first public Tern
@@ -64,5 +75,6 @@ release.
 - macOS AppleDouble/metadata files are hidden from REST listings while remaining
   available to Finder over WebDAV.
 
-[Unreleased]: https://github.com/XiaolongZhang-TT/tern/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/XiaolongZhang-TT/tern/compare/v1.1.1...HEAD
+[1.1.1]: https://github.com/XiaolongZhang-TT/tern/releases/tag/v1.1.1
 [1.1.0]: https://github.com/XiaolongZhang-TT/tern/releases/tag/v1.1.0

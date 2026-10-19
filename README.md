@@ -80,10 +80,10 @@ docker compose up -d --build
 
 **方式 A：使用仓库中构建好的应用（Apple Silicon / arm64）**
 
-解压 [`macos/dist/Tern-1.1.0.zip`](macos/dist/Tern-1.1.0.zip)（也可从 [Releases](https://github.com/XiaolongZhang-TT/tern/releases) 下载），把其中的 `Tern.app` 拖到「应用程序」。校验下载文件：
+解压 [`macos/dist/Tern-1.1.1.zip`](macos/dist/Tern-1.1.1.zip)（也可从 [Releases](https://github.com/XiaolongZhang-TT/tern/releases) 下载），把其中的 `Tern.app` 拖到「应用程序」。校验下载文件：
 
 ```bash
-cd macos/dist && shasum -a 256 -c Tern-1.1.0.zip.sha256
+cd macos/dist && shasum -a 256 -c Tern-1.1.1.zip.sha256
 ```
 
 > 预构建包为 Apple Silicon（arm64）；Intel Mac 请使用方式 B 构建：
