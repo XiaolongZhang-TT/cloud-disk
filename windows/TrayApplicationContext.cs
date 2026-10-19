@@ -18,6 +18,7 @@ public sealed class TrayApplicationContext : ApplicationContext
     private string? _savedPassword;
     private SettingsForm? _settingsForm;
     private bool _busy;
+    private bool? _lastConnected;
 
     public TrayApplicationContext(string[] args)
     {
@@ -130,6 +131,13 @@ public sealed class TrayApplicationContext : ApplicationContext
     {
         var connected = IsConnected();
         var drive = _settings.DriveLetter + ":";
+
+        if (_lastConnected != connected)
+        {
+            var remote = DriveMapper.GetMappedRemote(_settings.DriveLetter);
+            Log.Info($"托盘连接状态：connected={connected}, drive={drive}, remote={remote ?? "<none>"}, server={_settings.ServerUrl}");
+            _lastConnected = connected;
+        }
 
         _statusItem.Text = connected ? $"已连接 · {drive} · 在线" : "未连接";
         _connectItem.Text = connected ? "断开连接" : "连接";
