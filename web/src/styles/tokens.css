@@ -1,0 +1,130 @@
+:root {
+  /* palette — warm paper + ink + one vivid iris accent */
+  --bg: #f4f3ef;
+  --bg-subtle: #ecebe6;
+  --surface: #ffffff;
+  --surface-2: #faf9f6;
+  --surface-3: #f0efe9;
+  --sidebar-bg: rgba(255, 255, 255, 0.62);
+  --glass: rgba(255, 255, 255, 0.72);
+
+  --ink: #191a20;
+  --ink-2: #4b4e59;
+  --ink-3: #7c808c;
+  --ink-4: #a9acb6;
+
+  --line: rgba(24, 26, 32, 0.08);
+  --line-strong: rgba(24, 26, 32, 0.15);
+
+  --accent: #5b5bd6;
+  --accent-2: #8b7cff;
+  --accent-3: #b7a8ff;
+  --accent-soft: rgba(91, 91, 214, 0.1);
+  --accent-tint: rgba(91, 91, 214, 0.055);
+  --accent-contrast: #ffffff;
+
+  --success: #1f9d7a;
+  --success-soft: rgba(31, 157, 122, 0.12);
+  --warning: #b47c22;
+  --warning-soft: rgba(180, 124, 34, 0.14);
+  --danger: #cf5049;
+  --danger-soft: rgba(207, 80, 73, 0.11);
+
+  /* file-type colors */
+  --kind-folder: #d69a3f;
+  --kind-image: #d5668c;
+  --kind-video: #8b5cf6;
+  --kind-audio: #1f9d9a;
+  --kind-pdf: #d9544d;
+  --kind-word: #4a7fd4;
+  --kind-sheet: #2f9d68;
+  --kind-slides: #dc8a3c;
+  --kind-archive: #a9854f;
+  --kind-code: #5b7a94;
+  --kind-text: #5f7a92;
+  --kind-other: #8a8e99;
+
+  /* elevation */
+  --shadow-xs: 0 1px 2px rgba(20, 22, 30, 0.05);
+  --shadow-sm: 0 2px 8px rgba(20, 22, 30, 0.05), 0 1px 2px rgba(20, 22, 30, 0.04);
+  --shadow-md: 0 14px 34px -16px rgba(20, 22, 30, 0.24), 0 3px 10px rgba(20, 22, 30, 0.05);
+  --shadow-lg: 0 30px 70px -28px rgba(20, 22, 30, 0.34), 0 10px 28px -14px rgba(20, 22, 30, 0.14);
+  --shadow-accent: 0 8px 22px -8px rgba(91, 91, 214, 0.55);
+
+  /* shape & type */
+  --r-xs: 8px;
+  --r-sm: 10px;
+  --r-md: 14px;
+  --r-lg: 18px;
+  --r-xl: 24px;
+  --r-full: 999px;
+
+  --font-sans: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', 'PingFang SC',
+    'Hiragino Sans GB', 'Microsoft YaHei', 'Noto Sans CJK SC', sans-serif;
+  --font-mono: 'SF Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono',
+    monospace;
+
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --speed: 0.18s;
+
+  --sidebar-w: 272px;
+  --topbar-h: 72px;
+  --page-max: 1240px;
+
+  --z-scrim: 70;
+  --z-drawer: 80;
+  --z-modal: 90;
+  --z-preview: 100;
+  --z-toast: 120;
+}
+
+[data-theme='dark'] {
+  --bg: #0b0c10;
+  --bg-subtle: #0f1116;
+  --surface: #15171f;
+  --surface-2: #191c25;
+  --surface-3: #1f232e;
+  --sidebar-bg: rgba(21, 23, 31, 0.58);
+  --glass: rgba(21, 23, 31, 0.72);
+
+  --ink: #f2f3f7;
+  --ink-2: #b9bcc7;
+  --ink-3: #878b98;
+  --ink-4: #5f636f;
+
+  --line: rgba(255, 255, 255, 0.08);
+  --line-strong: rgba(255, 255, 255, 0.16);
+
+  --accent: #9393fa;
+  --accent-2: #a78bfa;
+  --accent-3: #c4b5fd;
+  --accent-soft: rgba(147, 147, 250, 0.15);
+  --accent-tint: rgba(147, 147, 250, 0.075);
+  --accent-contrast: #12131a;
+
+  --success: #4fd1a5;
+  --success-soft: rgba(79, 209, 165, 0.14);
+  --warning: #e0b056;
+  --warning-soft: rgba(224, 176, 86, 0.14);
+  --danger: #f0827b;
+  --danger-soft: rgba(240, 130, 123, 0.14);
+
+  --kind-folder: #e5b76b;
+  --kind-image: #f08cb0;
+  --kind-video: #b39bff;
+  --kind-audio: #4fd1c5;
+  --kind-pdf: #f08a84;
+  --kind-word: #7ba6f0;
+  --kind-sheet: #5fcb94;
+  --kind-slides: #f0a45f;
+  --kind-archive: #cdb07c;
+  --kind-code: #8fb0c9;
+  --kind-text: #8fb0c9;
+  --kind-other: #9a9eaa;
+
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.34);
+  --shadow-sm: 0 2px 10px rgba(0, 0, 0, 0.34), 0 1px 2px rgba(0, 0, 0, 0.28);
+  --shadow-md: 0 16px 38px -18px rgba(0, 0, 0, 0.7), 0 3px 10px rgba(0, 0, 0, 0.28);
+  --shadow-lg: 0 34px 80px -30px rgba(0, 0, 0, 0.82), 0 12px 30px -16px rgba(0, 0, 0, 0.44);
+  --shadow-accent: 0 8px 26px -8px rgba(147, 147, 250, 0.45);
+}

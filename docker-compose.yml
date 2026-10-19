@@ -1,0 +1,38 @@
+name: clouddisk
+
+services:
+  clouddisk:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: clouddisk:latest
+    container_name: clouddisk
+    restart: unless-stopped
+    ports:
+      - "${PORT:-8080}:8080"
+    environment:
+      PORT: "8080"
+      DATA_DIR: /data
+      STATIC_DIR: /app/public
+      SERVER_NAME: "${SERVER_NAME:-云屿 CloudDisk}"
+      PUBLIC_BASE_URL: "${PUBLIC_BASE_URL:-}"
+      ADMIN_USERNAME: "${ADMIN_USERNAME:-}"
+      ADMIN_PASSWORD: "${ADMIN_PASSWORD:-}"
+      ALLOW_REGISTRATION: "${ALLOW_REGISTRATION:-false}"
+      DEFAULT_QUOTA_GB: "${DEFAULT_QUOTA_GB:-0}"
+      MAX_UPLOAD_BYTES: "${MAX_UPLOAD_BYTES:-21474836480}"
+      COOKIE_SECURE: "${COOKIE_SECURE:-auto}"
+      TRUST_PROXY: "${TRUST_PROXY:-false}"
+      DATA_UID: "${DATA_UID:-1000}"
+      DATA_GID: "${DATA_GID:-1000}"
+      TZ: "${TZ:-Asia/Shanghai}"
+    volumes:
+      # Bind mount so NAS users can back up the SQLite database and blobs with
+      # their normal tooling. The entrypoint fixes ownership for DATA_UID/GID.
+      - ./data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8080/api/health > /dev/null || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s

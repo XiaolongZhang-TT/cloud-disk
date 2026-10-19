@@ -1,0 +1,34 @@
+.git
+.gitignore
+.gitattributes
+.DS_Store
+
+# Local dependency + build caches (image installs its own)
+**/node_modules
+**/.pnpm-store
+.npm-cache
+.npm-logs
+.qa
+**/screenshots
+**/npm-debug.log*
+
+# Runtime data must never leak into the build context
+server/.data
+data
+web/dist
+server/test
+**/*.sqlite
+**/*.db
+**/*.db-wal
+**/*.db-shm
+
+# Local env / editor noise
+.env
+.env.local
+.idea
+.vscode
+
+# Docs and the macOS client are not needed inside the server image
+docs
+macos
+README.md

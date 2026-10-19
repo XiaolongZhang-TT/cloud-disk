@@ -1,0 +1,31 @@
+# dependencies
+node_modules/
+.pnpm-store/
+
+# build output
+web/dist/
+server/dist/
+macos/.build/
+macos/build/
+web/screenshots/
+
+# Keep the downloadable macOS build in the repo, but not the .app bundle or CLI
+macos/dist/*
+!macos/dist/CloudDisk-1.0.0.zip
+!macos/dist/CloudDisk-1.0.0.zip.sha256
+
+# runtime data & secrets
+data/*
+!data/.gitkeep
+server/.data/
+.env
+*.db
+*.db-wal
+*.db-shm
+*.log
+
+# tooling
+.npm-cache/
+.npm-logs/
+.qa/
+.DS_Store
