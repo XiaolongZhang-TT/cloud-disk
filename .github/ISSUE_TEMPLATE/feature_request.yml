@@ -1,0 +1,57 @@
+name: Feature request
+description: Suggest an improvement or a new capability
+title: "[feature] "
+labels: ["enhancement", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please check [ROADMAP.md](../blob/main/ROADMAP.md) first — your idea may
+        already be listed. Tell us about the problem, not only the solution.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem would this solve?
+      description: Describe the user need or the workflow that is currently awkward.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: Describe the behavior you would like to see. Alternatives are welcome too.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+    validations:
+      required: false
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Files / uploads / downloads
+        - Sharing and public links
+        - WebDAV / Finder integration
+        - Users, permissions and storage
+        - Web UI / accessibility / i18n
+        - Docker / deployment / observability
+        - Documentation / developer experience
+        - Other
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checklist
+      options:
+        - label: I searched existing issues and the ROADMAP for duplicates.
+          required: true

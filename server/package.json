@@ -3,6 +3,17 @@
   "version": "1.0.0",
   "private": true,
   "description": "CloudDisk / 云屿 — self-hosted personal cloud drive: REST API, WebDAV and SPA hosting in one Node process.",
+  "license": "MIT",
+  "author": "CloudDisk contributors",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/XiaolongZhang-TT/cloud-disk.git",
+    "directory": "server"
+  },
+  "homepage": "https://github.com/XiaolongZhang-TT/cloud-disk/tree/main/server",
+  "bugs": {
+    "url": "https://github.com/XiaolongZhang-TT/cloud-disk/issues"
+  },
   "type": "module",
   "engines": {
     "node": ">=24.0.0"

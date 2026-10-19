@@ -1,8 +1,13 @@
 # 云屿 CloudDisk
 
+[![CI](https://github.com/XiaolongZhang-TT/cloud-disk/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/XiaolongZhang-TT/cloud-disk/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Latest release](https://img.shields.io/github/v/release/XiaolongZhang-TT/cloud-disk)](https://github.com/XiaolongZhang-TT/cloud-disk/releases)
+[![GitHub stars](https://img.shields.io/github/stars/XiaolongZhang-TT/cloud-disk?style=flat)](https://github.com/XiaolongZhang-TT/cloud-disk/stargazers)
+
 一个可以部署在 NAS 上的私有网盘：**Docker 一键部署**，网页端界面简洁美观，macOS 客户端可把网盘挂载到 Finder 的「位置」中，与 iCloud 云盘并排显示。
 
-> 数据完全属于你：文件保存在自己的 NAS 上，不经过任何第三方云服务。
+> 数据完全属于你：文件保存在自己的 NAS 上，不经过任何第三方云服务。项目使用 MIT 协议开源，欢迎参与贡献。
 
 ![云屿 CloudDisk 网页端](docs/screenshots/02-drive.png)
 
@@ -73,7 +78,7 @@ docker compose up -d --build
 
 **方式 A：使用仓库中构建好的应用**
 
-解压 [`macos/dist/CloudDisk-1.0.0.zip`](macos/dist/CloudDisk-1.0.0.zip)，把其中的 `CloudDisk.app` 拖到「应用程序」。校验下载文件：
+解压 [`macos/dist/CloudDisk-1.0.0.zip`](macos/dist/CloudDisk-1.0.0.zip)（也可从 [Releases](https://github.com/XiaolongZhang-TT/cloud-disk/releases) 下载），把其中的 `CloudDisk.app` 拖到「应用程序」。校验下载文件：
 
 ```bash
 cd macos/dist && shasum -a 256 -c CloudDisk-1.0.0.zip.sha256
@@ -116,6 +121,10 @@ macos/tools/mount-smoke --url http://127.0.0.1:8080/CloudDisk --user admin --pas
 - [docs/MAC.md](docs/MAC.md) — macOS 客户端构建、安装、Finder 集成、卸载
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — 架构与安全设计
 - [docs/API.md](docs/API.md) — REST / WebDAV 接口契约
+- [ROADMAP.md](ROADMAP.md) — 已知限制与后续计划
+- [CONTRIBUTING.md](CONTRIBUTING.md) — 开发环境、测试与提交规范
+- [CHANGELOG.md](CHANGELOG.md) — 版本变更记录
+- [SECURITY.md](SECURITY.md) — 安全模型与漏洞报告方式
 
 ## 架构
 
@@ -169,6 +178,19 @@ cd macos && ./build.sh     # 菜单栏应用 + 挂载 CLI
 - WebDAV 使用 HTTP Basic 认证，请勿在不可信网络中直接暴露明文 HTTP；
 - 建议将 `data/` 放在 NAS 的 RAID/快照卷上，并定期备份。
 
+## 参与贡献
+
+这是一个开源项目，欢迎提交 Issue、改进文档、翻译或代码：
+
+- 先阅读 [CONTRIBUTING.md](CONTRIBUTING.md) 和 [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)
+- 功能建议和缺陷请使用 [Issues](https://github.com/XiaolongZhang-TT/cloud-disk/issues)
+- 安全问题请**不要**公开提 Issue，按 [SECURITY.md](SECURITY.md) 私下报告
+- 想参与但不知道从哪开始，可以看 [ROADMAP.md](ROADMAP.md) 或 `good first issue`
+
+如果这个项目对你有帮助，欢迎点一个 Star。
+
 ## License
 
-MIT
+[MIT](LICENSE) © 2026 CloudDisk / 云屿 contributors
+
+第三方依赖的许可证信息以其各自仓库为准。macOS 客户端使用 Apple 系统框架，分发时请遵守 Apple 的相关条款。

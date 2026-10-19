@@ -1,0 +1,138 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  server:
+    name: Server tests (Node 24)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: server
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: server/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Run integration tests
+        run: npm test
+
+  web:
+    name: Web build (React + TypeScript)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Build production SPA
+        run: npm run build
+
+      - name: Upload build output
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-dist
+          path: web/dist
+          retention-days: 7
+
+  docker:
+    name: Docker image + smoke test
+    runs-on: ubuntu-latest
+    needs: [server, web]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build image
+        run: docker build --tag clouddisk:ci .
+
+      - name: Smoke test the container
+        run: |
+          set -euo pipefail
+          trap 'docker rm -f clouddisk-ci >/dev/null 2>&1 || true' EXIT
+          docker run -d --name clouddisk-ci -p 18080:8080 \
+            -e ADMIN_USERNAME=admin \
+            -e ADMIN_PASSWORD=ci-test-password \
+            -e DATA_UID=1000 \
+            -e DATA_GID=1000 \
+            clouddisk:ci
+
+          for _ in $(seq 1 45); do
+            if curl -fsS http://127.0.0.1:18080/api/health >/dev/null 2>&1; then
+              break
+            fi
+            sleep 2
+          done
+
+          curl -fsS http://127.0.0.1:18080/api/health
+          curl -fsS -o /dev/null -w 'SPA HTTP %{http_code}\n' http://127.0.0.1:18080/
+          curl -fsS -o /dev/null -w 'Login HTTP %{http_code}\n' \
+            -H 'Content-Type: application/json' \
+            -d '{"username":"admin","password":"ci-test-password"}' \
+            http://127.0.0.1:18080/api/auth/login
+          code=$(curl -sS -o /tmp/propfind.xml -w '%{http_code}' \
+            -u admin:ci-test-password -X PROPFIND -H 'Depth: 0' \
+            http://127.0.0.1:18080/CloudDisk)
+          test "$code" = "207"
+          grep -q 'multistatus' /tmp/propfind.xml
+          echo "WebDAV PROPFIND HTTP $code"
+          docker logs clouddisk-ci | tail -20
+
+  macos:
+    name: macOS client build
+    runs-on: macos-latest
+    defaults:
+      run:
+        working-directory: macos
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Show toolchain
+        run: |
+          sw_vers
+          swiftc --version
+          xcode-select -p
+
+      - name: Build app + mount CLI
+        run: ARCHS=x86_64 ./build.sh
+
+      - name: Verify signed bundle
+        run: |
+          codesign --verify --deep --strict --verbose=2 dist/CloudDisk.app
+          unzip -t dist/CloudDisk-1.0.0.zip
+
+      - name: Upload macOS build
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-client
+          path: |
+            macos/dist/CloudDisk-1.0.0.zip
+            macos/dist/CloudDisk-1.0.0.zip.sha256
+          retention-days: 7

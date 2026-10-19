@@ -1,0 +1,50 @@
+# Changelog
+
+All notable changes to this project are documented here. The format is based on
+[Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and this project
+adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [Unreleased]
+
+### Planned
+
+See [ROADMAP.md](ROADMAP.md) for the prioritized backlog.
+
+## [1.0.0] - 2026-10-19
+
+### Added
+
+- Docker Compose deployment: one Node.js container serving the REST API, WebDAV
+  and the compiled React SPA, with bind-mounted `./data` storage.
+- Multi-stage image build (web build + production dependencies) on Node 24
+  Alpine; runs as a non-root UID via `DATA_UID`/`DATA_GID`, includes healthcheck.
+- Authentication and accounts: first-run setup, scrypt password hashing,
+  HttpOnly session cookies, admin member management with per-user quotas.
+- File management: folders, multi-file streaming uploads, downloads, Range
+  requests, image previews, rename/move/copy, star, search, recent, overview,
+  soft-delete trash with restore/permanent delete/empty, folder ZIP downloads.
+- Share links with optional scrypt-hashed passwords, expiry and download
+  counters; public share page with password gate and inline preview.
+- Finder-compatible WebDAV at `/dav` and `/CloudDisk`: DAV 1,2, PROPFIND,
+  PROPPATCH, GET/HEAD with Range, PUT, MKCOL, DELETE, COPY, MOVE, LOCK/UNLOCK.
+- React 19 + TypeScript web client with light/dark themes, responsive layout,
+  drag-and-drop upload queue with progress, previews, dialogs, toasts and admin
+  screens; no external CDN/font dependencies.
+- SwiftUI macOS menu-bar client that mounts the WebDAV endpoint via NetFS at
+  `/Volumes/CloudDisk`, stores passwords in Keychain, supports launch at login,
+  clean unmount, diagnostics and a `mount-smoke` CLI.
+- Documentation: deployment (Synology/QNAP/Unraid, HTTPS proxy), macOS client,
+  architecture, API contract; UI screenshots.
+- 35 server integration tests covering auth, file operations, shares, quotas and
+  WebDAV; CI for server, web, Docker and macOS builds.
+
+### Security
+
+- Upload and WebDAV PUT size limits plus per-user quotas.
+- Inline HTML/SVG/XML content is sandboxed via CSP; downloads keep attachments.
+- Login and WebDAV Basic-auth rate limiting.
+- macOS AppleDouble/metadata files are hidden from REST listings while remaining
+  available to Finder over WebDAV.
+
+[Unreleased]: https://github.com/XiaolongZhang-TT/cloud-disk/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/XiaolongZhang-TT/cloud-disk/releases/tag/v1.0.0
