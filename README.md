@@ -85,9 +85,7 @@ NAS 上不需要 Node，也不需要本地构建。
 镜像已发布到 Docker Hub：**[acc110789/tern](https://hub.docker.com/r/acc110789/tern)**。
 
 ```bash
-export TERN_IMAGE=acc110789/tern:latest
-
-docker pull "$TERN_IMAGE"
+docker pull acc110789/tern:latest
 mkdir -p data
 
 docker run -d --name tern --restart unless-stopped \
@@ -97,7 +95,7 @@ docker run -d --name tern --restart unless-stopped \
   -e ADMIN_PASSWORD='请换成强密码' \
   -e DATA_UID="$(id -u)" \
   -e DATA_GID="$(id -g)" \
-  "$TERN_IMAGE"
+  acc110789/tern:latest
 ```
 
 打开 `http://<NAS-IP>:8080` 即可。上传大小、反向代理的 `client_max_body_size`
@@ -107,8 +105,7 @@ docker run -d --name tern --restart unless-stopped \
 
 ```bash
 cp .env.example .env
-# 在 .env 中增加：
-# TERN_IMAGE=acc110789/tern:latest
+# 修改 ADMIN_PASSWORD、DATA_UID、DATA_GID
 
 docker compose -f docker-compose.hub.yml pull
 docker compose -f docker-compose.hub.yml up -d

@@ -1,7 +1,6 @@
 # Deploy the prebuilt multi-arch image from Docker Hub.
 #
 #   cp .env.example .env
-#   # optional: set TERN_IMAGE=acc110789/tern:latest in .env
 #   docker compose -f docker-compose.hub.yml pull
 #   docker compose -f docker-compose.hub.yml up -d
 #
@@ -12,7 +11,7 @@ name: tern
 
 services:
   tern:
-    image: ${TERN_IMAGE:-acc110789/tern:latest}
+    image: acc110789/tern:latest
     container_name: tern
     restart: unless-stopped
     pull_policy: always

@@ -64,9 +64,8 @@ docker compose start
 Docker Hub 命名空间决定。Tern 当前发布的镜像为 `acc110789/tern:latest`：
 
 ```bash
-export TERN_IMAGE=acc110789/tern:latest
 mkdir -p data
-docker pull "$TERN_IMAGE"
+docker pull acc110789/tern:latest
 docker run -d --name tern --restart unless-stopped \
   -p 8080:8080 \
   -v "$PWD/data:/data" \
@@ -74,14 +73,13 @@ docker run -d --name tern --restart unless-stopped \
   -e ADMIN_PASSWORD='请换成强密码' \
   -e DATA_UID="$(id -u)" \
   -e DATA_GID="$(id -g)" \
-  "$TERN_IMAGE"
+  acc110789/tern:latest
 ```
 
 或者使用仓库提供的镜像版 Compose：
 
 ```bash
 cp .env.example .env
-# 在 .env 中设置 TERN_IMAGE=acc110789/tern:latest
 docker compose -f docker-compose.hub.yml pull
 docker compose -f docker-compose.hub.yml up -d
 ```
@@ -180,7 +178,6 @@ COOKIE_SECURE=true
 | `TRUST_PROXY` | `false` | 是否信任反向代理头 |
 | `COOKIE_SECURE` | `auto` | Cookie 是否仅 HTTPS；auto 按请求协议判断 |
 | `DATA_UID` / `DATA_GID` | `1000` / `1000` | 容器运行用户，需对 `data/` 有写权限 |
-| `TERN_IMAGE` | 无 | `docker-compose.hub.yml` 使用的 Docker Hub 镜像名 |
 
 ## 6. 健康检查与升级
 

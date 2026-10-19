@@ -99,9 +99,7 @@ REST API and WebDAV, so no Node.js or local build is needed on the NAS.
 The image is published on Docker Hub: **[acc110789/tern](https://hub.docker.com/r/acc110789/tern)**.
 
 ```bash
-export TERN_IMAGE=acc110789/tern:latest
-
-docker pull "$TERN_IMAGE"
+docker pull acc110789/tern:latest
 mkdir -p data
 
 docker run -d --name tern --restart unless-stopped \
@@ -111,7 +109,7 @@ docker run -d --name tern --restart unless-stopped \
   -e ADMIN_PASSWORD='change-me' \
   -e DATA_UID="$(id -u)" \
   -e DATA_GID="$(id -g)" \
-  "$TERN_IMAGE"
+  acc110789/tern:latest
 ```
 
 Open `http://<NAS-IP>:8080`. Reverse-proxy and upload settings are the same as
@@ -121,8 +119,7 @@ Or use the dedicated Compose file:
 
 ```bash
 cp .env.example .env
-# Add to .env:
-# TERN_IMAGE=acc110789/tern:latest
+# Edit ADMIN_PASSWORD, DATA_UID and DATA_GID
 
 docker compose -f docker-compose.hub.yml pull
 docker compose -f docker-compose.hub.yml up -d
