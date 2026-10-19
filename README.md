@@ -4,6 +4,7 @@
 
 [![CI](https://github.com/XiaolongZhang-dev/tern/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/XiaolongZhang-dev/tern/actions/workflows/ci.yml)
 [![Docker Publish](https://github.com/XiaolongZhang-dev/tern/actions/workflows/docker-publish.yml/badge.svg?branch=main)](https://github.com/XiaolongZhang-dev/tern/actions/workflows/docker-publish.yml)
+[![Docker Hub](https://img.shields.io/docker/pulls/acc110789/tern?logo=docker)](https://hub.docker.com/r/acc110789/tern)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Latest release](https://img.shields.io/github/v/release/XiaolongZhang-dev/tern)](https://github.com/XiaolongZhang-dev/tern/releases)
 [![GitHub stars](https://img.shields.io/github/stars/XiaolongZhang-dev/tern?style=flat)](https://github.com/XiaolongZhang-dev/tern/stargazers)
@@ -81,10 +82,10 @@ docker compose up -d --build
 （`linux/amd64` + `linux/arm64`）。镜像已经包含网页端、REST API 和 WebDAV，
 NAS 上不需要 Node，也不需要本地构建。
 
-把下面的 `your-dockerhub-username` 换成实际 Docker Hub 命名空间：
+镜像已发布到 Docker Hub：**[acc110789/tern](https://hub.docker.com/r/acc110789/tern)**。
 
 ```bash
-export TERN_IMAGE=your-dockerhub-username/tern:latest
+export TERN_IMAGE=acc110789/tern:latest
 
 docker pull "$TERN_IMAGE"
 mkdir -p data
@@ -107,7 +108,7 @@ docker run -d --name tern --restart unless-stopped \
 ```bash
 cp .env.example .env
 # 在 .env 中增加：
-# TERN_IMAGE=your-dockerhub-username/tern:latest
+# TERN_IMAGE=acc110789/tern:latest
 
 docker compose -f docker-compose.hub.yml pull
 docker compose -f docker-compose.hub.yml up -d

@@ -61,10 +61,10 @@ docker compose start
 ### 直接拉取 Docker Hub 镜像（可选）
 
 如果不想在 NAS 上构建，可以直接拉取预构建的多架构镜像。镜像名由发布者的
-Docker Hub 命名空间决定，例如 `yourname/tern:latest`：
+Docker Hub 命名空间决定。Tern 当前发布的镜像为 `acc110789/tern:latest`：
 
 ```bash
-export TERN_IMAGE=yourname/tern:latest
+export TERN_IMAGE=acc110789/tern:latest
 mkdir -p data
 docker pull "$TERN_IMAGE"
 docker run -d --name tern --restart unless-stopped \
@@ -81,7 +81,7 @@ docker run -d --name tern --restart unless-stopped \
 
 ```bash
 cp .env.example .env
-# 在 .env 中设置 TERN_IMAGE=yourname/tern:latest
+# 在 .env 中设置 TERN_IMAGE=acc110789/tern:latest
 docker compose -f docker-compose.hub.yml pull
 docker compose -f docker-compose.hub.yml up -d
 ```
@@ -232,7 +232,7 @@ docker compose pull && docker compose up -d --build
 创建 token：Docker Hub → Account settings → Security → New access token。
 
 ```bash
-gh secret set DOCKERHUB_USERNAME --body 'yourname' -R XiaolongZhang-dev/tern
+gh secret set DOCKERHUB_USERNAME --body 'acc110789' -R XiaolongZhang-dev/tern
 gh secret set DOCKERHUB_TOKEN --body 'dckr_pat_xxx' -R XiaolongZhang-dev/tern
 
 # 手动构建：会发布 latest 和 edge（适合第一次验证）
