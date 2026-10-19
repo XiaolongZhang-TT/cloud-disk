@@ -39,8 +39,8 @@ public sealed class SettingsForm : Form
         ShowInTaskbar = true;
         AutoScaleMode = AutoScaleMode.Dpi;
         Font = new Font("Segoe UI", 9F);
-        ClientSize = new Size(640, 660);
-        MinimumSize = new Size(620, 560);
+        ClientSize = new Size(640, 570);
+        MinimumSize = new Size(620, 520);
         BackColor = Color.FromArgb(248, 247, 244);
 
         BuildUi(firstRun);
