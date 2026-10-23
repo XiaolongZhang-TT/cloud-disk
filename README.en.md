@@ -90,7 +90,7 @@ The Windows **WebClient** service is required. See [docs/WINDOWS.md](docs/WINDOW
 
 - [Deployment](docs/DEPLOY.md): NAS, HTTPS, backups and upgrades
 - [macOS client](docs/MAC.md): build, install and Finder integration
-- [macOS offline location (experimental)](docs/MAC_OFFLINE.md): File Provider Phase 2
+- [macOS offline location (experimental)](docs/MAC_OFFLINE.md): File Provider Phase 3
 - [Windows client](docs/WINDOWS.md): install, drive mapping, WebClient
 - [Architecture](docs/ARCHITECTURE.md) · [API](docs/API.md)
 - [Roadmap](ROADMAP.md) · [Contributing](CONTRIBUTING.md) · [Security](SECURITY.md)

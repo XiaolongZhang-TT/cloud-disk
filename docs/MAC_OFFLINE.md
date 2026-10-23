@@ -85,7 +85,7 @@ TEAM=你的TeamID ./build-xcode.sh       # 签名运行
 - 确认 `TernFileProvider.appex` 已嵌入 `Tern.app/Contents/PlugIns`；
 - 查看 Console.app 中 `TernFileProvider` 的日志。
 
-## Phase 2 当前能力
+## Phase 2 能力
 
 - 新建文件夹、上传文件；
 - 修改文件内容（带 `If-Match`，服务端返回 412 时当前会保留待同步状态）；
