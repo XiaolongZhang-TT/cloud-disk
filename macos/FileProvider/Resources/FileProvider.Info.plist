@@ -37,8 +37,6 @@
 		<integer>4</integer>
 		<key>NSExtensionFileProviderSupportsEnumeration</key>
 		<true/>
-		<key>NSExtensionFileProviderAppliesChangesAtomically</key>
-		<true/>
 		<key>NSExtensionFileProviderActions</key>
 		<array>
 			<dict>
@@ -46,6 +44,8 @@
 				<string>com.tern.fileprovider.keepDownloaded</string>
 				<key>NSExtensionFileProviderActionName</key>
 				<string>保持下载</string>
+				<key>NSExtensionFileProviderActionIconName</key>
+				<string>arrow.down.circle</string>
 				<key>NSExtensionFileProviderActionActivationRule</key>
 				<string>TRUEPREDICATE</string>
 			</dict>
@@ -54,6 +54,8 @@
 				<string>com.tern.fileprovider.removeDownload</string>
 				<key>NSExtensionFileProviderActionName</key>
 				<string>移除下载</string>
+				<key>NSExtensionFileProviderActionIconName</key>
+				<string>icloud.slash</string>
 				<key>NSExtensionFileProviderActionActivationRule</key>
 				<string>TRUEPREDICATE</string>
 			</dict>
@@ -62,10 +64,14 @@
 				<string>com.tern.fileprovider.share</string>
 				<key>NSExtensionFileProviderActionName</key>
 				<string>创建分享链接…</string>
+				<key>NSExtensionFileProviderActionIconName</key>
+				<string>square.and.arrow.up</string>
 				<key>NSExtensionFileProviderActionActivationRule</key>
 				<string>TRUEPREDICATE</string>
 			</dict>
 		</array>
+		<key>NSExtensionFileProviderAppliesChangesAtomically</key>
+		<true/>
 	</dict>
 </dict>
 </plist>

@@ -7,6 +7,7 @@
 
 import AppKit
 import Foundation
+import FileProvider
 
 private let shareRequestCallback: CFNotificationCallback = { _, _, _, _, _ in
     DispatchQueue.main.async {
@@ -55,13 +56,24 @@ final class ShareRequestHandler {
     }
 
     func processPending() {
-        guard !presenting, let request = FileProviderShared.takeShareRequest() else { return }
+        guard !presenting else { return }
+        if let action = FileProviderShared.takeFinderAction() {
+            presenting = true
+            handleFinderAction(action)
+            return
+        }
+        guard let request = FileProviderShared.takeShareRequest() else { return }
         presenting = true
         defer { presenting = false }
 
         NSApp.activate(ignoringOtherApps: true)
+        showSharePolicy(nodeId: request.nodeId, name: request.name)
+    }
+
+    private func showSharePolicy(nodeId: String, name: String) {
+        NSApp.activate(ignoringOtherApps: true)
         let alert = NSAlert()
-        alert.messageText = "分享「\(request.name)」"
+        alert.messageText = "分享「\(name)」"
         alert.informativeText = "选择这条分享链接的有效期和密码。默认 24 小时、无密码。"
         alert.alertStyle = .informational
         alert.addButton(withTitle: "创建并复制链接")
@@ -96,9 +108,115 @@ final class ShareRequestHandler {
         guard alert.runModal() == .alertFirstButtonReturn else { return }
         let password = passwordField.stringValue
         let hours = expiryPopup.selectedItem?.representedObject as? Int
-        createShare(nodeId: request.nodeId, name: request.name,
+        createShare(nodeId: nodeId, name: name,
                     password: password.isEmpty ? nil : password,
                     expiresInHours: hours)
+    }
+
+    private func handleFinderAction(_ action: FileProviderShared.FinderAction) {
+        Task {
+            defer { Task { @MainActor in self.presenting = false } }
+            do {
+                let nodes = try await resolveNodes(paths: action.paths)
+                switch action.kind {
+                case "share":
+                    guard let first = nodes.first else { throw FinderActionError.notFound }
+                    await MainActor.run {
+                        NSApp.activate(ignoringOtherApps: true)
+                        self.showSharePolicy(nodeId: first.id, name: first.name ?? "Tern 文件")
+                    }
+                case "keep", "remove":
+                    let manager = NSFileProviderManager(for: FileProviderBridge.domain)
+                    for node in nodes {
+                        FileProviderShared.setPinned(action.kind == "keep", itemIdentifier: node.id)
+                        if action.kind == "remove" {
+                            manager?.evictItem(identifier: NSFileProviderItemIdentifier(node.id)) { _ in }
+                        }
+                    }
+                    FileProviderBridge.signalChanges()
+                default:
+                    break
+                }
+            } catch {
+                await MainActor.run {
+                    self.presentError("操作失败：\(error.localizedDescription)")
+                }
+            }
+        }
+    }
+
+    private func resolveNodes(paths: [String]) async throws -> [TernChange] {
+        guard let config = FileProviderShared.loadConfiguration(),
+              let password = FileProviderShared.loadPassword(serverURL: config.serverURL,
+                                                             username: config.username) else {
+            throw SyncClientError.notConfigured
+        }
+        let root = try cloudStorageRoot()
+        let wanted = paths.compactMap { path -> String? in
+            let target = URL(fileURLWithPath: path).standardizedFileURL.path
+            let rootPath = root.standardizedFileURL.path
+            guard target.hasPrefix(rootPath + "/") else { return nil }
+            return String(target.dropFirst(rootPath.count + 1))
+        }
+        guard !wanted.isEmpty else { throw FinderActionError.outsideRoot }
+
+        let client = try TernSyncClient(serverURL: config.serverURL,
+                                        username: config.username,
+                                        password: password)
+        let page = try await client.sync(cursor: 0)
+        var byId: [String: TernChange] = [:]
+        for change in page.changes where !change.deleted {
+            byId[change.id] = change
+        }
+        var pathsById: [String: String] = [:]
+        func pathFor(_ node: TernChange, _ guardSet: inout Set<String>) -> String? {
+            if let cached = pathsById[node.id] { return cached }
+            guard guardSet.insert(node.id).inserted else { return nil }
+            var value = node.name ?? ""
+            if let parentId = node.parentId, let parent = byId[parentId],
+               let parentPath = pathFor(parent, &guardSet) {
+                value = parentPath + "/" + value
+            }
+            pathsById[node.id] = value
+            return value
+        }
+        var result: [TernChange] = []
+        for target in wanted {
+            var found: TernChange?
+            for node in byId.values {
+                var set = Set<String>()
+                if let path = pathFor(node, &set),
+                   path.caseInsensitiveCompare(target) == .orderedSame {
+                    found = node
+                    break
+                }
+            }
+            if let found { result.append(found) }
+        }
+        if result.isEmpty { throw FinderActionError.notFound }
+        return result
+    }
+
+    private func cloudStorageRoot() throws -> URL {
+        let cloudStorage = FileManager.default.homeDirectoryForCurrentUser
+            .appendingPathComponent("Library/CloudStorage", isDirectory: true)
+        let entries = (try? FileManager.default.contentsOfDirectory(at: cloudStorage,
+                                                                    includingPropertiesForKeys: nil)) ?? []
+        if let match = entries.first(where: { $0.lastPathComponent.hasPrefix("Tern") }) {
+            return match
+        }
+        throw FinderActionError.notFound
+    }
+
+    private enum FinderActionError: LocalizedError {
+        case outsideRoot
+        case notFound
+        var errorDescription: String? {
+            switch self {
+            case .outsideRoot: return "只能操作 Tern 同步文件夹中的项目。"
+            case .notFound: return "没有找到对应的 Tern 文件，请稍后再试。"
+            }
+        }
     }
 
     private func createShare(nodeId: String, name: String, password: String?, expiresInHours: Int?) {

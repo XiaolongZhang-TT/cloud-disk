@@ -17,7 +17,7 @@ public enum FileProviderShared {
     private static let configService = "com.tern.menubar.fileprovider.config"
     private static let statusService = "com.tern.menubar.fileprovider.status"
     private static let pinnedService = "com.tern.menubar.fileprovider.pinned"
-    private static let shareRequestService = "com.tern.menubar.fileprovider.shareRequest"
+    private static let extensionBundleIdentifier = "com.tern.menubar.FileProvider"
 
     private struct Configuration: Codable {
         let serverURL: String
@@ -129,9 +129,41 @@ public enum FileProviderShared {
         public let name: String
     }
 
+    public static func notifyShareRequest() {
+        CFNotificationCenterPostNotification(
+            CFNotificationCenterGetDarwinNotifyCenter(),
+            CFNotificationName(shareRequestNotification as CFString),
+            nil,
+            nil,
+            true
+        )
+    }
+
+    /// The extension and menu-bar app have different code signatures, so a
+    /// plain Keychain item triggers an ACL prompt. Create it with both apps as
+    /// trusted applications so Finder actions never ask for the login password.
+    private static let shareRequestService = "com.tern.menubar.fileprovider.shareRequest"
+
     public static func saveShareRequest(nodeId: String, name: String) {
         guard let data = try? JSONEncoder().encode(ShareRequest(nodeId: nodeId, name: name)) else { return }
-        _ = write(data, service: shareRequestService, account: "pending")
+        delete(service: shareRequestService, account: "pending")
+
+        var trusted: [SecTrustedApplication] = []
+        if let selfApp = trustedApplication(path: nil) { trusted.append(selfApp) }
+        if let appPath = mainAppPath(),
+           let app = trustedApplication(path: appPath) { trusted.append(app) }
+
+        var access: SecAccess?
+        let descriptor = "Tern share request" as CFString
+        if SecAccessCreate(descriptor, trusted as CFArray, &access) != errSecSuccess {
+            access = nil
+        }
+
+        var attributes = query(service: shareRequestService, account: "pending")
+        attributes[kSecValueData as String] = data
+        attributes[kSecAttrAccessible as String] = kSecAttrAccessibleAfterFirstUnlock
+        if let access { attributes[kSecAttrAccess as String] = access }
+        _ = SecItemAdd(attributes as CFDictionary, nil)
     }
 
     /// Read and remove the pending request so one Finder action is handled once.
@@ -141,14 +173,58 @@ public enum FileProviderShared {
         return try? JSONDecoder().decode(ShareRequest.self, from: data)
     }
 
-    public static func notifyShareRequest() {
-        CFNotificationCenterPostNotification(
-            CFNotificationCenterGetDarwinNotifyCenter(),
-            CFNotificationName(shareRequestNotification as CFString),
-            nil,
-            nil,
-            true
-        )
+    private static func trustedApplication(path: String?) -> SecTrustedApplication? {
+        var application: SecTrustedApplication?
+        let status: OSStatus
+        if let path {
+            status = path.withCString { cPath in
+                SecTrustedApplicationCreateFromPath(cPath, &application)
+            }
+        } else {
+            status = SecTrustedApplicationCreateFromPath(nil, &application)
+        }
+        return status == errSecSuccess ? application : nil
+    }
+
+    private static func mainAppPath() -> String? {
+        // .../Tern.app/Contents/PlugIns/TernFileProvider.appex
+        var url = Bundle.main.bundleURL
+        guard url.pathExtension == "appex" else { return nil }
+        url.deleteLastPathComponent() // PlugIns
+        url.deleteLastPathComponent() // Contents
+        url.deleteLastPathComponent() // Tern.app
+        return url.path
+    }
+
+    // MARK: - Finder Sync action bridge
+
+    public struct FinderAction: Codable, Sendable {
+        public let kind: String
+        public let paths: [String]
+    }
+
+    private static var finderActionFileURL: URL {
+        let home = NSHomeDirectory()
+        let containerHome = home.contains("/Library/Containers/")
+            ? home
+            : home + "/Library/Containers/com.tern.menubar.FinderSync/Data"
+        return URL(fileURLWithPath: containerHome)
+            .appendingPathComponent("Library/Application Support/Tern/finder-action.json")
+    }
+
+    public static func saveFinderAction(kind: String, paths: [String]) {
+        guard let data = try? JSONEncoder().encode(FinderAction(kind: kind, paths: paths)) else { return }
+        let url = finderActionFileURL
+        try? FileManager.default.createDirectory(at: url.deletingLastPathComponent(),
+                                                 withIntermediateDirectories: true)
+        try? data.write(to: url, options: .atomic)
+    }
+
+    public static func takeFinderAction() -> FinderAction? {
+        let url = finderActionFileURL
+        guard let data = try? Data(contentsOf: url) else { return nil }
+        try? FileManager.default.removeItem(at: url)
+        return try? JSONDecoder().decode(FinderAction.self, from: data)
     }
 
     // MARK: - Keychain helpers
