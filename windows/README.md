@@ -37,6 +37,8 @@ Credentials live in **Windows Credential Manager**, not in `settings.json`.
 - Offline writes queued and uploaded when the network returns
 - Conflict copies instead of silent overwrite
 - New folders/files, edits, renames and deletes sync
+- FileSystemWatcher for immediate local-change sync
+- Network change listeners for reconnect and immediate refresh
 - Real-time remote changes through `/api/sync/watch`
 - Optional `T:` drive letter (`subst`)
 

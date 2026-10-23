@@ -19,6 +19,8 @@ See [ROADMAP.md](ROADMAP.md) for the prioritized backlog.
   conflict copies and optional `T:` drive.
 - Long-poll `/api/sync/watch` watcher so web/other-client uploads appear in
   Explorer without reopening folders.
+- Windows `NetworkAvailabilityChanged` / `NetworkAddressChanged` listeners and
+  a FileSystemWatcher for immediate reconnect and local-change uploads.
 - On-demand download and offline queue through the Tern REST API.
 
 ### Changed

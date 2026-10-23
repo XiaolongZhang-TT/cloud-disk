@@ -44,6 +44,10 @@ OneDrive 的离线位置。文件在资源管理器里是占位符，打开时�
 - **重命名 / 移动 / 删除 / 新建文件夹**：本地修改会同步到服务端；
 - **远程变化**：菜单栏 watcher 长轮询 `/api/sync/watch`，网页上传后约
   1 秒出现在资源管理器；
+- **本地变化**：FileSystemWatcher 监听同步文件夹，新建/修改/删除会立即
+  进入上传队列；
+- **网络变化**：监听 Windows 的 `NetworkAvailabilityChanged` /
+  `NetworkAddressChanged`，网络恢复后立即刷新同步根并唤醒上传队列；
 - **盘符**：`T:` 只是通过 `subst` 指向同步根的快捷方式，不改变 Cloud Files
   的离线行为。
 

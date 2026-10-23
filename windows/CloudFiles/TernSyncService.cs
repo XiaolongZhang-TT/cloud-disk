@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Net.NetworkInformation;
 
 namespace Tern.Windows;
 
@@ -18,6 +19,10 @@ public sealed class TernSyncService : IAsyncDisposable
     private Dictionary<string, TernNode> nodes = new(StringComparer.Ordinal);
     private Dictionary<string, TernNode> nodesByPath = new(StringComparer.OrdinalIgnoreCase);
     private readonly SemaphoreSlim refreshLock = new(1, 1);
+    private readonly SemaphoreSlim localWake = new(0, 1);
+    private readonly SemaphoreSlim networkRefreshLock = new(1, 1);
+    private FileSystemWatcher? localWatcher;
+    private bool networkSubscribed;
 
     public TernSyncService(string root, string dataDirectory)
     {
@@ -48,6 +53,11 @@ public sealed class TernSyncService : IAsyncDisposable
         await RefreshAsync(cancellationToken).ConfigureAwait(false);
         watcherTask = Task.Run(() => WatchLoopAsync(lifetime.Token));
         localTask = Task.Run(() => LocalLoopAsync(lifetime.Token));
+        StartLocalWatcher();
+        NetworkChange.NetworkAvailabilityChanged += OnNetworkChanged;
+        NetworkChange.NetworkAddressChanged += OnNetworkChanged;
+        networkSubscribed = true;
+        WakeLocal();
         if (!string.IsNullOrWhiteSpace(settings.DriveLetter))
         {
             try
@@ -67,6 +77,18 @@ public sealed class TernSyncService : IAsyncDisposable
 
     public async Task StopAsync()
     {
+        if (networkSubscribed)
+        {
+            NetworkChange.NetworkAvailabilityChanged -= OnNetworkChanged;
+            NetworkChange.NetworkAddressChanged -= OnNetworkChanged;
+            networkSubscribed = false;
+        }
+        if (localWatcher is not null)
+        {
+            localWatcher.EnableRaisingEvents = false;
+            localWatcher.Dispose();
+            localWatcher = null;
+        }
         if (provider is not null)
         {
             try { await provider.DisposeAsync().ConfigureAwait(false); } catch (Exception ex) { Log.Warn("cloudfiles dispose: " + ex.Message); }
@@ -185,13 +207,79 @@ public sealed class TernSyncService : IAsyncDisposable
         }
     }
 
+    private void StartLocalWatcher()
+    {
+        try
+        {
+            localWatcher = new FileSystemWatcher(root)
+            {
+                IncludeSubdirectories = true,
+                NotifyFilter = NotifyFilters.FileName
+                    | NotifyFilters.DirectoryName
+                    | NotifyFilters.LastWrite
+                    | NotifyFilters.Size,
+            };
+            localWatcher.Created += (_, _) => WakeLocal();
+            localWatcher.Changed += (_, _) => WakeLocal();
+            localWatcher.Deleted += (_, _) => WakeLocal();
+            localWatcher.Renamed += (_, _) => WakeLocal();
+            localWatcher.Error += (_, _) => WakeLocal();
+            localWatcher.EnableRaisingEvents = true;
+        }
+        catch (Exception exception)
+        {
+            Log.Warn("local watcher failed: " + exception.Message);
+        }
+    }
+
+    private void WakeLocal()
+    {
+        try
+        {
+            if (localWake.CurrentCount == 0) localWake.Release();
+        }
+        catch (SemaphoreFullException)
+        {
+            // A wake-up is already pending.
+        }
+    }
+
+    private void OnNetworkChanged(object? sender, EventArgs e)
+    {
+        if (!IsRunning) return;
+        Log.Info("network: change detected; refreshing sync");
+        _ = Task.Run(async () =>
+        {
+            await networkRefreshLock.WaitAsync().ConfigureAwait(false);
+            try
+            {
+                await Task.Delay(700).ConfigureAwait(false);
+                if (backend is not null)
+                {
+                    try { await backend.LoginAsync().ConfigureAwait(false); }
+                    catch (Exception exception) { Log.Warn("network: login after change failed: " + exception.Message); }
+                }
+                try { await RefreshAsync().ConfigureAwait(false); }
+                catch (Exception exception) { Log.Warn("network: refresh after change failed: " + exception.Message); }
+                WakeLocal();
+                StateChanged?.Invoke(this, EventArgs.Empty);
+            }
+            finally
+            {
+                networkRefreshLock.Release();
+            }
+        });
+    }
+
     private async Task LocalLoopAsync(CancellationToken cancellationToken)
     {
         while (!cancellationToken.IsCancellationRequested)
         {
             try
             {
-                await Task.Delay(2500, cancellationToken).ConfigureAwait(false);
+                await localWake.WaitAsync(TimeSpan.FromSeconds(25), cancellationToken).ConfigureAwait(false);
+                // Coalesce bursts from editors and Cloud Files hydration.
+                await Task.Delay(250, cancellationToken).ConfigureAwait(false);
                 await UploadLocalChangesAsync(cancellationToken).ConfigureAwait(false);
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
