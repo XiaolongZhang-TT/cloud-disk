@@ -56,21 +56,16 @@ cd web && npm run build   # outputs web/dist, served by the Node server
 
 ```bash
 cd macos
-./build.sh
+./build.sh          # menu-bar app only, no Xcode required
 open dist/Tern.app
+
+# Full File Provider build (requires Xcode + signing):
+TEAM=YOUR_TEAM_ID ./build-xcode.sh
 ```
 
-`build.sh` uses `swiftc` directly and needs no Apple Developer account. The
-`mount-smoke` CLI is built alongside the app and can verify WebDAV mounting:
-
-```bash
-macos/tools/mount-smoke --url http://127.0.0.1:18080/Tern \
-  --user admin --password 'your-password'
-```
-
-macOS network mounts require a graphical login session; see
-[docs/MAC.md](docs/MAC.md) for the LaunchServices workaround in sandboxed/CI
-shells.
+`build.sh` uses `swiftc` directly and needs no Apple Developer account, but it
+does not embed the File Provider extension. Use `build-xcode.sh` for Finder
+integration. See [docs/MAC.md](docs/MAC.md).
 
 ### Docker
 

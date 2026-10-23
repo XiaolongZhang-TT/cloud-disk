@@ -120,13 +120,13 @@ jobs:
           swiftc --version
           xcode-select -p
 
-      - name: Build app + mount CLI
+      - name: Build menu-bar app
         run: ARCHS=x86_64 ./build.sh
 
       - name: Verify signed bundle
         run: |
           codesign --verify --deep --strict --verbose=2 dist/Tern.app
-          unzip -t dist/Tern-1.1.1.zip
+          unzip -t dist/Tern-*.zip
 
       - name: Build Xcode app + File Provider extension (unsigned)
         run: ./build-xcode.sh
@@ -141,6 +141,6 @@ jobs:
         with:
           name: macos-client
           path: |
-            macos/dist/Tern-1.1.1.zip
-            macos/dist/Tern-1.1.1.zip.sha256
+            macos/dist/Tern-*.zip
+            macos/dist/Tern-*.zip.sha256
           retention-days: 7

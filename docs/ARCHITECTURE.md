@@ -6,9 +6,9 @@ Tern / Tern is a self-hosted personal cloud drive designed for a home NAS.
 ┌──────────────────────┐        HTTPS / HTTP        ┌─────────────────────────────┐
 │  Browser (React SPA) │ ─────────────────────────► │  Node.js server (Express)   │
 └──────────────────────┘                            │                             │
-┌──────────────────────┐        WebDAV (Basic)      │  /api   REST + session      │
-│  macOS Finder        │ ─────────────────────────► │  /dav   WebDAV              │
-│  (mounted volume)    │                            │  /Tern  WebDAV alias   │
+┌──────────────────────┐   REST + session + watch   │  /api   REST + session      │
+│  macOS File Provider │ ─────────────────────────► │  /dav   WebDAV              │
+│  (Finder location)   │                            │  /Tern  WebDAV alias   │
 └──────────────────────┘                            │  /      static SPA          │
                                                     └──────────────┬──────────────┘
                                                                    │
@@ -30,10 +30,11 @@ Tern / Tern is a self-hosted personal cloud drive designed for a home NAS.
   stays small and works on x86_64 and arm64 NAS devices.
 - **scrypt password hashing** via Node crypto, with transparent Basic-auth caching for the many
   small requests Finder makes over WebDAV.
-- **WebDAV first.** The macOS client does not reimplement sync: macOS mounts the WebDAV endpoint
-  through `NetFSMountURLSync`. The volume is managed by Finder and appears in the sidebar under
-  **Locations**, next to iCloud Drive and other cloud services. This requires no Apple Developer
-  account, no kernel extension and no File Provider entitlement.
+- **File Provider on macOS.** The menu-bar app owns a replicated
+  `NSFileProviderReplicatedExtension`; Finder sees a native cloud location. Sync uses the
+  append-only `/api/sync/changes` feed, and a long-poll watcher (`/api/sync/watch`) wakes File
+  Provider when the web UI or another client changes the tree. WebDAV remains available for
+  Windows/rclone but is no longer used by the macOS client.
 - **Soft delete + restorable trash**, share links with optional password/expiry, per-user quotas.
 
 ## Repository layout
@@ -41,7 +42,7 @@ Tern / Tern is a self-hosted personal cloud drive designed for a home NAS.
 ```
 server/    Express API, WebDAV, SQLite, tests, Docker runtime
 web/       React + TypeScript + Vite single-page app (built into web/dist)
-macos/     Swift menu-bar client, build script, Finder mount smoke test
+macos/     Swift menu-bar app + File Provider extension, build scripts
 docs/      API contract, architecture, deployment, macOS guide
 ```
 
@@ -67,10 +68,11 @@ nodes; trashed nodes are excluded from that constraint.
 
 ## macOS Finder integration
 
-The client builds a `.app` that lives in the menu bar. On connect it calls
-`NetFSMountURLSync` for `http(s)://host:port/Tern` with the user's credentials; macOS then
-mounts it as a normal network volume. WebDAV `LOCK`/`UNLOCK`, `PROPFIND`, Range `GET` and `MOVE`
-are implemented so Finder mounts read-write and Quick Look works.
+The menu-bar app registers a replicated File Provider domain. Finder shows **Tern** under
+**Locations** alongside iCloud Drive. The extension pulls metadata through
+`GET /api/sync/changes`, streams contents through `/api/nodes/:id/content`, and writes through the
+same REST endpoints with `If-Match` conflict detection.
 
-The volume appears in Finder's sidebar under **Locations** alongside iCloud Drive. Users can drag
-it into Favorites for a permanent spot; the app also opens Finder at the mount on connect.
+A long-poll watcher in the menu-bar app holds `GET /api/sync/watch`; when another client changes
+the tree, the app calls `NSFileProviderManager.signalEnumerator` and the extension applies the
+incremental changes. There is no server push connection and no WebDAV mount on macOS.

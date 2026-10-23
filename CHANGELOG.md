@@ -10,6 +10,21 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 See [ROADMAP.md](ROADMAP.md) for the prioritized backlog.
 
+## [1.2.1] - 2026-10-23
+
+### Added
+
+- Server `GET /api/sync/watch` long-poll endpoint so the macOS menu-bar app can wake File Provider when the web UI or another client changes the tree.
+- macOS File Provider watcher: web uploads appear in Finder in about a second without reopening folders.
+- Updated NAS image and menu-bar app to 1.2.1.
+
+### Changed
+
+- File Provider folder enumeration now pulls incremental changes on every open.
+- macOS client no longer mounts WebDAV: removed `MountClient`, the `mount-smoke` CLI, WebDAV diagnostics and the auto-mount/login-remount path. WebDAV remains server-side for Windows/rclone.
+- Personal Team build no longer requires App Groups; connection metadata and status use shared Keychain items.
+- Login startup is retained for the watcher; the app is File Provider-only.
+
 ## [1.2.0] - 2026-10-23
 
 ### Added

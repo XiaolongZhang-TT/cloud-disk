@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# build.sh – build Tern.app (menu-bar client) and the mount-smoke CLI.
+# build.sh – build the Tern menu-bar client without Xcode.
 #
 # Works with the macOS Command Line Tools only (no Xcode, no xcodebuild, no
 # Apple Developer account):
@@ -8,8 +8,7 @@
 #   * compiles the Swift sources with swiftc,
 #   * assembles a proper .app bundle with Info.plist + icon,
 #   * ad-hoc signs everything (`codesign --sign -`),
-#   * writes a distributable zip + sha256 into macos/dist/,
-#   * builds macos/tools/mount-smoke for end-to-end verification.
+#   * writes a distributable zip + sha256 into macos/dist/.
 #
 # Usage:
 #   ./build.sh                # arm64 build (default)
@@ -27,7 +26,6 @@ DIST_DIR="$ROOT/dist"
 APP_DIR="$DIST_DIR/$APP_NAME.app"
 MODULE_CACHE="$BUILD_DIR/ModuleCache"
 TMP_DIR="$BUILD_DIR/tmp"
-CLI_OUT="$ROOT/tools/mount-smoke"
 ARCHS="${ARCHS:-arm64}"
 DEPLOYMENT_TARGET="${DEPLOYMENT_TARGET:-13.0}"
 VERSION="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$ROOT/Resources/Info.plist" 2>/dev/null || echo 1.1.0)"
@@ -39,7 +37,7 @@ fail()  { printf '\033[1;31m  ✗ %s\033[0m\n' "$*" >&2; exit 1; }
 
 if [[ "${1:-}" == "--clean" ]]; then
   info "清理构建目录"
-  rm -rf "$BUILD_DIR" "$DIST_DIR" "$CLI_OUT"
+  rm -rf "$BUILD_DIR" "$DIST_DIR"
 fi
 
 mkdir -p "$BUILD_DIR" "$DIST_DIR" "$MODULE_CACHE" "$TMP_DIR"
@@ -127,8 +125,6 @@ SHARED_SOURCES=(
   Sources/Shared/KeychainStore.swift
   Sources/FileProvider/FileProviderShared.swift
   Sources/FileProvider/TernSyncClient.swift
-  Sources/Shared/MountClient.swift
-  Sources/Shared/SmokeRunner.swift
 )
 APP_SOURCES=(
   Sources/App/TernApp.swift
@@ -140,11 +136,7 @@ APP_SOURCES=(
   Sources/App/FileProviderBridge.swift
   Sources/App/FileProviderWatcher.swift
 )
-CLI_SOURCES=(
-  Sources/CLI/MountSmokeMain.swift
-)
-
-for file in "${SHARED_SOURCES[@]}" "${APP_SOURCES[@]}" "${CLI_SOURCES[@]}"; do
+for file in "${SHARED_SOURCES[@]}" "${APP_SOURCES[@]}"; do
   [[ -f "$file" ]] || fail "缺少源文件：$file"
 done
 
@@ -158,20 +150,16 @@ COMMON_FLAGS=(
   -Xfrontend -disable-sandbox
   -O
   -parse-as-library
-  -framework NetFS
   -framework Security
   -framework AppKit
   -framework SwiftUI
   -framework FileProvider
-  -framework Network
 )
 
 APP_SLICES=()
-CLI_SLICES=()
 for arch in $ARCHS; do
   target="${arch}-apple-macos$DEPLOYMENT_TARGET"
   app_slice="$BUILD_DIR/${APP_NAME}-${arch}"
-  cli_slice="$BUILD_DIR/mount-smoke-${arch}"
 
   info "编译应用（${arch}）"
   if ! "$SWIFTC" "${COMMON_FLAGS[@]}" "${PLUGIN_FLAGS[@]}" -target "$target" \
@@ -185,20 +173,7 @@ for arch in $ARCHS; do
   fi
   ok "$app_slice"
 
-  info "编译 mount-smoke（${arch}）"
-  if ! "$SWIFTC" "${COMMON_FLAGS[@]}" "${PLUGIN_FLAGS[@]}" -target "$target" \
-        "${CLI_SOURCES[@]}" "${SHARED_SOURCES[@]}" \
-        -o "$cli_slice" 2> "$BUILD_DIR/build-cli-${arch}.log"; then
-    cat "$BUILD_DIR/build-cli-${arch}.log" >&2
-    fail "CLI 编译失败（${arch}），日志：$BUILD_DIR/build-cli-${arch}.log"
-  fi
-  if [[ -s "$BUILD_DIR/build-cli-${arch}.log" ]]; then
-    sed 's/^/    /' "$BUILD_DIR/build-cli-${arch}.log" | head -40
-  fi
-  ok "$cli_slice"
-
   APP_SLICES+=("$app_slice")
-  CLI_SLICES+=("$cli_slice")
 done
 
 # ---------------------------------------------------------------------------
@@ -223,16 +198,6 @@ else
   warn "缺少 Resources/AppIcon.icns（可运行 tools/make-icon.py 生成）"
 fi
 
-if [[ ${#CLI_SLICES[@]} -eq 1 ]]; then
-  cp "${CLI_SLICES[0]}" "$CLI_OUT"
-else
-  /usr/bin/lipo -create "${CLI_SLICES[@]}" -output "$CLI_OUT"
-fi
-chmod +x "$CLI_OUT"
-
-# Keep a copy of the CLI next to the distributable for convenience.
-cp "$CLI_OUT" "$DIST_DIR/mount-smoke"
-
 # ---------------------------------------------------------------------------
 # Ad-hoc code signing
 # ---------------------------------------------------------------------------
@@ -241,7 +206,6 @@ info "临时签名（ad-hoc，无需开发者账号）"
   || fail "应用二进制签名失败"
 /usr/bin/codesign --force --sign - --timestamp=none "$APP_DIR" >/dev/null 2>&1 \
   || fail "应用包签名失败"
-/usr/bin/codesign --force --sign - --timestamp=none "$CLI_OUT" >/dev/null 2>&1 || true
 
 /usr/bin/codesign --verify --deep --strict --verbose=2 "$APP_DIR" 2>&1 | sed 's/^/    /'
 /usr/bin/codesign -dv "$APP_DIR" 2>&1 | sed -n '1,6p' | sed 's/^/    /'
@@ -266,10 +230,8 @@ echo
 info "构建完成"
 echo "    应用:      $APP_DIR ($SIZE_APP)"
 echo "    Zip:       $ZIP ($SIZE_ZIP)"
-echo "    CLI:       $CLI_OUT"
 echo "    签名:      ad-hoc（$(/usr/bin/codesign -dv "$APP_DIR" 2>&1 | awk -F= '/Identifier=/{print $2; exit}')）"
 echo
 echo "下一步:"
 echo "    open \"$APP_DIR\"                       # 启动菜单栏应用"
-echo "    \"$CLI_OUT\" --help                      # 查看挂载冒烟测试用法"
-echo "    \"$CLI_OUT\" --url http://127.0.0.1:18080/Tern --user admin --password '***'"
+echo "    TEAM=你的TeamID ./build-xcode.sh        # 生成带 File Provider 扩展的签名版"

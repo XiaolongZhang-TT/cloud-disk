@@ -128,13 +128,11 @@ TEAM=你的TeamID ./build-xcode.sh       # 自动签名并生成 provisioning pr
   标记并调用 evict；
 - **实时 watcher**：菜单栏 App 持有 `/api/sync/watch` 长轮询，收到变化后
   `signalEnumerator`，让 File Provider 增量同步网页/其他客户端的改动；
-- **从 WebDAV 迁移**：设置页提供「断开 WebDAV 网络盘（保留登录启动）」；
-  会关闭 `autoConnect` 并卸载 `/Volumes/Tern-1`，但保留 Tern 登录启动，
-  因为 watcher 需要菜单栏 App 常驻；
-- **网络变化自动重连**：菜单栏 App 和 File Provider 扩展都使用 `NWPathMonitor`；
-  - 网络恢复时 App 通知 File Provider 重新枚举；
-  - 扩展自动 flush 离线写队列；
-  - 如果启用了 WebDAV `autoConnect`，App 也会重新挂载网络卷；
+- **Mac 客户端不再使用 WebDAV**：服务端 WebDAV 仍保留给 Windows/rclone，
+  但菜单栏 App 只使用 REST + File Provider；
+- **网络变化自动重连**：File Provider 扩展使用 `NWPathMonitor`；
+  - 网络恢复时自动 flush 离线写队列；
+  - 菜单栏 watcher 自动重连长轮询；
 - **签名脚本**：`package-release.sh` 使用 Developer ID 归档、公证、staple。
 
 ## 已验证
@@ -157,16 +155,10 @@ TEAM=你的TeamID ./build-xcode.sh       # 自动签名并生成 provisioning pr
 - 正式 Developer ID 签名、公证、发布和升级流程；
 - 扩展必须由 Xcode 构建并正确签名，旧版 `build.sh`（CLT + ad-hoc）不能注册它。
 
-## 从 WebDAV 迁移
+## 与 WebDAV 的关系
 
-1. 先在设置中启用 File Provider；
-2. 确认 Finder「位置」中的 Tern 可以浏览、下载和写入；
-3. 点击设置里的 **「断开 WebDAV 网络盘（保留登录启动）」**；
-4. 应用会卸载旧的 `/Volumes/Tern` 挂载并关闭 `autoConnect`，但保留
-   LaunchAgent 和登录启动，因为 File Provider 的实时 watcher 需要菜单栏 App
-   常驻；File Provider 位置继续保留。
-
-不要同时保留两个 Tern 入口，否则 Finder 里会出现两个位置。
+macOS 客户端不挂载 WebDAV。服务端 `/Tern` 和 `/dav` 仍可供 Windows、rclone
+等客户端使用；macOS 的 Finder 访问全部经过 File Provider 的 REST 通道。
 
 ## 签名与公证
 

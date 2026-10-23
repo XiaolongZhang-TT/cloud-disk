@@ -10,7 +10,6 @@
 import SwiftUI
 import AppKit
 import Darwin
-import FileProvider
 
 // MARK: - Entry point
 
@@ -19,7 +18,7 @@ struct TernMain {
     static func main() {
         let arguments = Array(CommandLine.arguments.dropFirst())
 
-        // Hidden non-GUI modes: --smoke, --set-password, --login-item, ...
+        // Hidden non-GUI modes: --set-password, --login-item, --file-provider-*, ...
         if let first = arguments.first, first.hasPrefix("--") {
             if let exitCode = CommandLineModes.run(arguments: arguments) {
                 exit(exitCode)
@@ -131,24 +130,6 @@ enum CommandLineModes {
             print(helpText())
             return 0
 
-        case "--smoke":
-            switch SmokeRunner.parse(arguments: rest) {
-            case .success(let options):
-                return SmokeRunner.run(options: options)
-            case .failure(let error):
-                switch error.message {
-                case "__HELP__":
-                    print(SmokeRunner.usageText())
-                    return 0
-                case "__VERSION__":
-                    print(TernInfo.versionDescription)
-                    return 0
-                default:
-                    FileHandle.standardError.write(Data(("错误：\(error.message)\n\n" + SmokeRunner.usageText() + "\n").utf8))
-                    return 1
-                }
-            }
-
         case "--set-password":
             return runSetPassword(arguments: rest)
         case "--delete-password":
@@ -177,7 +158,6 @@ enum CommandLineModes {
           open Tern.app
 
         隐藏的命令行模式（用于自动化与排障）：
-          --smoke <mount-smoke 参数>   运行挂载冒烟测试（见 --help 中的 mount-smoke 说明）
           --set-password --url URL --user NAME --password PASS [--result FILE]
                                        把密码写入 macOS 钥匙串（以当前应用身份）
           --delete-password --url URL --user NAME
@@ -309,28 +289,20 @@ enum CommandLineModes {
         lines.append("server: \(serverURL)")
         lines.append("user: \(settings.username.isEmpty ? "(未设置)" : settings.username)")
         lines.append("connectAtLogin(defaults): \(settings.connectAtLogin)")
-        lines.append("autoConnect: \(settings.autoConnect)")
         lines.append("launchAgent: \(LaunchAgentManager.statusDescription())")
         if let url = try? settings.validatedServerURL(), !settings.username.isEmpty {
             let password = KeychainStore.loadPassword(serverURL: url, username: settings.username)
             lines.append("keychainPassword: \(password == nil ? "未保存" : "已保存")")
         }
-        if let url = try? settings.validatedServerURL() {
-            lines.append("expectedMountPath: \(MountClient.expectedMountPath(for: url))")
-            if let volume = MountClient.findMountedVolume(for: url) {
-                lines.append("mounted: yes \(volume.path) (\(MountClient.fileSystemType(atPath: volume.path) ?? "?"))")
-            } else {
-                lines.append("mounted: no")
-                if MountClient.isStaleMountPoint(atPath: MountClient.expectedMountPath(for: url)) {
-                    lines.append("staleMountPoint: yes \(MountClient.expectedMountPath(for: url))")
-                }
-            }
-            let reachability = HTTPProbe.check(serverURL: url,
-                                               username: settings.username,
-                                               password: KeychainStore.loadPassword(serverURL: url, username: settings.username) ?? "",
-                                               timeout: 4)
-            lines.append("reachability: \(reachability.displayText)")
+        if let configuration = FileProviderShared.loadConfiguration() {
+            lines.append("fileProviderConfigured: yes")
+            lines.append("fileProviderServer: \(configuration.serverURL.absoluteString)")
+        } else {
+            lines.append("fileProviderConfigured: no")
         }
+        let sync = FileProviderShared.syncStatus()
+        lines.append("fileProviderPending: \(sync.pending)")
+        lines.append("fileProviderLastError: \(sync.error ?? "无")")
         lines.append("log: \(CDLog.fileURL.path)")
         writeResult(lines.joined(separator: "\n"), to: resultFile)
         return 0

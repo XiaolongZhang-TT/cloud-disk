@@ -15,8 +15,8 @@ public enum KeychainStore {
     public static let service = "com.tern.menubar"
 
     /// Stable account key for one server + user pair.  The URL path is
-    /// intentionally ignored so switching between /Tern and /dav (or
-    /// adding a reverse-proxy prefix) keeps the saved password.
+    /// intentionally ignored so adding a reverse-proxy prefix keeps the
+    /// saved password.
     public static func account(serverURL: URL, username: String) -> String {
         let host = serverURL.host?.lowercased() ?? "unknown-host"
         let scheme = (serverURL.scheme ?? "http").lowercased()
@@ -40,7 +40,7 @@ public enum KeychainStore {
         let attributes: [String: Any] = [
             kSecValueData as String: data,
             kSecAttrLabel as String: "Tern 密码（\(account)）",
-            kSecAttrDescription as String: "Tern WebDAV 登录密码",
+            kSecAttrDescription as String: "Tern 登录密码",
             kSecAttrAccessible as String: kSecAttrAccessibleAfterFirstUnlock,
         ]
 

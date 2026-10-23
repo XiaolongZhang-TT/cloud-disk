@@ -14,7 +14,6 @@ public enum TernDefaults {
     public static let serverURLKey = "serverURL"
     public static let usernameKey = "username"
     public static let connectAtLoginKey = "connectAtLogin"
-    public static let autoConnectKey = "autoConnect"
     public static let lastVersionKey = "lastRunVersion"
 }
 
@@ -25,7 +24,6 @@ public final class SettingsStore: ObservableObject {
     @Published public var serverURLText: String
     @Published public var username: String
     @Published public var connectAtLogin: Bool
-    @Published public var autoConnect: Bool
 
     private let defaults = UserDefaults.standard
     private var isLoading = false
@@ -35,18 +33,15 @@ public final class SettingsStore: ObservableObject {
             TernDefaults.serverURLKey: TernDefaults.serverURL,
             TernDefaults.usernameKey: "",
             TernDefaults.connectAtLoginKey: false,
-            TernDefaults.autoConnectKey: true,
         ])
         serverURLText = defaults.string(forKey: TernDefaults.serverURLKey) ?? TernDefaults.serverURL
         username = defaults.string(forKey: TernDefaults.usernameKey) ?? ""
         connectAtLogin = defaults.bool(forKey: TernDefaults.connectAtLoginKey)
-        autoConnect = defaults.bool(forKey: TernDefaults.autoConnectKey)
 
         // Keep the SwiftUI bindings and the defaults in sync.
         $serverURLText.dropFirst().sink { [weak self] value in self?.persist(serverURL: value) }.store(in: &cancellables)
         $username.dropFirst().sink { [weak self] value in self?.persist(username: value) }.store(in: &cancellables)
         $connectAtLogin.dropFirst().sink { [weak self] value in self?.persist(connectAtLogin: value) }.store(in: &cancellables)
-        $autoConnect.dropFirst().sink { [weak self] value in self?.persist(autoConnect: value) }.store(in: &cancellables)
     }
 
     private var cancellables = Set<AnyCancellable>()
@@ -66,14 +61,11 @@ public final class SettingsStore: ObservableObject {
         defaults.set(connectAtLogin, forKey: TernDefaults.connectAtLoginKey)
     }
 
-    private func persist(autoConnect: Bool) {
-        guard !isLoading else { return }
-        defaults.set(autoConnect, forKey: TernDefaults.autoConnectKey)
-    }
-
     // MARK: - Validation
 
-    /// Turn whatever the user typed into a WebDAV URL.
+    /// Normalize the user-facing server address.  Tern exposes File Provider's
+    /// REST API under `/api`; the conventional user-facing URL still includes
+    /// the `/Tern` endpoint so old configurations keep working.
     public static func normalize(serverText: String) throws -> URL {
         var text = serverText.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !text.isEmpty else {
@@ -92,8 +84,6 @@ public final class SettingsStore: ObservableObject {
             throw SettingsError.invalidServerURL(text)
         }
         components.scheme = scheme
-        // The WebDAV endpoint is /Tern.  If the user only typed a host we
-        // append the endpoint so the mounted volume is called “Tern”.
         var path = components.path
         if path.isEmpty || path == "/" {
             path = "/Tern"
@@ -125,15 +115,13 @@ public final class SettingsStore: ObservableObject {
         serverURLText = defaults.string(forKey: TernDefaults.serverURLKey) ?? TernDefaults.serverURL
         username = defaults.string(forKey: TernDefaults.usernameKey) ?? ""
         connectAtLogin = defaults.bool(forKey: TernDefaults.connectAtLoginKey)
-        autoConnect = defaults.bool(forKey: TernDefaults.autoConnectKey)
         isLoading = false
     }
 
     public func snapshot() -> TernSettings {
         TernSettings(serverURLText: serverURLText,
-                          username: username,
-                          connectAtLogin: connectAtLogin,
-                          autoConnect: autoConnect)
+                     username: username,
+                     connectAtLogin: connectAtLogin)
     }
 }
 
@@ -141,7 +129,6 @@ public struct TernSettings: Equatable {
     public var serverURLText: String
     public var username: String
     public var connectAtLogin: Bool
-    public var autoConnect: Bool
 }
 
 public enum SettingsError: LocalizedError, Equatable {

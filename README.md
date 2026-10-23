@@ -6,7 +6,7 @@
 [![Docker Hub](https://img.shields.io/docker/pulls/acc110789/tern?logo=docker)](https://hub.docker.com/r/acc110789/tern)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-部署在 NAS 上的私有网盘：Docker 一键部署，网页端简洁易用，macOS 客户端可挂载到 Finder 的「位置」中，和 iCloud Drive 并排显示。
+部署在 NAS 上的私有网盘：Docker 一键部署，网页端简洁易用，macOS 客户端通过 File Provider 出现在 Finder 的「位置」中，和 iCloud Drive 并排显示。
 
 > 数据保存在你自己的 NAS 上，不经过第三方云服务。MIT 开源。
 
@@ -16,8 +16,8 @@
 
 - 文件/文件夹管理、拖拽上传、图片/视频/PDF/文本预览、搜索、收藏、回收站
 - 多用户与存储配额、带密码和有效期的公开分享
-- WebDAV：`/dav` 和 `/Tern`，支持 Finder、rclone 等客户端
-- macOS 菜单栏客户端：挂载为 Finder 网络卷，可随登录自动连接
+- WebDAV：`/dav` 和 `/Tern`，供 Windows、rclone 等客户端使用（macOS 客户端不再使用 WebDAV）
+- macOS 菜单栏客户端：原生 File Provider 位置，按需下载、离线写入、冲突副本、实时同步
 - Docker 单容器：SQLite + 本地文件存储，支持 amd64 / arm64
 
 ## 快速开始
@@ -60,19 +60,36 @@ docker compose up -d --build
 
 ## macOS 客户端
 
-下载 [Tern-1.1.1.zip](macos/dist/Tern-1.1.1.zip)（或从 [Releases](https://github.com/XiaolongZhang-dev/tern/releases) 下载），把 `Tern.app` 拖到「应用程序」。若 Gatekeeper 拦截，右键 →「打开」。
+macOS 客户端现在使用 **File Provider**，Finder 的「位置」中会出现 **Tern**（与 iCloud Drive 同级），不再挂载 `/Volumes` WebDAV 网络盘。
 
-打开菜单栏 Tern →「设置」：
+菜单栏 Tern →「设置」：
 
 ```text
-服务器地址：http://<NAS-IP>:8080/Tern
+服务器地址：https://<NAS>:<PORT>/Tern
 用户名：    网页端账号
 密码：      网页端密码
 ```
 
-连接后，Finder 的「位置」会出现 **Tern**，可拖到「个人收藏」固定。完整说明见 [docs/MAC.md](docs/MAC.md)。
+保存后点「在 Finder 中启用 Tern」，再到 **系统设置 → 通用 → 登录项与扩展 → 文件提供程序** 中启用 Tern。首次启用需要 Xcode 签名构建；Personal Team 可以使用。
 
-> 正在开发 Finder File Provider 离线位置（Phase 3：写入、离线队列、冲突副本、缩略图、保持下载，实验性），见 [docs/MAC_OFFLINE.md](docs/MAC_OFFLINE.md)。
+支持：
+
+- 按需下载、Quick Look、缩略图；
+- Finder 中新建、修改、重命名、移动、删除；
+- 离线写队列；
+- 服务端冲突时生成 `(conflicted copy)`；
+- 网页/其他客户端上传后，通过菜单栏 App 的长轮询 watcher 在约 1 秒内出现在 Finder；
+- 右键「保持下载 / 移除下载」。
+
+构建与签名：
+
+```bash
+cd macos
+TEAM=你的TeamID ./build-xcode.sh
+cp -R .build-xcode/Build/Products/Debug/Tern.app /Applications/
+```
+
+完整说明见 [docs/MAC.md](docs/MAC.md)；离线/File Provider 细节见 [docs/MAC_OFFLINE.md](docs/MAC_OFFLINE.md)。
 
 ## Windows 客户端
 
@@ -100,7 +117,7 @@ Windows 10/11 x64 托盘客户端，把网盘映射为 **`Tern (T:)`**，在「�
 ```bash
 (cd server && npm ci && npm test)
 (cd web && npm ci && npm run build)
-(cd macos && ./build.sh)
+(cd macos && ./build.sh)          # 仅菜单栏 App；File Provider 用 build-xcode.sh
 cd windows && powershell -File build.ps1   # Windows
 ```
 

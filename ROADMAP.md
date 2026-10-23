@@ -73,7 +73,7 @@ These are known and accepted for v1.2.0:
 
 - [x] Windows tray client with WebDAV drive mapping (`Tern (T:)`)
 - [x] Docker deployment with web build inside the image
-- [x] macOS Finder mount client and `mount-smoke` verification
+- [x] macOS File Provider client with long-poll watcher and offline writes
 - [x] CI for server, web, Docker and macOS builds
 - [x] Security policy, contribution guide and issue templates
 - [x] Hidden AppleDouble files in the web UI

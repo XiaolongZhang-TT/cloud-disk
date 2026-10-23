@@ -6,7 +6,7 @@
 [![Docker Hub](https://img.shields.io/docker/pulls/acc110789/tern?logo=docker)](https://hub.docker.com/r/acc110789/tern)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-A private cloud drive for your NAS: one-command Docker deployment, a clean web UI, and a macOS menu-bar client that mounts your files in Finder next to iCloud Drive.
+A private cloud drive for your NAS: one-command Docker deployment, a clean web UI, and a macOS menu-bar client that puts your files in Finder’s Locations sidebar via File Provider.
 
 > Your data stays on your own NAS, never on a third-party cloud. MIT licensed.
 
@@ -16,8 +16,8 @@ A private cloud drive for your NAS: one-command Docker deployment, a clean web U
 
 - Files and folders, drag-and-drop uploads, previews (images/video/PDF/text), search, favorites and trash
 - Multi-user quotas and public share links with optional password and expiry
-- WebDAV at `/dav` and `/Tern`, usable by Finder, rclone and other clients
-- macOS menu-bar client: mounts as a Finder network volume, with optional auto-connect
+- WebDAV at `/dav` and `/Tern`, usable by Windows, rclone and other clients (the macOS client no longer uses WebDAV)
+- macOS menu-bar client: native File Provider location with on-demand download, offline writes, conflict copies and live sync
 - One Docker container: SQLite + local file storage, amd64 / arm64
 
 ## Quick start
@@ -60,19 +60,29 @@ docker compose up -d --build
 
 ## macOS client
 
-Download [Tern-1.1.1.zip](macos/dist/Tern-1.1.1.zip) (or from [Releases](https://github.com/XiaolongZhang-dev/tern/releases)) and move `Tern.app` to `/Applications`. If Gatekeeper blocks it, right-click → **Open**.
+The macOS client uses **File Provider**. **Tern** appears in Finder’s **Locations** sidebar next to iCloud Drive; it no longer mounts a `/Volumes` WebDAV volume.
 
-Open Tern in the menu bar → **Settings**:
+Tern menu bar → **Settings**:
 
 ```text
-Server: http://<NAS-IP>:8080/Tern
+Server: https://<NAS>:<PORT>/Tern
 User:   web account
 Pass:   web password
 ```
 
-After connecting, **Tern** appears in Finder's **Locations** sidebar; drag it to **Favorites** to pin it. See [docs/MAC.md](docs/MAC.md) for details.
+Save, click **Enable Tern in Finder**, then enable Tern under **System Settings → General → Login Items & Extensions → File Providers**. The first build must be signed from Xcode; a free Personal Team works.
 
-> A File Provider offline prototype is in progress (Phase 3: writes, offline queue, conflict copies, thumbnails and Keep Downloaded): [docs/MAC_OFFLINE.md](docs/MAC_OFFLINE.md).
+Features: on-demand download, Quick Look/thumbnails, create/edit/rename/move/delete, offline write queue, conflict copies, Keep Downloaded/Remove Download, and a long-poll watcher that makes web uploads appear in Finder within about a second.
+
+Build and install:
+
+```bash
+cd macos
+TEAM=YOUR_TEAM_ID ./build-xcode.sh
+cp -R .build-xcode/Build/Products/Debug/Tern.app /Applications/
+```
+
+See [docs/MAC.md](docs/MAC.md) and [docs/MAC_OFFLINE.md](docs/MAC_OFFLINE.md).
 
 ## Windows client
 
@@ -90,7 +100,7 @@ The Windows **WebClient** service is required. See [docs/WINDOWS.md](docs/WINDOW
 
 - [Deployment](docs/DEPLOY.md): NAS, HTTPS, backups and upgrades
 - [macOS client](docs/MAC.md): build, install and Finder integration
-- [macOS offline location (experimental)](docs/MAC_OFFLINE.md): File Provider Phase 3
+- [macOS File Provider details](docs/MAC_OFFLINE.md): offline writes, conflicts, watcher
 - [Windows client](docs/WINDOWS.md): install, drive mapping, WebClient
 - [Architecture](docs/ARCHITECTURE.md) · [API](docs/API.md)
 - [Roadmap](ROADMAP.md) · [Contributing](CONTRIBUTING.md) · [Security](SECURITY.md)
@@ -100,7 +110,7 @@ The Windows **WebClient** service is required. See [docs/WINDOWS.md](docs/WINDOW
 ```bash
 (cd server && npm ci && npm test)
 (cd web && npm ci && npm run build)
-(cd macos && ./build.sh)
+(cd macos && ./build.sh)          # menu-bar app only; File Provider uses build-xcode.sh
 cd windows && powershell -File build.ps1   # Windows
 ```
 

@@ -23,7 +23,7 @@ struct SettingsView: View {
         Form {
             Section {
                 TextField("服务器地址", text: $settings.serverURLText,
-                          prompt: Text("http://192.168.1.10:8080/Tern"))
+                          prompt: Text("https://example.com/Tern"))
                 TextField("用户名", text: $settings.username,
                           prompt: Text("与 Tern 网页登录账号相同"))
                 HStack {
@@ -52,9 +52,8 @@ struct SettingsView: View {
             }
 
             Section {
-                Toggle("登录时自动启动 Tern（LaunchAgent）", isOn: $settings.connectAtLogin)
-                Toggle("启动后自动连接", isOn: $settings.autoConnect)
-                Text("登录启动通过 ~/Library/LaunchAgents/\(LaunchAgentManager.label).plist 实现，适合本地构建、无开发者账号的应用。移动 App 后重新打开会自动修正路径。")
+                Toggle("登录时自动启动 Tern", isOn: $settings.connectAtLogin)
+                Text("登录启动通过 ~/Library/LaunchAgents/\(LaunchAgentManager.label).plist 实现。实时同步 watcher 需要 Tern 菜单栏 App 保持运行，建议开启。")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             } header: {
@@ -62,18 +61,36 @@ struct SettingsView: View {
             }
 
             Section {
-                LabeledContent("卷名称", value: model.volumeName)
-                LabeledContent("默认挂载点", value: model.expectedMountPath)
-                LabeledContent("当前状态", value: model.statusHeadline)
-                if let volumePath = model.volumePath {
-                    LabeledContent("实际挂载点", value: volumePath)
+                LabeledContent("File Provider", value: model.fileProviderStatus)
+                LabeledContent("同步状态", value: model.syncStatusText)
+                HStack {
+                    Button(enablingFileProvider ? "正在添加…" : "在 Finder 中启用 Tern") {
+                        enablingFileProvider = true
+                        fileProviderMessage = nil
+                        Task {
+                            let result = await model.enableFileProvider()
+                            await MainActor.run {
+                                fileProviderMessage = result
+                                enablingFileProvider = false
+                            }
+                        }
+                    }
+                    .disabled(enablingFileProvider)
+                    Button("在 Finder 中打开") {
+                        model.openInFinder()
+                    }
                 }
-                LabeledContent("服务器在线", value: model.onlineText)
-                Text("卷名取自服务器地址的最后一段路径；使用 /Tern 时卷名为 Tern，并会出现在 Finder 侧边栏的“位置”中。")
+                Text("Finder 会按需下载文件，并支持在线/离线写入、冲突副本和保持下载。首次启用可能需要在 系统设置 → 通用 → 登录项与扩展 中允许 File Provider。")
                     .font(.caption)
                     .foregroundStyle(.secondary)
+                if let fileProviderMessage {
+                    Text(fileProviderMessage)
+                        .font(.callout)
+                        .foregroundStyle(fileProviderMessage.hasPrefix("✅") ? .green : .red)
+                        .textSelection(.enabled)
+                }
             } header: {
-                Text("挂载")
+                Text("Finder 位置")
             }
 
             Section {
@@ -105,43 +122,6 @@ struct SettingsView: View {
             }
 
             Section {
-                Button(enablingFileProvider ? "正在添加…" : "在 Finder 中启用 Tern") {
-                    enablingFileProvider = true
-                    fileProviderMessage = nil
-                    Task {
-                        let result = await model.enableFileProvider()
-                        await MainActor.run {
-                            fileProviderMessage = result
-                            enablingFileProvider = false
-                        }
-                    }
-                }
-                .disabled(enablingFileProvider)
-                Text("Finder 会按需下载文件，并支持在线/离线写入、冲突副本和保持下载。首次启用可能需要在系统设置中允许 File Provider。")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                if let fileProviderMessage {
-                    Text(fileProviderMessage)
-                        .font(.callout)
-                        .foregroundStyle(fileProviderMessage.hasPrefix("✅") ? .green : .red)
-                        .textSelection(.enabled)
-                }
-            } header: {
-                Text("Finder 离线位置")
-            }
-
-            Section {
-                Text("启用 File Provider 后，可以断开旧的 /Volumes/Tern 网络盘，避免 Finder 里出现两个 Tern。会关闭自动挂载，但保留 Tern 登录启动，供 File Provider 实时同步。")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                Button("断开 WebDAV 网络盘（保留登录启动）") {
-                    fileProviderMessage = model.disableWebDAVMount()
-                }
-            } header: {
-                Text("从 WebDAV 迁移")
-            }
-
-            Section {
                 LabeledContent("版本", value: TernInfo.versionDescription)
                 LabeledContent("应用路径", value: Bundle.main.bundleURL.path)
                 LabeledContent("登录启动", value: LaunchAgentManager.statusDescription())
@@ -156,7 +136,7 @@ struct SettingsView: View {
             }
         }
         .formStyle(.grouped)
-        .frame(minWidth: 560, idealWidth: 600, minHeight: 620, idealHeight: 680)
+        .frame(minWidth: 560, idealWidth: 600, minHeight: 560, idealHeight: 620)
         .onAppear {
             password = ""
             model.refreshCredentialState()
@@ -169,8 +149,7 @@ struct SettingsView: View {
         let error = model.applySettings(serverURLText: settings.serverURLText,
                                         username: settings.username,
                                         password: password.isEmpty ? nil : password,
-                                        connectAtLogin: settings.connectAtLogin,
-                                        autoConnect: settings.autoConnect)
+                                        connectAtLogin: settings.connectAtLogin)
         if let error = error {
             message = "❌ \(error)"
             messageIsError = true
@@ -195,58 +174,5 @@ struct SettingsView: View {
             testResult = result
             testing = false
         }
-    }
-}
-
-// MARK: - Settings window
-
-/// Opens a real AppKit settings window.
-///
-/// We deliberately do **not** rely on the private `showSettingsWindow:` action:
-/// on recent macOS releases it can return `true` without actually showing the
-/// SwiftUI Settings scene (especially for LSUIElement/menu-bar-only apps), which
-/// made the menu item appear to do nothing. A dedicated NSWindow is predictable
-/// across macOS 13–27 and can always be brought to the front.
-@MainActor
-enum SettingsWindowHelper {
-
-    static func openSettings() {
-        CDLog.info("settings: opening settings window")
-        SettingsWindowController.shared.show()
-    }
-}
-
-final class SettingsWindowController: NSWindowController, NSWindowDelegate {
-
-    static let shared = SettingsWindowController()
-
-    private init() {
-        let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 600, height: 680),
-                              styleMask: [.titled, .closable, .miniaturizable, .resizable],
-                              backing: .buffered,
-                              defer: false)
-        window.title = "Tern 设置"
-        window.isReleasedWhenClosed = false
-        window.center()
-        super.init(window: window)
-        window.delegate = self
-        let root = SettingsView(model: AppModel.shared, settings: SettingsStore.shared)
-            .frame(minWidth: 560, minHeight: 620)
-        window.contentViewController = NSHostingController(rootView: root)
-        window.setContentSize(NSSize(width: 600, height: 680))
-    }
-
-    @available(*, unavailable)
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
-
-    func show() {
-        NSApp.activate(ignoringOtherApps: true)
-        showWindow(nil)
-        window?.center()
-        window?.makeKeyAndOrderFront(nil)
-        window?.orderFrontRegardless()
-        CDLog.info("settings: window visible=\(window?.isVisible ?? false)")
     }
 }

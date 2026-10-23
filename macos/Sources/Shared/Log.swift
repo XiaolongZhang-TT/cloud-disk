@@ -3,7 +3,7 @@
 //  Tern (Tern) macOS menu-bar client
 //
 //  Lightweight logger shared by the app, the bundled CLI helpers and the
-//  standalone `mount-smoke` tool.  Logs go to os_log and to
+//  menu-bar app.  Logs go to os_log and to
 //  ~/Library/Logs/Tern.log (rotated at ~1 MB) so that users can attach a
 //  file to a bug report.  The password is never logged.
 //

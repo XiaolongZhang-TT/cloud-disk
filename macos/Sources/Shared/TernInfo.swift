@@ -7,9 +7,8 @@ import Foundation
 
 public enum TernInfo {
     public static let appName = "Tern"
-    public static let volumeBrand = "Tern"
     public static let bundleIdentifier = "com.tern.menubar"
-    public static let fallbackVersion = "1.1.1"
+    public static let fallbackVersion = "1.2.1"
 
     public static var version: String {
         (Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String) ?? fallbackVersion
