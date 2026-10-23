@@ -42,6 +42,20 @@ public enum FileProviderShared {
         defaults.removeObject(forKey: "username")
     }
 
+    // MARK: - Keep downloaded
+
+    public static func isPinned(_ itemIdentifier: String) -> Bool {
+        guard let defaults else { return false }
+        return (defaults.stringArray(forKey: "fileProviderPinned") ?? []).contains(itemIdentifier)
+    }
+
+    public static func setPinned(_ pinned: Bool, itemIdentifier: String) {
+        guard let defaults else { return }
+        var values = Set(defaults.stringArray(forKey: "fileProviderPinned") ?? [])
+        if pinned { values.insert(itemIdentifier) } else { values.remove(itemIdentifier) }
+        defaults.set(Array(values), forKey: "fileProviderPinned")
+    }
+
     // MARK: - Sync status
 
     public static func updateSyncStatus(pending: Int, error: String?) {

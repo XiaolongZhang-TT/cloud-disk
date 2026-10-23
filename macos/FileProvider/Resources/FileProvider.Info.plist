@@ -39,6 +39,25 @@
 		<integer>4</integer>
 		<key>NSExtensionFileProviderAppliesChangesAtomically</key>
 		<true/>
+		<key>NSExtensionFileProviderActions</key>
+		<array>
+			<dict>
+				<key>NSExtensionFileProviderActionIdentifier</key>
+				<string>com.tern.fileprovider.keepDownloaded</string>
+				<key>NSExtensionFileProviderActionName</key>
+				<string>保持下载</string>
+				<key>NSExtensionFileProviderActionActivationRule</key>
+				<string>TRUEPREDICATE</string>
+			</dict>
+			<dict>
+				<key>NSExtensionFileProviderActionIdentifier</key>
+				<string>com.tern.fileprovider.removeDownload</string>
+				<key>NSExtensionFileProviderActionName</key>
+				<string>移除下载</string>
+				<key>NSExtensionFileProviderActionActivationRule</key>
+				<string>TRUEPREDICATE</string>
+			</dict>
+		</array>
 	</dict>
 </dict>
 </plist>

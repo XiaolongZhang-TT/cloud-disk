@@ -13,9 +13,10 @@ These are known and accepted for v1.1.1:
 
 - **macOS File Provider is Phase 3 only.** On-demand download, offline read
   cache, create/upload/modify/move/delete, an offline write queue, conflict
-  copies and image thumbnails exist. Spotlight, a user-facing "keep downloaded"
-  control, notarized distribution and migration from the WebDAV mount remain
-  pending. The old WebDAV mount remains the production path until Phase 4.
+  copies, thumbnails, Keep Downloaded / Remove Download actions and WebDAV-mount
+  migration exist. Spotlight, final conflict UX, notarized distribution and a
+  public signed build remain pending. The old WebDAV mount remains available as
+  a fallback.
 - **Single process / single SQLite file.** No horizontal scaling or HA. SQLite WAL
   is fine for a personal or family NAS but not a multi-node cluster.
 - **No file versioning.** Overwriting a file keeps only the latest content;

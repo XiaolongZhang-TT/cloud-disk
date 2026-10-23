@@ -68,7 +68,9 @@ public final class TernItem: NSObject, NSFileProviderItem {
         isDownloaded = (stored.pending ?? false)
         isUploaded = !(stored.pending ?? false)
         isMostRecentVersionDownloaded = !(stored.pending ?? false)
-        contentPolicy = .downloadLazily
+        contentPolicy = FileProviderShared.isPinned(stored.id)
+            ? .downloadEagerlyAndKeepDownloaded
+            : .inherited
         super.init()
     }
 }

@@ -10,7 +10,7 @@ import Foundation
 import FileProvider
 import UniformTypeIdentifiers
 
-final class FileProviderExtension: NSObject, NSFileProviderReplicatedExtension {
+final class FileProviderExtension: NSObject, NSFileProviderReplicatedExtension, NSFileProviderCustomAction {
 
     let domain: NSFileProviderDomain
     let store = FileProviderStore()
@@ -396,6 +396,41 @@ final class FileProviderExtension: NSObject, NSFileProviderReplicatedExtension {
         NSError(domain: NSFileProviderErrorDomain, code: -2005, userInfo: [
             NSLocalizedDescriptionKey: "服务器上的文件已被修改，本地内容已保存为冲突副本。",
         ])
+    }
+
+    // MARK: - Custom actions
+
+    func performAction(
+        identifier actionIdentifier: NSFileProviderExtensionActionIdentifier,
+        onItemsWithIdentifiers itemIdentifiers: [NSFileProviderItemIdentifier],
+        completionHandler: @escaping (Error?) -> Void
+    ) -> Progress {
+        let progress = Progress.discreteProgress(totalUnitCount: Int64(itemIdentifiers.count))
+        Task {
+            switch actionIdentifier.rawValue {
+            case "com.tern.fileprovider.keepDownloaded":
+                for identifier in itemIdentifiers {
+                    FileProviderShared.setPinned(true, itemIdentifier: identifier.rawValue)
+                }
+                signalChanges()
+                completionHandler(nil)
+            case "com.tern.fileprovider.removeDownload":
+                let manager = NSFileProviderManager(for: domain)
+                for identifier in itemIdentifiers {
+                    FileProviderShared.setPinned(false, itemIdentifier: identifier.rawValue)
+                    manager?.evictItem(identifier: identifier) { _ in }
+                }
+                signalChanges()
+                completionHandler(nil)
+            default:
+                completionHandler(NSError(
+                    domain: NSCocoaErrorDomain,
+                    code: NSFeatureUnsupportedError,
+                    userInfo: [NSLocalizedDescriptionKey: "不支持的 Tern 操作"]
+                ))
+            }
+        }
+        return progress
     }
 
     private static func unsupported() -> NSError {

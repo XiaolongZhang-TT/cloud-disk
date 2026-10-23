@@ -72,7 +72,7 @@ docker compose up -d --build
 
 连接后，Finder 的「位置」会出现 **Tern**，可拖到「个人收藏」固定。完整说明见 [docs/MAC.md](docs/MAC.md)。
 
-> 正在开发 Finder File Provider 离线位置（Phase 3：写入、离线队列、冲突副本、缩略图，实验性），见 [docs/MAC_OFFLINE.md](docs/MAC_OFFLINE.md)。
+> 正在开发 Finder File Provider 离线位置（Phase 3：写入、离线队列、冲突副本、缩略图、保持下载，实验性），见 [docs/MAC_OFFLINE.md](docs/MAC_OFFLINE.md)。
 
 ## Windows 客户端
 

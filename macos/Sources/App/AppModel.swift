@@ -456,6 +456,22 @@ public final class AppModel: ObservableObject {
         }
     }
 
+    /// Stop the old NetFS/WebDAV mount and its login item, but keep the menu
+    /// bar app running so the File Provider domain remains available.
+    @discardableResult
+    public func disableWebDAVMount() -> String {
+        if status.isConnected {
+            disconnect(force: true)
+        }
+        if LaunchAgentManager.isInstalled() {
+            LaunchAgentManager.uninstall()
+        }
+        settings.connectAtLogin = false
+        settings.autoConnect = false
+        CDLog.info("migration: disabled WebDAV mount and login item")
+        return "已断开 WebDAV 网络盘，并关闭自动连接。File Provider 位置会继续保留。"
+    }
+
     /// Register the File Provider domain.  Phase 1 is read-only; write
     /// operations are added in the next stage.
     public func enableFileProvider() async -> String {

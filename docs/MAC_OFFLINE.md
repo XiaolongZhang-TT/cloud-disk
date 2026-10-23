@@ -101,22 +101,26 @@ TEAM=你的TeamID ./build-xcode.sh       # 签名运行
 - **缩略图**：图片文件通过 ImageIO 在本地生成缩略图；
 - **同步状态**：菜单栏显示待上传数量和最近一次冲突/错误；
 - **内容策略**：默认 `downloadLazily`，由系统按需下载/缓存；
+- **保持下载 / 移除下载**：Finder 右键自定义动作；「保持下载」把 item 标记为
+  `downloadEagerlyAndKeepDownloaded` 并通知 File Provider，「移除下载」清除固定
+  标记并调用 evict；
+- **从 WebDAV 迁移**：设置页提供「断开 WebDAV 网络盘并关闭自动连接」；
 - **签名脚本**：`package-release.sh` 使用 Developer ID 归档、公证、staple。
 
 ## 仍待完成
 
-- 「保持下载 / 移除下载」的用户动作和固定集合；
 - Spotlight 索引、同步进度页、失败重试 UI；
 - 自动合并/冲突解决 UI（目前只生成冲突副本）；
-- 旧 WebDAV 网络卷到 File Provider 的自动迁移；
+- 正式签名、公证、发布和升级流程；
 - 扩展必须由 Xcode 构建并正确签名，旧版 `build.sh`（CLT + ad-hoc）不能注册它。
 
 ## 从 WebDAV 迁移
 
 1. 先在设置中启用 File Provider；
 2. 确认 Finder「位置」中的 Tern 可以浏览和下载；
-3. 再关闭「登录时自动启动」/「启动后自动连接」，并在菜单中「断开连接」；
-4. 如果不再使用网络卷，删除 `~/Library/LaunchAgents` 中的 Tern 启动项（或在设置中关闭自动启动）。
+3. 点击设置里的 **「断开 WebDAV 网络盘并关闭自动连接」**；
+4. 应用会卸载旧的 `/Volumes/Tern` 挂载并移除 LaunchAgent，但菜单栏 App 和
+   File Provider 位置会继续保留。
 
 不要同时保留两个 Tern 入口，否则 Finder 里会出现两个位置。
 
