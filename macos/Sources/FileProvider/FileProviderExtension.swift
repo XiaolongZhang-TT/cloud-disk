@@ -9,18 +9,39 @@
 import Foundation
 import FileProvider
 import UniformTypeIdentifiers
+import Network
 
 final class FileProviderExtension: NSObject, NSFileProviderReplicatedExtension, NSFileProviderCustomAction {
 
     let domain: NSFileProviderDomain
     let store = FileProviderStore()
+    private let pathMonitor = NWPathMonitor()
+    private let pathQueue = DispatchQueue(label: "com.tern.menubar.fileprovider.network")
 
     required init(domain: NSFileProviderDomain) {
         self.domain = domain
         super.init()
+        pathMonitor.pathUpdateHandler = { [weak self] path in
+            guard let self else { return }
+            let online = path.status == .satisfied
+            if online {
+                Task {
+                    try? await self.store.flushPending()
+                    self.signalChanges()
+                }
+            } else {
+                FileProviderShared.updateSyncStatus(
+                    pending: self.store.pending.list().count,
+                    error: "网络不可用，等待恢复后自动重连"
+                )
+            }
+        }
+        pathMonitor.start(queue: pathQueue)
     }
 
-    func invalidate() {}
+    func invalidate() {
+        pathMonitor.cancel()
+    }
 
     // MARK: - Metadata
 

@@ -161,6 +161,7 @@ COMMON_FLAGS=(
   -framework AppKit
   -framework SwiftUI
   -framework FileProvider
+  -framework Network
 )
 
 APP_SLICES=()

@@ -46,6 +46,14 @@ public enum FileProviderBridge {
         }
     }
 
+    /// Ask File Provider to re-enumerate after a network change or a local
+    /// write.  Safe to call when the domain is not configured.
+    public static func signalChanges() {
+        let manager = NSFileProviderManager(for: domain)
+        manager?.signalEnumerator(for: .workingSet) { _ in }
+        manager?.signalEnumerator(for: .rootContainer) { _ in }
+    }
+
     public static func openInFinder() {
         let url = URL(fileURLWithPath: NSHomeDirectory())
             .appendingPathComponent("Library/CloudStorage", isDirectory: true)

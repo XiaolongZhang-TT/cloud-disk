@@ -105,6 +105,10 @@ TEAM=你的TeamID ./build-xcode.sh       # 签名运行
   `downloadEagerlyAndKeepDownloaded` 并通知 File Provider，「移除下载」清除固定
   标记并调用 evict；
 - **从 WebDAV 迁移**：设置页提供「断开 WebDAV 网络盘并关闭自动连接」；
+- **网络变化自动重连**：菜单栏 App 和 File Provider 扩展都使用 `NWPathMonitor`；
+  - 网络恢复时 App 通知 File Provider 重新枚举；
+  - 扩展自动 flush 离线写队列；
+  - 如果启用了 WebDAV `autoConnect`，App 也会重新挂载网络卷；
 - **签名脚本**：`package-release.sh` 使用 Developer ID 归档、公证、staple。
 
 ## 仍待完成

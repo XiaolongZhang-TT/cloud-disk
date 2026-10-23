@@ -10,6 +10,7 @@
 import Foundation
 import AppKit
 import Combine
+import Network
 
 @MainActor
 public final class AppModel: ObservableObject {
@@ -47,6 +48,10 @@ public final class AppModel: ObservableObject {
     private var cachedPassword: String?
     private var cachedCredentialKey: String?
     private var started = false
+    private let pathMonitor = NWPathMonitor()
+    private let pathQueue = DispatchQueue(label: "com.tern.menubar.network")
+    private var networkMonitorStarted = false
+    private var lastNetworkOnline: Bool?
 
     private init(settings: SettingsStore = SettingsStore.shared) {
         self.settings = settings
@@ -151,6 +156,7 @@ public final class AppModel: ObservableObject {
 
         recoverMountState()
         refreshCredentialState()
+        startNetworkMonitor()
         startPolling()
 
         if settings.autoConnect {
@@ -168,7 +174,43 @@ public final class AppModel: ObservableObject {
     public func shutdown() {
         pollTask?.cancel()
         pollTask = nil
+        if networkMonitorStarted {
+            pathMonitor.cancel()
+            networkMonitorStarted = false
+        }
         CDLog.info("app: shutdown")
+    }
+
+    private func startNetworkMonitor() {
+        guard !networkMonitorStarted else { return }
+        networkMonitorStarted = true
+        pathMonitor.pathUpdateHandler = { [weak self] path in
+            let online = path.status == .satisfied
+            Task { @MainActor [weak self] in
+                self?.handleNetworkChange(online: online)
+            }
+        }
+        pathMonitor.start(queue: pathQueue)
+    }
+
+    private func handleNetworkChange(online: Bool) {
+        guard lastNetworkOnline != online else { return }
+        lastNetworkOnline = online
+        CDLog.info("network: online=\(online)")
+
+        if online {
+            FileProviderBridge.signalChanges()
+            // Reconnect the optional WebDAV volume after the Mac comes back
+            // online. File Provider gets its own signal above and flushes its
+            // offline queue from the extension.
+            if settings.autoConnect, canConnect, !isBusy,
+               !settings.username.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                CDLog.info("network: restored, reconnecting")
+                connect(userInitiated: false)
+            }
+        } else if status.isConnected {
+            CDLog.warn("network: offline while mounted; keeping volume for recovery")
+        }
     }
 
     // MARK: - Polling
