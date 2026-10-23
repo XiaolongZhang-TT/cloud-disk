@@ -126,6 +126,7 @@ SHARED_SOURCES=(
   Sources/Shared/Log.swift
   Sources/Shared/KeychainStore.swift
   Sources/FileProvider/FileProviderShared.swift
+  Sources/FileProvider/TernSyncClient.swift
   Sources/Shared/MountClient.swift
   Sources/Shared/SmokeRunner.swift
 )
@@ -137,6 +138,7 @@ APP_SOURCES=(
   Sources/App/MenuBarView.swift
   Sources/App/SettingsView.swift
   Sources/App/FileProviderBridge.swift
+  Sources/App/FileProviderWatcher.swift
 )
 CLI_SOURCES=(
   Sources/CLI/MountSmokeMain.swift

@@ -284,5 +284,60 @@ export function createCollectionsRouter({ store, config }) {
     res.json({ reset: false, ...result });
   });
 
+  // Long-poll companion to /sync/changes.  Without a cursor it returns the
+  // current head immediately so a client can establish its reference point.
+  // With a cursor it holds the request until a change is recorded or the
+  // timeout expires.  This is what lets the menu-bar app wake File Provider
+  // when another client (web/WebDAV/another Mac) changes the tree.
+  router.get('/sync/watch', (req, res) => {
+    const rawCursor = req.query.cursor;
+    const head = store.syncCursor(req.user.id);
+    if (rawCursor === undefined || rawCursor === '') {
+      res.setHeader('Cache-Control', 'no-store');
+      res.json({ cursor: head, changed: false });
+      return;
+    }
+
+    const cursor = Number.parseInt(String(rawCursor), 10);
+    if (!Number.isInteger(cursor) || cursor < 0) {
+      throw badRequest('invalid_cursor', 'cursor must be a non-negative integer');
+    }
+    const timeoutSeconds = intParam(req.query.timeout, 25, 1, 30);
+    const deadline = Date.now() + timeoutSeconds * 1000;
+
+    let timer = null;
+    let finished = false;
+    const finish = (payload) => {
+      if (finished) return;
+      finished = true;
+      if (timer) clearTimeout(timer);
+      if (!res.headersSent) {
+        res.setHeader('Cache-Control', 'no-store');
+        res.json(payload);
+      }
+    };
+    const cleanup = () => {
+      finished = true;
+      if (timer) clearTimeout(timer);
+    };
+    req.on('close', cleanup);
+    res.on('close', cleanup);
+
+    const check = () => {
+      if (finished) return;
+      const current = store.syncCursor(req.user.id);
+      if (current > cursor) {
+        finish({ cursor: current, changed: true });
+        return;
+      }
+      if (Date.now() >= deadline) {
+        finish({ cursor, changed: false });
+        return;
+      }
+      timer = setTimeout(check, 500);
+    };
+    check();
+  });
+
   return router;
 }

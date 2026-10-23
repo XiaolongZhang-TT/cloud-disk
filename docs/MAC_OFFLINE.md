@@ -16,6 +16,7 @@ Finder 左侧「位置」出现 **Tern**（与 iCloud Drive 同级），支持�
   `name (conflicted copy).ext`；
 - Quick Look / 缩略图；
 - 「保持下载」/「移除下载」Finder 右键动作；
+- 网页/WebDAV/其他 Mac 的改动通过长轮询实时出现在 Finder；
 - 网络恢复后自动重连并 flush 待上传队列。
 
 它 **不是** `/Volumes/Tern` 网络卷；macOS 原生云盘体验使用 File Provider 位置。
@@ -125,7 +126,11 @@ TEAM=你的TeamID ./build-xcode.sh       # 自动签名并生成 provisioning pr
 - **保持下载 / 移除下载**：Finder 右键自定义动作；「保持下载」把 item 标记为
   `downloadEagerlyAndKeepDownloaded` 并通知 File Provider，「移除下载」清除固定
   标记并调用 evict；
-- **从 WebDAV 迁移**：设置页提供「断开 WebDAV 网络盘并关闭自动连接」；
+- **实时 watcher**：菜单栏 App 持有 `/api/sync/watch` 长轮询，收到变化后
+  `signalEnumerator`，让 File Provider 增量同步网页/其他客户端的改动；
+- **从 WebDAV 迁移**：设置页提供「断开 WebDAV 网络盘（保留登录启动）」；
+  会关闭 `autoConnect` 并卸载 `/Volumes/Tern-1`，但保留 Tern 登录启动，
+  因为 watcher 需要菜单栏 App 常驻；
 - **网络变化自动重连**：菜单栏 App 和 File Provider 扩展都使用 `NWPathMonitor`；
   - 网络恢复时 App 通知 File Provider 重新枚举；
   - 扩展自动 flush 离线写队列；
@@ -141,6 +146,8 @@ TEAM=你的TeamID ./build-xcode.sh       # 自动签名并生成 provisioning pr
 - 在线新建、修改、重命名、移动、删除同步到服务端；
 - 断网创建文件后恢复 Wi-Fi，文件自动上传到服务端；
 - 远端和本地同时修改同一文件时生成 `(conflicted copy)`，远端原文件不被覆盖；
+- 网页/REST 上传新文件后，Finder 在约 1 秒内自动出现该文件；
+- 卸载 WebDAV 后 File Provider 和 watcher 仍然正常工作；
 - App 重启后 File Provider domain 保持注册。
 
 ## 仍待完成
@@ -154,9 +161,10 @@ TEAM=你的TeamID ./build-xcode.sh       # 自动签名并生成 provisioning pr
 
 1. 先在设置中启用 File Provider；
 2. 确认 Finder「位置」中的 Tern 可以浏览、下载和写入；
-3. 点击设置里的 **「断开 WebDAV 网络盘并关闭自动连接」**；
-4. 应用会卸载旧的 `/Volumes/Tern` 挂载并移除 LaunchAgent，但菜单栏 App 和
-   File Provider 位置会继续保留。
+3. 点击设置里的 **「断开 WebDAV 网络盘（保留登录启动）」**；
+4. 应用会卸载旧的 `/Volumes/Tern` 挂载并关闭 `autoConnect`，但保留
+   LaunchAgent 和登录启动，因为 File Provider 的实时 watcher 需要菜单栏 App
+   常驻；File Provider 位置继续保留。
 
 不要同时保留两个 Tern 入口，否则 Finder 里会出现两个位置。
 

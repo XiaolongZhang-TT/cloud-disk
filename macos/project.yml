@@ -20,6 +20,7 @@ targets:
       - path: Sources/App
       - path: Sources/Shared
       - path: Sources/FileProvider/FileProviderShared.swift
+      - path: Sources/FileProvider/TernSyncClient.swift
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.tern.menubar

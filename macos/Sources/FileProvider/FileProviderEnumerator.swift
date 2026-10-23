@@ -1,6 +1,6 @@
 //
 //  FileProviderEnumerator.swift
-//  Read-only enumerator backed by the cached sync snapshot.
+//  Enumerator backed by the cached sync snapshot plus incremental REST pulls.
 //
 
 import Foundation
@@ -28,8 +28,14 @@ final class TernEnumerator: NSObject, NSFileProviderEnumerator {
             if invalidated { return }
             do {
                 try? await store.flushPending()
-                if store.cursor == 0 {
-                    _ = try await store.sync(forceBootstrap: true)
+                // Opening a folder is also a refresh point. On an existing
+                // cache a network failure should not hide cached items; when
+                // there is no cache at all the error is still surfaced below.
+                let bootstrapping = store.cursor == 0
+                do {
+                    _ = try await store.sync(forceBootstrap: bootstrapping)
+                } catch {
+                    if bootstrapping { throw error }
                 }
                 let items = self.itemsForContainer().map { TernItem(stored: $0) }
                 observer.didEnumerate(items)

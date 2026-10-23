@@ -52,6 +52,7 @@ public final class AppModel: ObservableObject {
     private let pathQueue = DispatchQueue(label: "com.tern.menubar.network")
     private var networkMonitorStarted = false
     private var lastNetworkOnline: Bool?
+    private let fileProviderWatcher = FileProviderWatcher()
 
     private init(settings: SettingsStore = SettingsStore.shared) {
         self.settings = settings
@@ -158,6 +159,7 @@ public final class AppModel: ObservableObject {
         refreshCredentialState()
         startNetworkMonitor()
         startPolling()
+        fileProviderWatcher.start()
 
         // A previously configured File Provider domain is re-registered from
         // the real GUI app process (not a CLI helper) so macOS treats it as a
@@ -187,6 +189,7 @@ public final class AppModel: ObservableObject {
     }
 
     public func shutdown() {
+        fileProviderWatcher.stop()
         pollTask?.cancel()
         pollTask = nil
         if networkMonitorStarted {
@@ -513,20 +516,17 @@ public final class AppModel: ObservableObject {
         }
     }
 
-    /// Stop the old NetFS/WebDAV mount and its login item, but keep the menu
-    /// bar app running so the File Provider domain remains available.
+    /// Stop the old NetFS/WebDAV mount and disable auto-connect, but keep the
+    /// menu-bar app's login item: the File Provider watcher needs the app to be
+    /// running after login even when WebDAV is no longer used.
     @discardableResult
     public func disableWebDAVMount() -> String {
         if status.isConnected {
             disconnect(force: true)
         }
-        if LaunchAgentManager.isInstalled() {
-            LaunchAgentManager.uninstall()
-        }
-        settings.connectAtLogin = false
         settings.autoConnect = false
-        CDLog.info("migration: disabled WebDAV mount and login item")
-        return "已断开 WebDAV 网络盘，并关闭自动连接。File Provider 位置会继续保留。"
+        CDLog.info("migration: disabled WebDAV mount; keeping login startup for File Provider watcher")
+        return "已断开 WebDAV 网络盘并关闭自动挂载。Tern 登录启动保留，用于 File Provider 实时同步。"
     }
 
     /// Register the replicated File Provider domain, sharing connection
@@ -551,6 +551,7 @@ public final class AppModel: ObservableObject {
         }
         do {
             try await FileProviderBridge.addDomain()
+            fileProviderWatcher.start()
             return "✅ 已添加 Tern 到 Finder 位置。若系统提示未启用，请在 系统设置 → 通用 → 登录项与扩展 中打开 Tern。"
         } catch {
             let message = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription

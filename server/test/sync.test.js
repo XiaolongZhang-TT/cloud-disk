@@ -182,3 +182,34 @@ test('sync: raw content PUT updates content and enforces If-Match', async () => 
   const read = await api.get(`/api/nodes/${file.id}/content`);
   assert.equal(read.text, 'new content');
 });
+
+test('sync: watch returns the current head immediately', async () => {
+  const snapshot = await bootstrap();
+  const res = await api.get('/api/sync/watch');
+  assert.equal(res.status, 200);
+  assert.equal(res.json.cursor, snapshot.cursor);
+  assert.equal(res.json.changed, false);
+});
+
+test('sync: watch wakes as soon as a change is recorded', async () => {
+  const head = (await api.get('/api/sync/watch')).json.cursor;
+  const pending = api.get(`/api/sync/watch?cursor=${head}&timeout=5`);
+  await new Promise((resolve) => setTimeout(resolve, 100));
+  const created = await api.post('/api/nodes/folder', { name: 'Watch me' });
+  assert.equal(created.status, 201);
+
+  const res = await pending;
+  assert.equal(res.status, 200);
+  assert.equal(res.json.changed, true);
+  assert.ok(res.json.cursor > head);
+});
+
+test('sync: watch times out without a new change', async () => {
+  const head = (await api.get('/api/sync/watch')).json.cursor;
+  const started = Date.now();
+  const res = await api.get(`/api/sync/watch?cursor=${head}&timeout=1`);
+  assert.equal(res.status, 200);
+  assert.equal(res.json.changed, false);
+  assert.equal(res.json.cursor, head);
+  assert.ok(Date.now() - started >= 900);
+});

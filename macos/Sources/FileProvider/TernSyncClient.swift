@@ -53,6 +53,11 @@ public struct TernSyncPage: Codable, Sendable {
     public var hasMore: Bool?
 }
 
+public struct TernWatchPage: Codable, Sendable {
+    public var cursor: Int
+    public var changed: Bool
+}
+
 public enum SyncClientError: LocalizedError {
     case notConfigured
     case invalidServerURL
@@ -191,6 +196,34 @@ public final class TernSyncClient: @unchecked Sendable {
         }
         do {
             return try JSONDecoder().decode(TernSyncPage.self, from: data)
+        } catch {
+            throw SyncClientError.malformedResponse
+        }
+    }
+
+    // MARK: - Long poll
+
+    /// Long-poll the server for a change after `cursor`.
+    ///
+    /// Without a cursor the server returns its current head immediately. The
+    /// caller can then repeatedly call this with that cursor and will only be
+    /// woken when another client changes the tree (or after the server-side
+    /// timeout). This is deliberately a plain HTTP request: no WebSocket or
+    /// WebDAV dependency, and it works through a normal reverse proxy.
+    public func watch(cursor: Int?, timeout: Int = 25) async throws -> TernWatchPage {
+        var components = URLComponents(url: apiBase.appendingPathComponent("sync").appendingPathComponent("watch"), resolvingAgainstBaseURL: false)!
+        var query: [URLQueryItem] = []
+        if let cursor { query.append(URLQueryItem(name: "cursor", value: String(cursor))) }
+        query.append(URLQueryItem(name: "timeout", value: String(max(1, min(timeout, 25)))))
+        components.queryItems = query
+        var request = URLRequest(url: components.url!)
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        let (data, http) = try await withAuth(request)
+        guard http.statusCode == 200 else {
+            throw SyncClientError.http(http.statusCode, Self.errorMessage(data))
+        }
+        do {
+            return try JSONDecoder().decode(TernWatchPage.self, from: data)
         } catch {
             throw SyncClientError.malformedResponse
         }

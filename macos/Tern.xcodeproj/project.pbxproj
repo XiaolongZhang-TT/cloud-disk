@@ -25,9 +25,11 @@
 		9C3E41EB6A3A9AAC26EAE981 /* PendingStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 60ACF75E60DCBF86E7072870 /* PendingStore.swift */; };
 		9CCC8201732BE199955514FF /* TernSyncClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDE535000D230B5E798B392D /* TernSyncClient.swift */; };
 		BC86E05F087A546D83A51611 /* FileProviderBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 847F706BD5764B5C76B032F9 /* FileProviderBridge.swift */; };
+		BE75F6EE72937B3DEEEDC611 /* TernSyncClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDE535000D230B5E798B392D /* TernSyncClient.swift */; };
 		C9C3A3996DEFDFBE18228787 /* MenuBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B56B450C31858D8C8E23FAD /* MenuBarView.swift */; };
 		D0E9A2086C11ADC5D891F621 /* FileProviderStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 06A57010E1DDD3A0BAD09708 /* FileProviderStore.swift */; };
 		D8CE3F7D849E6715A32F1D43 /* FileProviderItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0EB7626E07471872930DD4A /* FileProviderItem.swift */; };
+		EE455C331FBDA476C663F3EA /* FileProviderWatcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3555787C1AA6FC16A5351556 /* FileProviderWatcher.swift */; };
 		F61356BEA299C32A7EE7FEF8 /* LaunchAgentManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 52D2D18F808319F4967106C1 /* LaunchAgentManager.swift */; };
 /* End PBXBuildFile section */
 
@@ -62,6 +64,7 @@
 		07A8DD9EA01FD3436A836DB9 /* KeychainStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainStore.swift; sourceTree = "<group>"; };
 		102DEA10E99DC7C114752354 /* FileProviderShared.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileProviderShared.swift; sourceTree = "<group>"; };
 		2695F3AB8A4516714C98B842 /* Log.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Log.swift; sourceTree = "<group>"; };
+		3555787C1AA6FC16A5351556 /* FileProviderWatcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileProviderWatcher.swift; sourceTree = "<group>"; };
 		3DE759483646F7CDDF253593 /* TernFileProvider.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = TernFileProvider.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		52D2D18F808319F4967106C1 /* LaunchAgentManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LaunchAgentManager.swift; sourceTree = "<group>"; };
 		5B56B450C31858D8C8E23FAD /* MenuBarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarView.swift; sourceTree = "<group>"; };
@@ -128,6 +131,7 @@
 			children = (
 				C5F113F277901FB0E2232295 /* AppModel.swift */,
 				847F706BD5764B5C76B032F9 /* FileProviderBridge.swift */,
+				3555787C1AA6FC16A5351556 /* FileProviderWatcher.swift */,
 				52D2D18F808319F4967106C1 /* LaunchAgentManager.swift */,
 				5B56B450C31858D8C8E23FAD /* MenuBarView.swift */,
 				DCF4101FD2502203EE1C7BCE /* SettingsStore.swift */,
@@ -250,6 +254,7 @@
 				329EB95E46181CB25D45E330 /* AppModel.swift in Sources */,
 				BC86E05F087A546D83A51611 /* FileProviderBridge.swift in Sources */,
 				3EE017ACA89453ED5E84C1FE /* FileProviderShared.swift in Sources */,
+				EE455C331FBDA476C663F3EA /* FileProviderWatcher.swift in Sources */,
 				6D16DDF9DCDEB10E2B7E1C0B /* KeychainStore.swift in Sources */,
 				F61356BEA299C32A7EE7FEF8 /* LaunchAgentManager.swift in Sources */,
 				7999D6B3BC54E4BDFC830347 /* Log.swift in Sources */,
@@ -260,6 +265,7 @@
 				7CFEE1848AD480833F725D74 /* SmokeRunner.swift in Sources */,
 				689211458F55479891A831EF /* TernApp.swift in Sources */,
 				46E2D81B4497AE3713846363 /* TernInfo.swift in Sources */,
+				BE75F6EE72937B3DEEEDC611 /* TernSyncClient.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

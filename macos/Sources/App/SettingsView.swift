@@ -131,10 +131,10 @@ struct SettingsView: View {
             }
 
             Section {
-                Text("启用 File Provider 后，可以断开旧的 /Volumes/Tern 网络盘，避免 Finder 里出现两个 Tern。")
+                Text("启用 File Provider 后，可以断开旧的 /Volumes/Tern 网络盘，避免 Finder 里出现两个 Tern。会关闭自动挂载，但保留 Tern 登录启动，供 File Provider 实时同步。")
                     .font(.caption)
                     .foregroundStyle(.secondary)
-                Button("断开 WebDAV 网络盘并关闭自动连接") {
+                Button("断开 WebDAV 网络盘（保留登录启动）") {
                     fileProviderMessage = model.disableWebDAVMount()
                 }
             } header: {

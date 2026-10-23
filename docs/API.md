@@ -79,6 +79,7 @@
 | GET | `/api/storage` | – | `{ used, quota, fileCount, folderCount, trashCount, trashSize }` |
 | GET | `/api/overview` | – | `{ storage, recent: Node[], starred: Node[] }` |
 | GET | `/api/sync/changes` | `cursor=0` or cursor, `limit?` | `{ reset, cursor, changes, hasMore? }` — bootstrap snapshot for cursor 0; incremental upserts/tombstones after |
+| GET | `/api/sync/watch` | `cursor?`, `timeout?` | `{ cursor, changed }` — long-poll; no cursor returns the current head immediately; with a cursor waits up to 25s for a change |
 
 ### Sync changes (File Provider)
 
@@ -115,6 +116,23 @@ cursor return incremental changes.
 - `seq` is a global monotonic change sequence (not a timestamp).
 - Hidden AppleDouble/`.DS_Store` files are excluded.
 - Requires the normal session cookie.
+
+### Sync watch (long poll)
+
+`GET /api/sync/watch` without `cursor` returns `{ "cursor": 123, "changed": false }`
+immediately, so a client can establish its starting point without a full
+snapshot. With `cursor=123` the request is held until a newer change appears or
+the timeout (default 25s, max 30s) expires:
+
+```json
+{ "cursor": 128, "changed": true }
+```
+
+The macOS menu-bar app holds this request and calls
+`NSFileProviderManager.signalEnumerator` when `changed` is true, so a file
+uploaded from the web/WebDAV/another Mac appears in Finder within about a
+second. The endpoint uses the normal session cookie and costs one suspended
+request per client.
 
 ### Upload rules
 
