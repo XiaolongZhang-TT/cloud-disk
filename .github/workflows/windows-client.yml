@@ -49,8 +49,12 @@ jobs:
       - name: Cloud Files self-test
         shell: pwsh
         run: |
-          & "windows/dist/Tern.exe" --cloudfiles-selftest
-          if ($LASTEXITCODE -ne 0) { throw "Cloud Files self-test failed with exit code $LASTEXITCODE" }
+          $process = Start-Process -FilePath "windows/dist/Tern.exe" `
+            -ArgumentList "--cloudfiles-selftest" `
+            -Wait -PassThru -NoNewWindow
+          if ($process.ExitCode -ne 0) {
+            throw "Cloud Files self-test failed with exit code $($process.ExitCode)"
+          }
 
       - name: Package portable zip
         run: Compress-Archive -Path windows/dist/* -DestinationPath Tern-Windows-x64.zip -Force
