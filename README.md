@@ -72,7 +72,7 @@ docker compose up -d --build
 
 连接后，Finder 的「位置」会出现 **Tern**，可拖到「个人收藏」固定。完整说明见 [docs/MAC.md](docs/MAC.md)。
 
-> 正在开发 Finder File Provider 离线位置（Phase 1 只读原型），见 [docs/MAC_OFFLINE.md](docs/MAC_OFFLINE.md)。
+> 正在开发 Finder File Provider 离线位置（Phase 2：在线写入 + 离线队列，实验性），见 [docs/MAC_OFFLINE.md](docs/MAC_OFFLINE.md)。
 
 ## Windows 客户端
 
@@ -90,7 +90,7 @@ Windows 10/11 x64 托盘客户端，把网盘映射为 **`Tern (T:)`**，在「�
 
 - [部署指南](docs/DEPLOY.md)：NAS、HTTPS、备份升级
 - [macOS 客户端](docs/MAC.md)：构建、安装、Finder 集成
-- [macOS 离线位置（实验）](docs/MAC_OFFLINE.md)：File Provider Phase 1
+- [macOS 离线位置（实验）](docs/MAC_OFFLINE.md)：File Provider Phase 2
 - [Windows 客户端](docs/WINDOWS.md)：安装、盘符映射、WebClient
 - [架构](docs/ARCHITECTURE.md) · [API](docs/API.md)
 - [路线图](ROADMAP.md) · [贡献指南](CONTRIBUTING.md) · [安全策略](SECURITY.md)

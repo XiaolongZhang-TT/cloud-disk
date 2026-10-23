@@ -24,6 +24,26 @@ public struct TernChange: Codable, Sendable {
 
     public var isFolder: Bool { type == "folder" }
     public var isDeleted: Bool { deleted }
+
+    private enum CodingKeys: String, CodingKey {
+        case seq, id, parentId, name, type, size, mime, starred, createdAt, updatedAt, etag, deleted
+    }
+
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        seq = try c.decodeIfPresent(Int.self, forKey: .seq)
+        id = try c.decode(String.self, forKey: .id)
+        parentId = try c.decodeIfPresent(String.self, forKey: .parentId)
+        name = try c.decodeIfPresent(String.self, forKey: .name)
+        type = try c.decodeIfPresent(String.self, forKey: .type)
+        size = try c.decodeIfPresent(Int64.self, forKey: .size)
+        mime = try c.decodeIfPresent(String.self, forKey: .mime)
+        starred = try c.decodeIfPresent(Bool.self, forKey: .starred)
+        createdAt = try c.decodeIfPresent(String.self, forKey: .createdAt)
+        updatedAt = try c.decodeIfPresent(String.self, forKey: .updatedAt)
+        etag = try c.decodeIfPresent(String.self, forKey: .etag)
+        deleted = try c.decodeIfPresent(Bool.self, forKey: .deleted) ?? false
+    }
 }
 
 public struct TernSyncPage: Codable, Sendable {
@@ -105,7 +125,7 @@ public final class TernSyncClient: @unchecked Sendable {
     // MARK: - Auth
 
     private func login() async throws {
-        let url = apiBase.appendingPathComponent("auth/login")
+        let url = apiBase.appendingPathComponent("auth").appendingPathComponent("login")
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
@@ -158,7 +178,7 @@ public final class TernSyncClient: @unchecked Sendable {
     // MARK: - Sync
 
     public func sync(cursor: Int) async throws -> TernSyncPage {
-        var components = URLComponents(url: apiBase.appendingPathComponent("sync/changes"), resolvingAgainstBaseURL: false)!
+        var components = URLComponents(url: apiBase.appendingPathComponent("sync").appendingPathComponent("changes"), resolvingAgainstBaseURL: false)!
         components.queryItems = [
             URLQueryItem(name: "cursor", value: String(cursor)),
             URLQueryItem(name: "limit", value: "1000"),
@@ -187,6 +207,125 @@ public final class TernSyncClient: @unchecked Sendable {
             throw SyncClientError.http(http.statusCode, Self.errorMessage(data))
         }
         return (data, http.value(forHTTPHeaderField: "Content-Type"))
+    }
+
+    // MARK: - Writes
+
+    public func createFolder(parentId: String?, name: String, clientId: String) async throws -> TernChange {
+        var body: [String: Any] = ["name": name, "clientId": clientId]
+        if let parentId { body["parentId"] = parentId }
+        let request = try jsonRequest(path: "nodes/folder", method: "POST", object: body)
+        let (data, http) = try await withAuth(request)
+        guard http.statusCode == 201 else {
+            throw SyncClientError.http(http.statusCode, Self.errorMessage(data))
+        }
+        return try decodeNode(data)
+    }
+
+    public func uploadFile(parentId: String?, name: String, clientId: String, data: Data, mime: String) async throws -> TernChange {
+        var components = URLComponents(url: apiBase.appendingPathComponent("nodes").appendingPathComponent("upload"), resolvingAgainstBaseURL: false)!
+        var query = [URLQueryItem(name: "clientId", value: clientId)]
+        if let parentId { query.append(URLQueryItem(name: "parentId", value: parentId)) }
+        components.queryItems = query
+
+        let boundary = "TernBoundary-\(UUID().uuidString)"
+        var body = Data()
+        body.append("--\(boundary)\r\n".data(using: .utf8)!)
+        body.append("Content-Disposition: form-data; name=\"files\"; filename=\"\(name.replacingOccurrences(of: "\"", with: "_"))\"\r\n".data(using: .utf8)!)
+        body.append("Content-Type: \(mime)\r\n\r\n".data(using: .utf8)!)
+        body.append(data)
+        body.append("\r\n--\(boundary)--\r\n".data(using: .utf8)!)
+
+        var request = URLRequest(url: components.url!)
+        request.httpMethod = "POST"
+        request.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        request.httpBody = body
+
+        let (responseData, http) = try await withAuth(request)
+        guard http.statusCode == 201 else {
+            throw SyncClientError.http(http.statusCode, Self.errorMessage(responseData))
+        }
+        guard let object = try? JSONSerialization.jsonObject(with: responseData) as? [String: Any],
+              let items = object["items"] as? [[String: Any]],
+              let first = items.first,
+              let itemData = try? JSONSerialization.data(withJSONObject: first) else {
+            throw SyncClientError.malformedResponse
+        }
+        return try JSONDecoder().decode(TernChange.self, from: itemData)
+    }
+
+    public func updateContent(id: String, data: Data, ifMatch: String?) async throws -> TernChange {
+        let url = apiBase.appendingPathComponent("nodes").appendingPathComponent(id).appendingPathComponent("content")
+        var request = URLRequest(url: url)
+        request.httpMethod = "PUT"
+        request.setValue("application/octet-stream", forHTTPHeaderField: "Content-Type")
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        if let ifMatch, !ifMatch.isEmpty { request.setValue(ifMatch, forHTTPHeaderField: "If-Match") }
+        request.httpBody = data
+        let (responseData, http) = try await withAuth(request)
+        guard http.statusCode == 200 else {
+            throw SyncClientError.http(http.statusCode, Self.errorMessage(responseData))
+        }
+        return try decodeNode(responseData)
+    }
+
+    public func renameMove(id: String, name: String?, parentId: String?, moveToRoot: Bool = false, ifMatch: String?) async throws -> TernChange {
+        var body: [String: Any] = [:]
+        if let name { body["name"] = name }
+        if moveToRoot {
+            body["parentId"] = NSNull()
+        } else if let parentId {
+            body["parentId"] = parentId
+        }
+        let url = apiBase.appendingPathComponent("nodes").appendingPathComponent(id)
+        var request = URLRequest(url: url)
+        request.httpMethod = "PATCH"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        if let ifMatch, !ifMatch.isEmpty { request.setValue(ifMatch, forHTTPHeaderField: "If-Match") }
+        request.httpBody = try JSONSerialization.data(withJSONObject: body)
+        let (responseData, http) = try await withAuth(request)
+        guard http.statusCode == 200 else {
+            throw SyncClientError.http(http.statusCode, Self.errorMessage(responseData))
+        }
+        guard let object = try? JSONSerialization.jsonObject(with: responseData) as? [String: Any],
+              let node = object["node"],
+              let data = try? JSONSerialization.data(withJSONObject: node) else {
+            throw SyncClientError.malformedResponse
+        }
+        return try JSONDecoder().decode(TernChange.self, from: data)
+    }
+
+    public func delete(id: String) async throws {
+        let url = apiBase.appendingPathComponent("nodes").appendingPathComponent(id)
+        var request = URLRequest(url: url)
+        request.httpMethod = "DELETE"
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        let (data, http) = try await withAuth(request)
+        guard http.statusCode == 200 else {
+            throw SyncClientError.http(http.statusCode, Self.errorMessage(data))
+        }
+    }
+
+    private func jsonRequest(path: String, method: String, object: [String: Any]) throws -> URLRequest {
+        var url = apiBase
+        for component in path.split(separator: "/") { url = url.appendingPathComponent(String(component)) }
+        var request = URLRequest(url: url)
+        request.httpMethod = method
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        request.httpBody = try JSONSerialization.data(withJSONObject: object)
+        return request
+    }
+
+    private func decodeNode(_ data: Data) throws -> TernChange {
+        guard let object = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let node = object["node"],
+              let nodeData = try? JSONSerialization.data(withJSONObject: node) else {
+            throw SyncClientError.malformedResponse
+        }
+        return try JSONDecoder().decode(TernChange.self, from: nodeData)
     }
 
     // MARK: - Helpers

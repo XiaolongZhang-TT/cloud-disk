@@ -27,6 +27,7 @@ final class TernEnumerator: NSObject, NSFileProviderEnumerator {
         Task {
             if invalidated { return }
             do {
+                try? await store.flushPending()
                 if store.cursor == 0 {
                     _ = try await store.sync(forceBootstrap: true)
                 }
@@ -47,6 +48,7 @@ final class TernEnumerator: NSObject, NSFileProviderEnumerator {
             do {
                 // If the system is at a valid older anchor, replay only what is
                 // newer. A zero anchor triggers the server snapshot.
+                try? await store.flushPending()
                 let deleted = try await store.sync(forceBootstrap: start == 0)
                 let updates = self.itemsForContainer().map { TernItem(stored: $0) }
                 if !updates.isEmpty { observer.didUpdate(updates) }

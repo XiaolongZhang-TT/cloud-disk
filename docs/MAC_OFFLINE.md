@@ -1,7 +1,7 @@
 # macOS 离线位置（File Provider，Phase 1）
 
-> 状态：**实验性、只读**。当前实现用于验证 Finder「位置」、按需下载和离线缓存；
-> 上传、重命名、移动、删除和冲突处理属于 Phase 2。
+> 状态：**实验性、Phase 2**。已支持在线写入、离线写队列和按需下载；
+> 冲突自动拆分、缩略图和正式公证仍在后续阶段。
 
 ## 最终形态
 
@@ -85,19 +85,27 @@ TEAM=你的TeamID ./build-xcode.sh       # 签名运行
 - 确认 `TernFileProvider.appex` 已嵌入 `Tern.app/Contents/PlugIns`；
 - 查看 Console.app 中 `TernFileProvider` 的日志。
 
-## Phase 1 限制
+## Phase 2 当前能力
 
-- 只读：新建、修改、移动、删除返回 `NSFeatureUnsupportedError`；
-- 没有离线写队列和冲突处理；
-- 没有缩略图和 Spotlight 打磨；
-- 没有正式公证/分发流程；
+- 新建文件夹、上传文件；
+- 修改文件内容（带 `If-Match`，服务端返回 412 时当前会保留待同步状态）；
+- 重命名、移动（包括移动到根目录）；
+- 删除（进入服务端回收站）；
+- 离线写队列：网络不可用时本地保存内容/操作，Finder 中标记为待上传；下次枚举时重试；
+- 新建文件使用客户端生成的 ID，联网后不会发生 ID 变化。
+
+## 仍待完成
+
+- 412 冲突时自动生成冲突副本；
+- 缩略图、Spotlight、同步进度 UI；
+- 正式签名与公证分发；
+- 迁移旧 WebDAV 网络卷，避免 Finder 中出现两个 Tern；
 - 扩展必须由 Xcode 构建并正确签名，旧版 `build.sh`（CLT + ad-hoc）不能注册它。
 
-## Phase 2 计划
+## Phase 3 计划
 
-- WebDAV/REST 写入：上传、修改、删除、移动、重命名；
-- 离线写队列与重试；
-- ETag/If-Match 冲突副本；
-- 「保持下载」/移除下载；
-- 缩略图、Spotlight、进度 UI；
-- 迁移旧 WebDAV 网络卷，避免 Finder 中出现两个 Tern。
+- 冲突副本和合并 UI；
+- 「保持下载 / 移除下载」；
+- 缩略图、Spotlight；
+- 失败重试与同步状态页；
+- 安装包、公证、升级流程。

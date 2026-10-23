@@ -1,5 +1,6 @@
 import test, { after, before } from 'node:test';
 import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
 
 import { ApiClient, startTestServer, uploadFiles } from './helpers.js';
 
@@ -142,4 +143,42 @@ test('sync: deleted items do not appear in a fresh bootstrap', async () => {
 test('sync: cursor rejects invalid values', async () => {
   const res = await api.get('/api/sync/changes?cursor=-1');
   assert.equal(res.status, 400);
+});
+
+test('sync: client-supplied id makes offline-created items stable', async () => {
+  const clientId = crypto.randomUUID();
+  const folder = await api.post('/api/nodes/folder', { name: 'Offline folder', clientId });
+  assert.equal(folder.status, 201);
+  assert.equal(folder.json.node.id, clientId);
+
+  const form = new FormData();
+  form.append('files', new Blob(['offline file']), 'offline.txt');
+  const upload = await api.request('POST', `/api/nodes/upload?clientId=${crypto.randomUUID()}`, { body: form });
+  assert.equal(upload.status, 201);
+  assert.equal(upload.json.items.length, 1);
+});
+
+test('sync: raw content PUT updates content and enforces If-Match', async () => {
+  const folder = (await api.post('/api/nodes/folder', { name: 'Content' })).json.node;
+  const file = (await uploadFiles(api, folder.id, [{ name: 'edit.txt', content: 'old' }]))[0];
+
+  const first = await api.get(`/api/nodes/${file.id}/content`);
+  const etag = first.headers.get('etag');
+  assert.ok(etag);
+
+  const conflict = await api.request('PUT', `/api/nodes/${file.id}/content`, {
+    body: Buffer.from('stale'),
+    headers: { 'content-type': 'application/octet-stream', 'if-match': '"wrong"' },
+  });
+  assert.equal(conflict.status, 412);
+
+  const updated = await api.request('PUT', `/api/nodes/${file.id}/content`, {
+    body: Buffer.from('new content'),
+    headers: { 'content-type': 'application/octet-stream', 'if-match': etag },
+  });
+  assert.equal(updated.status, 200);
+  assert.equal(updated.json.node.size, Buffer.byteLength('new content'));
+
+  const read = await api.get(`/api/nodes/${file.id}/content`);
+  assert.equal(read.text, 'new content');
 });

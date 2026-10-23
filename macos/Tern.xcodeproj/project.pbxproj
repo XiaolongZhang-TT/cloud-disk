@@ -21,6 +21,7 @@
 		7999D6B3BC54E4BDFC830347 /* Log.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2695F3AB8A4516714C98B842 /* Log.swift */; };
 		7CFEE1848AD480833F725D74 /* SmokeRunner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8808C84A7E3AC74F515DC6B7 /* SmokeRunner.swift */; };
 		8DD3B5EF7A99B8CC8767DD95 /* MountClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0749EBE632CD2EAD98117CBC /* MountClient.swift */; };
+		9C3E41EB6A3A9AAC26EAE981 /* PendingStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 60ACF75E60DCBF86E7072870 /* PendingStore.swift */; };
 		9CCC8201732BE199955514FF /* TernSyncClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDE535000D230B5E798B392D /* TernSyncClient.swift */; };
 		BC86E05F087A546D83A51611 /* FileProviderBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 847F706BD5764B5C76B032F9 /* FileProviderBridge.swift */; };
 		C9C3A3996DEFDFBE18228787 /* MenuBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B56B450C31858D8C8E23FAD /* MenuBarView.swift */; };
@@ -62,6 +63,7 @@
 		3DE759483646F7CDDF253593 /* TernFileProvider.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = TernFileProvider.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		52D2D18F808319F4967106C1 /* LaunchAgentManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LaunchAgentManager.swift; sourceTree = "<group>"; };
 		5B56B450C31858D8C8E23FAD /* MenuBarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarView.swift; sourceTree = "<group>"; };
+		60ACF75E60DCBF86E7072870 /* PendingStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PendingStore.swift; sourceTree = "<group>"; };
 		7B2339C2CCDF127F089A5098 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		847F706BD5764B5C76B032F9 /* FileProviderBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileProviderBridge.swift; sourceTree = "<group>"; };
 		8808C84A7E3AC74F515DC6B7 /* SmokeRunner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmokeRunner.swift; sourceTree = "<group>"; };
@@ -85,6 +87,7 @@
 				B0EB7626E07471872930DD4A /* FileProviderItem.swift */,
 				102DEA10E99DC7C114752354 /* FileProviderShared.swift */,
 				06A57010E1DDD3A0BAD09708 /* FileProviderStore.swift */,
+				60ACF75E60DCBF86E7072870 /* PendingStore.swift */,
 				CDE535000D230B5E798B392D /* TernSyncClient.swift */,
 			);
 			path = FileProvider;
@@ -231,6 +234,7 @@
 				D8CE3F7D849E6715A32F1D43 /* FileProviderItem.swift in Sources */,
 				06E48F21710BCC0AA1B388DB /* FileProviderShared.swift in Sources */,
 				D0E9A2086C11ADC5D891F621 /* FileProviderStore.swift in Sources */,
+				9C3E41EB6A3A9AAC26EAE981 /* PendingStore.swift in Sources */,
 				9CCC8201732BE199955514FF /* TernSyncClient.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

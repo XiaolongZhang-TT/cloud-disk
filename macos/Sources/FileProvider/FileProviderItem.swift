@@ -64,9 +64,9 @@ public final class TernItem: NSObject, NSFileProviderItem {
         capabilities = stored.isFolder
             ? [.allowsContentEnumerating, .allowsReading]
             : [.allowsReading]
-        isDownloaded = false
-        isUploaded = true
-        isMostRecentVersionDownloaded = false
+        isDownloaded = (stored.pending ?? false)
+        isUploaded = !(stored.pending ?? false)
+        isMostRecentVersionDownloaded = !(stored.pending ?? false)
         super.init()
     }
 }

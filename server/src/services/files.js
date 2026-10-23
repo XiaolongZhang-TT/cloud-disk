@@ -5,7 +5,7 @@ import { randomUUID } from 'node:crypto';
 import mime from 'mime-types';
 
 import { ApiError, badRequest, conflict, nodeNotFound, notFound, payloadTooLarge } from '../errors.js';
-import { contentDisposition, contentTypeFor, normalizeNodeName, nowIso, parseRange } from '../util.js';
+import { contentDisposition, contentTypeFor, etagForNode, normalizeNodeName, nowIso, parseRange } from '../util.js';
 
 export const ROOT_BREADCRUMB_NAME = '我的文件';
 
@@ -63,6 +63,7 @@ export function serializeNode(row) {
     createdAt: row.created_at,
     updatedAt: row.updated_at,
     trashedAt: row.trashed_at ?? null,
+    etag: etagForNode(row),
   };
   if (row.type === 'folder') node.childCount = row.child_count ?? 0;
   return node;
@@ -144,11 +145,12 @@ export function listFolder(store, ownerId, rawParentId, { sort = 'name', order =
   };
 }
 
-export function createFolder(store, ownerId, { parentId, name }) {
+export function createFolder(store, ownerId, { parentId, name, id }) {
   const parent = getParentFolder(store, ownerId, parentId);
   const normalized = normalizeNodeName(name);
   const finalName = uniqueName(store, ownerId, parent ? parent.id : null, normalized);
   return store.createNode({
+    ...(id ? { id } : {}),
     ownerId,
     parentId: parent ? parent.id : null,
     name: finalName,
@@ -161,7 +163,7 @@ export function createFolder(store, ownerId, { parentId, name }) {
  * to disk). Validation, quota enforcement, auto-renaming, blob moves and DB
  * inserts all happen here so a partial failure leaves no orphaned rows.
  */
-export async function importUploads(store, config, user, rawParentId, files) {
+export async function importUploads(store, config, user, rawParentId, files, { clientId = null } = {}) {
   const ownerId = user.id;
   const parent = getParentFolder(store, ownerId, rawParentId);
   const parentId = parent ? parent.id : null;
@@ -189,7 +191,7 @@ export async function importUploads(store, config, user, rawParentId, files) {
     const items = [];
     for (const entry of entries) {
       const name = uniqueName(store, ownerId, parentId, entry.name);
-      const id = randomUUID();
+      const id = clientId && entries.length === 1 ? clientId : randomUUID();
       const target = blobPath(config, ownerId, id);
       await fsp.mkdir(path.dirname(target), { recursive: true });
       await fsp.rename(entry.file.path, target);
@@ -437,7 +439,7 @@ export async function streamBlob(req, res, config, node, { attachment = false, i
     throw nodeNotFound();
   }
 
-  const etag = `"${node.id}-${Math.floor(stat.mtimeMs).toString(36)}-${stat.size.toString(36)}"`;
+  const etag = etagForNode(node);
   const mime = contentTypeFor(node.mime);
   res.setHeader('ETag', etag);
   res.setHeader('Last-Modified', stat.mtime.toUTCString());

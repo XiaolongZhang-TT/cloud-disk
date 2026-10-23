@@ -1,9 +1,10 @@
 import { randomUUID } from 'node:crypto';
-import { Router } from 'express';
+import express, { Router } from 'express';
 import multer from 'multer';
-
-import { asyncHandler, badRequest } from '../errors.js';
-import { intParam, likeEscape } from '../util.js';
+import fsp from 'node:fs/promises';
+import path from 'node:path';
+import { etagForNode, intParam, likeEscape, nowIso } from '../util.js';
+import { ApiError, asyncHandler, badRequest } from '../errors.js';
 import {
   collectZipEntries,
   copyNode,
@@ -13,6 +14,7 @@ import {
   getTrashedNode,
   importUploads,
   isHiddenMetadataName,
+  mimeForName,
   listFolder,
   moveNode,
   overview,
@@ -74,6 +76,7 @@ export function createNodesRouter({ store, config }) {
     const node = createFolder(store, req.user.id, {
       parentId: req.body?.parentId,
       name: req.body?.name,
+      id: req.body?.clientId,
     });
     res.status(201).json({ node: serializeNode(node) });
   });
@@ -84,7 +87,9 @@ export function createNodesRouter({ store, config }) {
     asyncHandler(async (req, res) => {
       const files = Array.isArray(req.files) ? req.files : [];
       if (files.length === 0) throw badRequest('invalid_upload', 'At least one file part named "files" is required');
-      const items = await importUploads(store, config, req.user, req.query.parentId, files);
+      const items = await importUploads(store, config, req.user, req.query.parentId, files, {
+        clientId: typeof req.query.clientId === 'string' ? req.query.clientId : null,
+      });
       res.status(201).json({ items });
     }),
   );
@@ -140,6 +145,53 @@ export function createNodesRouter({ store, config }) {
       if (node.type !== 'file') throw badRequest('not_a_file', 'Only files have inline content');
       const download = req.query.download === '1' || req.query.download === 'true';
       await streamBlob(req, res, config, node, { attachment: download, inline: !download });
+    }),
+  );
+
+  // File Provider uploads raw bytes to an existing file.  This is separate
+  // from the multipart upload endpoint so the client can send If-Match and
+  // receive a 412 on a stale version.
+  router.put(
+    '/:id/content',
+    express.raw({ type: () => true, limit: config.maxUploadBytes }),
+    asyncHandler(async (req, res) => {
+      const node = getLiveNode(store, req.user.id, req.params.id);
+      if (node.type !== 'file') throw badRequest('not_a_file', 'Only files have content');
+      if (!Buffer.isBuffer(req.body)) throw badRequest('invalid_body', 'Expected a raw file body');
+
+      const currentEtag = etagForNode(node);
+      const ifMatch = req.headers['if-match'];
+      if (ifMatch && String(ifMatch).trim() !== '*') {
+        const tags = String(ifMatch).split(',').map((tag) => tag.trim());
+        if (!tags.includes(currentEtag)) {
+          throw new ApiError(412, 'version_conflict', 'The file was modified by another client', { etag: currentEtag });
+        }
+      }
+
+      const size = req.body.length;
+      const used = store.usedBytes(req.user.id);
+      if (req.user.quota > 0 && used - node.size + size > req.user.quota) {
+        throw new ApiError(507, 'quota_exceeded', 'Not enough storage quota available');
+      }
+
+      const target = path.join(config.storageDir, req.user.id, node.storage_key ?? node.id);
+      const temp = path.join(config.tmpDir, `content-${randomUUID()}.part`);
+      await fsp.mkdir(path.dirname(target), { recursive: true });
+      try {
+        await fsp.writeFile(temp, req.body);
+        await fsp.rename(temp, target);
+      } catch (error) {
+        await fsp.unlink(temp).catch(() => {});
+        throw error;
+      }
+
+      const updated = store.updateNode(node.id, {
+        size,
+        mime: mimeForName(node.name),
+        updatedAt: nowIso(),
+      });
+      res.setHeader('ETag', etagForNode(updated));
+      res.json({ node: serializeNode(updated) });
     }),
   );
 

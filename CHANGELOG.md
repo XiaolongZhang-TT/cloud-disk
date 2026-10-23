@@ -13,7 +13,7 @@ See [ROADMAP.md](ROADMAP.md) for the prioritized backlog.
 ### Added
 
 - Server `GET /api/sync/changes` append-only change feed with bootstrap snapshots, incremental upserts and tombstones, plus integration tests.
-- Experimental read-only macOS File Provider extension (Phase 1): Finder location, on-demand download and offline cache; built via the new Xcode project.
+- macOS File Provider Phase 2: online create/upload/modify/move/delete, client-supplied IDs and a durable offline write queue. Conflict copies and thumbnails remain for Phase 3.
 - Windows 10/11 x64 tray client that maps Tern as a drive letter (`Tern (T:)`) via WebDAV, with Credential Manager storage, auto-connect, drive-letter selection and a Windows build workflow.
 - GitHub Actions workflow to publish multi-arch (`amd64`/`arm64`) Docker images to
   Docker Hub on `v*` tags, plus a `docker-compose.hub.yml` deployment path for the

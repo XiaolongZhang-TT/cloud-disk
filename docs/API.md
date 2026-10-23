@@ -61,13 +61,14 @@
 |---|---|---|---|
 | GET | `/api/nodes` | `parentId?` (`root`/omitted = root), `sort=name|modified|size`, `order=asc|desc` | `{ folder: Node\|null, breadcrumb: [{id,name}], items: Node[] }` |
 | GET | `/api/nodes/:id` | – | `{ node: Node }` |
-| POST | `/api/nodes/folder` | `{ parentId?, name }` | `{ node }` |
-| POST | `/api/nodes/upload` | multipart, field `files` (1..n), query `parentId?` | `{ items: Node[] }` 201 |
+| POST | `/api/nodes/folder` | `{ parentId?, name, clientId? }` | `{ node }` |
+| POST | `/api/nodes/upload` | multipart, field `files` (1..n), query `parentId?`, `clientId?` (single file) | `{ items: Node[] }` 201 |
 | PATCH | `/api/nodes/:id` | any of `{ name?, parentId?, starred? }` | `{ node }` |
 | POST | `/api/nodes/:id/copy` | `{ parentId? }` | `{ node }` 201 |
 | DELETE | `/api/nodes/:id` | – | `{ ok: true }` (moves to trash) |
 | GET | `/api/nodes/:id/download` | – | binary attachment; folders stream a ZIP |
 | GET | `/api/nodes/:id/content` | `download=1?` | inline binary (preview); Range supported |
+| PUT | `/api/nodes/:id/content` | raw body; `If-Match?` | `{ node }`; 412 when the ETag is stale |
 | GET | `/api/trash` | `sort=trashed|name|size` | `{ items: Node[] }` |
 | POST | `/api/trash/:id/restore` | – | `{ node }` |
 | DELETE | `/api/trash/:id` | – | `{ ok: true }` (permanent) |
