@@ -32,7 +32,6 @@ public final class FileProviderStore: @unchecked Sendable {
 
     private let queue = DispatchQueue(label: "com.tern.menubar.fileprovider.store")
     private var cache = CacheFile()
-    private var loaded = false
     private let cacheURL: URL?
 
     public init() {
@@ -123,7 +122,6 @@ public final class FileProviderStore: @unchecked Sendable {
 
     private func load() {
         guard let cacheURL else { return }
-        defer { loaded = true }
         guard let data = try? Data(contentsOf: cacheURL),
               let decoded = try? JSONDecoder().decode(CacheFile.self, from: data) else { return }
         cache = decoded

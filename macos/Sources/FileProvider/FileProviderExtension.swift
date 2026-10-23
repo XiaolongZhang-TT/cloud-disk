@@ -71,8 +71,9 @@ final class FileProviderExtension: NSObject, NSFileProviderReplicatedExtension {
                 }
                 let client = try store.makeClient()
                 let result = try await client.fetchFile(id: stored.id)
-                let directory = FileManager.default.temporaryDirectory
-                    .appendingPathComponent("TernFileProvider", isDirectory: true)
+                let manager = NSFileProviderManager(for: domain)
+                let directory = (manager.flatMap { try? $0.temporaryDirectoryURL() })
+                    ?? FileManager.default.temporaryDirectory.appendingPathComponent("TernFileProvider", isDirectory: true)
                 try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
                 let fileURL = directory.appendingPathComponent(UUID().uuidString)
                     .appendingPathExtension((stored.name as NSString).pathExtension.isEmpty ? "data" : (stored.name as NSString).pathExtension)
