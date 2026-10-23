@@ -21,8 +21,12 @@ public sealed class TernSyncService : IAsyncDisposable
     private readonly SemaphoreSlim refreshLock = new(1, 1);
     private readonly SemaphoreSlim localWake = new(0, 1);
     private readonly SemaphoreSlim networkRefreshLock = new(1, 1);
+    private readonly object folderQueueLock = new();
     private FileSystemWatcher? localWatcher;
     private bool networkSubscribed;
+    private List<PendingFolderOperation> pendingFolderOperations = new();
+    private string StatePath => Path.Combine(dataDirectory, "sync-state.json");
+    private string FolderQueuePath => Path.Combine(dataDirectory, "pending-folders.json");
 
     public TernSyncService(string root, string dataDirectory)
     {
@@ -43,6 +47,8 @@ public sealed class TernSyncService : IAsyncDisposable
     {
         await StopAsync().ConfigureAwait(false);
         LastError = null;
+        LoadState();
+        LoadFolderQueue();
         var server = ServerUrl.NormalizeOrThrow(settings.ServerUrl);
         backend = new TernBackendClient(server, settings.Username, password);
         await backend.LoginAsync(cancellationToken).ConfigureAwait(false);
@@ -127,8 +133,25 @@ public sealed class TernSyncService : IAsyncDisposable
         try
         {
             if (provider is null || backend is null) return;
-            var (remote, newCursor) = await backend.GetTreeAsync(cancellationToken).ConfigureAwait(false);
-            nodes = remote.ToDictionary(node => node.Id, StringComparer.Ordinal);
+            var oldFolderPaths = nodesByPath
+                .Where(pair => pair.Value.IsFolder)
+                .Select(pair => pair.Key)
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+            var page = await backend.GetChangesAsync(cursor, cancellationToken: cancellationToken).ConfigureAwait(false);
+            if (page.Reset) nodes.Clear();
+            ApplyChanges(page);
+            cursor = page.Cursor;
+            while (page.HasMore)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                page = await backend.GetChangesAsync(cursor, cancellationToken: cancellationToken).ConfigureAwait(false);
+                if (page.Reset) nodes.Clear();
+                ApplyChanges(page);
+                cursor = page.Cursor;
+            }
+            SaveState();
+
             var paths = BuildPaths(nodes);
             nodesByPath = paths.ToDictionary(pair => pair.Value, pair => nodes[pair.Key], StringComparer.OrdinalIgnoreCase);
             var folders = paths.Where(pair => nodes[pair.Key].IsFolder)
@@ -139,6 +162,7 @@ public sealed class TernSyncService : IAsyncDisposable
                 if (!string.IsNullOrEmpty(path))
                     Directory.CreateDirectory(Path.Combine(root, path.Replace('/', Path.DirectorySeparatorChar)));
             }
+
             var entries = paths
                 .Where(pair => !nodes[pair.Key].IsFolder)
                 .Select(pair =>
@@ -164,9 +188,26 @@ public sealed class TernSyncService : IAsyncDisposable
                 Entries = entries,
             };
             var summary = await new ManifestReconciler(provider).ReconcileAsync(manifest, cancellationToken).ConfigureAwait(false);
-            cursor = newCursor;
+
+            // Remove directories that belonged to a folder deleted/renamed remotely.
+            foreach (var old in oldFolderPaths)
+            {
+                if (nodesByPath.ContainsKey(old)) continue;
+                if (string.IsNullOrWhiteSpace(old)) continue;
+                var directory = Path.Combine(root, old.Replace('/', Path.DirectorySeparatorChar));
+                try
+                {
+                    if (Directory.Exists(directory) && !Directory.EnumerateFileSystemEntries(directory).Any())
+                        Directory.Delete(directory);
+                }
+                catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+                {
+                    // The shell may still hold a handle; the next refresh will retry.
+                }
+            }
+
             LastError = null;
-            Log.Info($"cloudfiles refresh: created={summary.Created} updated={summary.Updated} removed={summary.Removed} conflicts={summary.Conflicts} unchanged={summary.Unchanged}");
+            Log.Info($"cloudfiles refresh: cursor={cursor} created={summary.Created} updated={summary.Updated} removed={summary.Removed} conflicts={summary.Conflicts} unchanged={summary.Unchanged}");
             Progress?.Invoke(this, new SyncProgress("已同步", entries.Length, folders.Length, true));
         }
         catch (Exception exception)
@@ -179,6 +220,117 @@ public sealed class TernSyncService : IAsyncDisposable
         {
             refreshLock.Release();
         }
+    }
+
+    private void ApplyChanges(TernChanges page)
+    {
+        foreach (var change in page.Changes)
+        {
+            if (change.Deleted)
+            {
+                nodes.Remove(change.Id);
+            }
+            else if (change.Node is { } node)
+            {
+                nodes[node.Id] = node;
+            }
+        }
+    }
+
+    private void LoadState()
+    {
+        nodes.Clear();
+        cursor = 0;
+        try
+        {
+            if (!File.Exists(StatePath)) return;
+            var state = System.Text.Json.JsonSerializer.Deserialize<SyncState>(File.ReadAllText(StatePath));
+            if (state is null) return;
+            cursor = Math.Max(0, state.Cursor);
+            foreach (var node in state.Nodes ?? new List<TernNode>())
+                nodes[node.Id] = node;
+            Log.Info($"cloudfiles state: cursor={cursor} nodes={nodes.Count}");
+        }
+        catch (Exception exception)
+        {
+            Log.Warn("cloudfiles state load failed: " + exception.Message);
+            nodes.Clear();
+            cursor = 0;
+        }
+    }
+
+    private void SaveState()
+    {
+        try
+        {
+            var state = new SyncState { Cursor = cursor, Nodes = nodes.Values.ToList() };
+            File.WriteAllText(StatePath, System.Text.Json.JsonSerializer.Serialize(state, new System.Text.Json.JsonSerializerOptions { WriteIndented = false }));
+        }
+        catch (Exception exception)
+        {
+            Log.Warn("cloudfiles state save failed: " + exception.Message);
+        }
+    }
+
+    private void LoadFolderQueue()
+    {
+        try
+        {
+            pendingFolderOperations = File.Exists(FolderQueuePath)
+                ? System.Text.Json.JsonSerializer.Deserialize<List<PendingFolderOperation>>(File.ReadAllText(FolderQueuePath)) ?? new()
+                : new();
+        }
+        catch
+        {
+            pendingFolderOperations = new();
+        }
+    }
+
+    private void SaveFolderQueue()
+    {
+        lock (folderQueueLock)
+        {
+            try
+            {
+                File.WriteAllText(FolderQueuePath, System.Text.Json.JsonSerializer.Serialize(pendingFolderOperations));
+            }
+            catch (Exception exception)
+            {
+                Log.Warn("folder queue save failed: " + exception.Message);
+            }
+        }
+    }
+
+    private void EnqueueFolderOperation(string kind, string oldPath, string newPath)
+    {
+        lock (folderQueueLock)
+        {
+            if (pendingFolderOperations.Any(op => op.Kind == kind && op.OldPath == oldPath && op.NewPath == newPath))
+                return;
+            pendingFolderOperations.Add(new PendingFolderOperation
+            {
+                Kind = kind,
+                OldPath = oldPath,
+                NewPath = newPath,
+                CreatedAt = DateTimeOffset.UtcNow,
+            });
+            SaveFolderQueue();
+        }
+        WakeLocal();
+    }
+
+    private sealed class SyncState
+    {
+        public int Cursor { get; set; }
+        public List<TernNode>? Nodes { get; set; }
+    }
+
+    private sealed class PendingFolderOperation
+    {
+        public string Kind { get; set; } = "";
+        public string OldPath { get; set; } = "";
+        public string NewPath { get; set; } = "";
+        public DateTimeOffset CreatedAt { get; set; }
     }
 
     private async Task WatchLoopAsync(CancellationToken cancellationToken)
@@ -221,8 +373,24 @@ public sealed class TernSyncService : IAsyncDisposable
             };
             localWatcher.Created += (_, _) => WakeLocal();
             localWatcher.Changed += (_, _) => WakeLocal();
-            localWatcher.Deleted += (_, _) => WakeLocal();
-            localWatcher.Renamed += (_, _) => WakeLocal();
+            localWatcher.Deleted += (_, e) =>
+            {
+                var relative = RelativePath(e.FullPath);
+                if (nodesByPath.TryGetValue(relative, out var node) && node.IsFolder)
+                    EnqueueFolderOperation("delete", relative, "");
+                WakeLocal();
+            };
+            localWatcher.Renamed += (_, e) =>
+            {
+                if (Directory.Exists(e.FullPath))
+                {
+                    var oldRelative = RelativePath(e.OldFullPath);
+                    var newRelative = RelativePath(e.FullPath);
+                    if (nodesByPath.TryGetValue(oldRelative, out var node) && node.IsFolder)
+                        EnqueueFolderOperation("rename", oldRelative, newRelative);
+                }
+                WakeLocal();
+            };
             localWatcher.Error += (_, _) => WakeLocal();
             localWatcher.EnableRaisingEvents = true;
         }
@@ -271,6 +439,69 @@ public sealed class TernSyncService : IAsyncDisposable
         });
     }
 
+    private string RelativePath(string absolute)
+    {
+        try { return Path.GetRelativePath(root, absolute).Replace('\\', '/'); }
+        catch { return ""; }
+    }
+
+    private async Task ProcessFolderOperationsAsync(CancellationToken cancellationToken)
+    {
+        if (backend is null || provider is null) return;
+        PendingFolderOperation[] operations;
+        lock (folderQueueLock) operations = pendingFolderOperations.ToArray();
+        foreach (var operation in operations)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            try
+            {
+                if (operation.Kind == "rename")
+                {
+                    if (!nodesByPath.TryGetValue(operation.OldPath, out var node) || !node.IsFolder) { RemoveFolderOperation(operation); continue; }
+                    var parent = ParentPath(operation.NewPath);
+                    nodesByPath.TryGetValue(parent, out var parentNode);
+                    var updated = await backend.RenameAsync(
+                        node.Id,
+                        Path.GetFileName(operation.NewPath),
+                        parentNode?.Id,
+                        moveToRoot: parent.Length == 0,
+                        cancellationToken).ConfigureAwait(false);
+                    nodes[node.Id] = updated;
+                    await provider.RemapPathPrefixAsync(operation.OldPath, operation.NewPath, cancellationToken).ConfigureAwait(false);
+                    RemoveFolderOperation(operation);
+                    await RefreshAsync(cancellationToken).ConfigureAwait(false);
+                    Log.Info("cloudfiles: renamed folder " + operation.OldPath + " -> " + operation.NewPath);
+                }
+                else if (operation.Kind == "delete")
+                {
+                    if (!nodesByPath.TryGetValue(operation.OldPath, out var node) || !node.IsFolder) { RemoveFolderOperation(operation); continue; }
+                    await backend.DeleteAsync(node.Id, cancellationToken).ConfigureAwait(false);
+                    await provider.RemovePathPrefixAsync(operation.OldPath, cancellationToken).ConfigureAwait(false);
+                    RemoveFolderOperation(operation);
+                    await RefreshAsync(cancellationToken).ConfigureAwait(false);
+                    Log.Info("cloudfiles: deleted folder " + operation.OldPath);
+                }
+                else
+                {
+                    RemoveFolderOperation(operation);
+                }
+            }
+            catch (Exception exception) when (exception is not OperationCanceledException)
+            {
+                Log.Warn("cloudfiles folder op failed " + operation.Kind + " " + operation.OldPath + ": " + exception.Message);
+            }
+        }
+    }
+
+    private void RemoveFolderOperation(PendingFolderOperation operation)
+    {
+        lock (folderQueueLock)
+        {
+            pendingFolderOperations.Remove(operation);
+            SaveFolderQueue();
+        }
+    }
+
     private async Task LocalLoopAsync(CancellationToken cancellationToken)
     {
         while (!cancellationToken.IsCancellationRequested)
@@ -297,6 +528,7 @@ public sealed class TernSyncService : IAsyncDisposable
     private async Task UploadLocalChangesAsync(CancellationToken cancellationToken)
     {
         if (provider is null || backend is null) return;
+        await ProcessFolderOperationsAsync(cancellationToken).ConfigureAwait(false);
         // Snapshot() prunes the index for paths that disappeared. Capture the
         // managed set first so a local delete/rename is still reported to the
         // server instead of silently disappearing from the index.
@@ -379,6 +611,11 @@ public sealed class TernSyncService : IAsyncDisposable
             cancellationToken.ThrowIfCancellationRequested();
             var relative = Path.GetRelativePath(root, directory).Replace('\\', '/');
             if (nodesByPath.ContainsKey(relative)) continue;
+            lock (folderQueueLock)
+            {
+                if (pendingFolderOperations.Any(op => op.Kind == "rename" && op.NewPath.Equals(relative, StringComparison.OrdinalIgnoreCase)))
+                    continue;
+            }
             var parent = ParentPath(relative);
             nodesByPath.TryGetValue(parent, out var parentNode);
             var node = await backend.CreateFolderAsync(parentNode?.Id, Path.GetFileName(relative), cancellationToken).ConfigureAwait(false);

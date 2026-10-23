@@ -640,6 +640,62 @@ public sealed class CloudFilesProvider : IPlaceholderStore, IAsyncDisposable
         }
     }
 
+    public async Task RemapPathPrefixAsync(string oldPrefix, string newPrefix, CancellationToken cancellationToken)
+    {
+        var old = Normalize(oldPrefix);
+        var target = Normalize(newPrefix);
+        await indexLock.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            var updates = new List<KeyValuePair<string, IndexEntry>>();
+            foreach (var pair in index.ToArray())
+            {
+                if (pair.Key.Equals(old, StringComparison.OrdinalIgnoreCase))
+                {
+                    updates.Add(new KeyValuePair<string, IndexEntry>(
+                        target,
+                        pair.Value with { RelativePath = target }));
+                }
+                else if (pair.Key.StartsWith(old + "/", StringComparison.OrdinalIgnoreCase))
+                {
+                    var moved = target + pair.Key[old.Length..];
+                    updates.Add(new KeyValuePair<string, IndexEntry>(
+                        moved,
+                        pair.Value with { RelativePath = moved }));
+                }
+            }
+            foreach (var pair in updates)
+            {
+                index.Remove(pair.Key);
+                index[pair.Key] = pair.Value;
+            }
+            if (updates.Count > 0) SaveIndex();
+        }
+        finally
+        {
+            indexLock.Release();
+        }
+    }
+
+    public async Task RemovePathPrefixAsync(string prefix, CancellationToken cancellationToken)
+    {
+        var normalized = Normalize(prefix);
+        await indexLock.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            var keys = index.Keys
+                .Where(key => key.Equals(normalized, StringComparison.OrdinalIgnoreCase)
+                    || key.StartsWith(normalized + "/", StringComparison.OrdinalIgnoreCase))
+                .ToArray();
+            foreach (var key in keys) index.Remove(key);
+            if (keys.Length > 0) SaveIndex();
+        }
+        finally
+        {
+            indexLock.Release();
+        }
+    }
+
     public IReadOnlyList<string> ManagedPaths()
     {
         indexLock.Wait();

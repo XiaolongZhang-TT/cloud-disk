@@ -10,6 +10,23 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 See [ROADMAP.md](ROADMAP.md) for the prioritized backlog.
 
+## [Windows 1.1.1] - 2026-10-23
+
+### Added
+
+- Windows sync state persists the `/api/sync/changes` cursor and node cache, so
+  restarts and watcher updates use incremental deltas instead of refetching the
+  full tree.
+- Durable folder operation queue for local folder create/rename/delete, retried
+  after offline periods.
+- Windows `NetworkAvailabilityChanged`, `NetworkAddressChanged` and
+  FileSystemWatcher events for immediate reconnect and local uploads.
+
+### Fixed
+
+- Local folder rename/delete now reaches the server; remote folder cleanup
+  removes empty local directories.
+
 ## [Windows 1.1.0] - 2026-10-23
 
 ### Added

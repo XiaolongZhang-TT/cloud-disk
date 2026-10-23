@@ -26,6 +26,10 @@ public sealed record TernNode(
 
 public sealed record HydrationResult(string Path, long Size, string Sha256);
 
+public sealed record TernChange(TernNode? Node, string Id, bool Deleted);
+
+public sealed record TernChanges(IReadOnlyList<TernChange> Changes, int Cursor, bool Reset, bool HasMore);
+
 public sealed class TernBackendClient : IAsyncDisposable
 {
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
@@ -137,6 +141,67 @@ public sealed class TernBackendClient : IAsyncDisposable
             response = await http.SendAsync(retry, HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
         }
         return response;
+    }
+
+    public async Task<TernChanges> GetChangesAsync(
+        int cursor,
+        int limit = 1000,
+        CancellationToken cancellationToken = default)
+    {
+        using var response = await SendAuthorizedAsync(
+            HttpMethod.Get,
+            new Uri(apiBase, $"sync/changes?cursor={cursor}&limit={limit}"),
+            null,
+            cancellationToken).ConfigureAwait(false);
+        if (!response.IsSuccessStatusCode)
+            throw new TernBackendException("changes_failed", $"服务器返回 HTTP {(int)response.StatusCode}。");
+        await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
+        var page = await JsonSerializer.DeserializeAsync<ChangesPage>(stream, Json, cancellationToken).ConfigureAwait(false)
+            ?? throw new TernBackendException("invalid_response", "服务器返回了无法解析的同步数据。");
+        var changes = new List<TernChange>(page.Changes.Count);
+        foreach (var change in page.Changes)
+        {
+            if (change.Deleted)
+            {
+                changes.Add(new TernChange(null, change.Id, true));
+                continue;
+            }
+            if (string.IsNullOrWhiteSpace(change.Id) || string.IsNullOrWhiteSpace(change.Name))
+                continue;
+            changes.Add(new TernChange(new TernNode(
+                change.Id,
+                change.ParentId,
+                change.Name,
+                change.Type ?? "file",
+                change.Size ?? 0,
+                change.Mime,
+                change.UpdatedAt,
+                change.Etag), change.Id, false));
+        }
+        return new TernChanges(changes, page.Cursor, page.Reset, page.HasMore ?? false);
+    }
+
+    public async Task<TernNode> RenameAsync(
+        string nodeId,
+        string? name,
+        string? parentId,
+        bool moveToRoot = false,
+        CancellationToken cancellationToken = default)
+    {
+        object body = moveToRoot
+            ? new { name, parentId = (string?)null }
+            : new { name, parentId };
+        using var content = new StringContent(JsonSerializer.Serialize(body), Encoding.UTF8, "application/json");
+        using var response = await SendAuthorizedAsync(
+            HttpMethod.Patch,
+            new Uri(apiBase, "nodes/" + Uri.EscapeDataString(nodeId)),
+            content,
+            cancellationToken).ConfigureAwait(false);
+        if (!response.IsSuccessStatusCode)
+            throw new TernBackendException("rename_failed", $"服务器返回 HTTP {(int)response.StatusCode}。");
+        var json = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
+        using var doc = JsonDocument.Parse(json);
+        return ParseNode(doc.RootElement.GetProperty("node"));
     }
 
     public async Task<(IReadOnlyList<TernNode> nodes, int cursor)> GetTreeAsync(CancellationToken cancellationToken = default)
@@ -348,6 +413,12 @@ public sealed class TernBackendClient : IAsyncDisposable
         loginLock.Dispose();
         await Task.CompletedTask;
     }
+
+    private sealed record ChangesPage(
+        [property: JsonPropertyName("cursor")] int Cursor,
+        [property: JsonPropertyName("changes")] IReadOnlyList<SyncChange> Changes,
+        [property: JsonPropertyName("reset")] bool Reset,
+        [property: JsonPropertyName("hasMore")] bool? HasMore);
 
     private sealed record SyncSnapshot(
         [property: JsonPropertyName("cursor")] int Cursor,

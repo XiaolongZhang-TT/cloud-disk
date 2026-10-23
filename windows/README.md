@@ -39,6 +39,8 @@ Credentials live in **Windows Credential Manager**, not in `settings.json`.
 - New folders/files, edits, renames and deletes sync
 - FileSystemWatcher for immediate local-change sync
 - Network change listeners for reconnect and immediate refresh
+- Incremental `/api/sync/changes` cursor persisted across starts
+- Durable folder create/rename/delete operation queue
 - Real-time remote changes through `/api/sync/watch`
 - Optional `T:` drive letter (`subst`)
 
