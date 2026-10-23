@@ -82,12 +82,32 @@ internal static class Program
                 ContentType = "text/plain",
             };
             provider.CreateAsync(entry, "hello.txt", CancellationToken.None).GetAwaiter().GetResult();
+
+            var localPath = Path.Combine(root, "local.txt");
+            File.WriteAllText(localPath, "local write");
+            var localEntry = new ManifestEntry
+            {
+                RelativePath = "local.txt",
+                Kind = "file",
+                CourseId = "root",
+                SourceId = Guid.NewGuid().ToString(),
+                Revision = "1",
+                Size = 11,
+                UpdatedAt = DateTimeOffset.UtcNow.ToString("O"),
+                ContentType = "text/plain",
+            };
+            provider.AdoptUploadedAsync("local.txt", localEntry, convertToPlaceholder: true, CancellationToken.None)
+                .GetAwaiter().GetResult();
+            var attributes = File.GetAttributes(localPath);
+            if ((attributes & FileAttributes.ReparsePoint) == 0)
+                throw new InvalidOperationException("local file was not converted to a Cloud Files placeholder");
+
             var local = provider.SnapshotAsync(CancellationToken.None).GetAwaiter().GetResult();
-            Console.WriteLine($"SELF_TEST_OK files={local.Count} root={root}");
+            Console.WriteLine($"SELF_TEST_OK files={local.Count} placeholder={attributes} root={root}");
             provider.DisposeAsync().AsTask().GetAwaiter().GetResult();
+            CloudFilesProvider.PrepareForUninstall(root, data);
             backend.DisposeAsync().AsTask().GetAwaiter().GetResult();
-            CloudFilesProvider.Unregister(root);
-            return local.Count == 1 ? 0 : 2;
+            return local.Count == 2 ? 0 : 2;
         }
         catch (Exception exception)
         {
