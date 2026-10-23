@@ -8,7 +8,7 @@ namespace Tern.Windows;
 
 public sealed class CloudFilesProvider : IPlaceholderStore, IAsyncDisposable
 {
-    private static readonly Guid ProviderId = new("8532A890-8B27-4A75-9849-BFC7D892539D");
+    private static readonly Guid ProviderId = new("6C2F4D8A-1B37-4E95-9A61-0F7C5B2D8E43");
     private static readonly JsonSerializerOptions JsonOptions = new() { WriteIndented = true };
     private readonly string root;
     private readonly string? registrationId;
