@@ -11,11 +11,11 @@ approach. Items marked **good first issue** are usually small and self-contained
 
 These are known and accepted for v1.1.1:
 
-- **macOS File Provider is Phase 1 only.** A read-only File Provider extension,
-  `/api/sync/changes`, on-demand download and offline read cache now exist, but
-  uploads, moves, deletes, conflict handling, thumbnails and notarized
-  distribution are still pending. The old WebDAV mount remains the production
-  path until Phase 2 is complete.
+- **macOS File Provider is Phase 2 only.** The extension now supports on-demand
+  download, offline read cache, create/upload/modify/move/delete and a durable
+  offline write queue. Automatic conflict copies, thumbnails/Spotlight,
+  notarized distribution and migration from the WebDAV mount are still pending.
+  The old WebDAV mount remains the production path until Phase 3 is complete.
 - **Single process / single SQLite file.** No horizontal scaling or HA. SQLite WAL
   is fine for a personal or family NAS but not a multi-node cluster.
 - **No file versioning.** Overwriting a file keeps only the latest content;
