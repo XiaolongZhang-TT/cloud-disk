@@ -105,7 +105,7 @@ struct SettingsView: View {
             }
 
             Section {
-                Button(enablingFileProvider ? "正在添加…" : "在 Finder 中启用 Tern（只读预览）") {
+                Button(enablingFileProvider ? "正在添加…" : "在 Finder 中启用 Tern") {
                     enablingFileProvider = true
                     fileProviderMessage = nil
                     Task {
@@ -117,7 +117,7 @@ struct SettingsView: View {
                     }
                 }
                 .disabled(enablingFileProvider)
-                Text("Phase 1 只读：Finder 会按需下载文件，最近打开的文件在断网时仍可用。写入同步将在下一阶段加入。")
+                Text("Finder 会按需下载文件，并支持在线/离线写入、冲突副本和保持下载。首次启用可能需要在系统设置中允许 File Provider。")
                     .font(.caption)
                     .foregroundStyle(.secondary)
                 if let fileProviderMessage {

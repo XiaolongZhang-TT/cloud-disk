@@ -6,7 +6,7 @@
 >
 > 不需要 Apple 开发者账号、不需要内核扩展，也不需要 File Provider 权限。
 >
-> 如果你要的是 Finder 中的 **离线 File Provider 位置**（按需下载/断网读缓存），那是另一条实验性路线，需要 Xcode 签名、App Group 和 Keychain Sharing，见 [docs/MAC_OFFLINE.md](MAC_OFFLINE.md)。
+> 如果你要的是 Finder 中的 **离线 File Provider 位置**（按需下载/断网读缓存），那是另一条实验性路线，需要 Xcode 签名和 Keychain Sharing，见 [docs/MAC_OFFLINE.md](MAC_OFFLINE.md)。
 
 ---
 

@@ -36,9 +36,16 @@ public final class FileProviderStore: @unchecked Sendable {
     private let cacheURL: URL?
     public let pending = PendingStore()
 
+    static var supportDirectory: URL {
+        let base = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first
+            ?? FileManager.default.temporaryDirectory
+        return base.appendingPathComponent("TernFileProvider", isDirectory: true)
+    }
+
     public init() {
-        let container = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: FileProviderShared.appGroup)
-        cacheURL = container?.appendingPathComponent("fileprovider-cache.json")
+        let directory = Self.supportDirectory
+        try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        cacheURL = directory.appendingPathComponent("fileprovider-cache.json")
         load()
     }
 

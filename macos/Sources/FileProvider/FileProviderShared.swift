@@ -2,8 +2,9 @@
 //  FileProviderShared.swift
 //  Shared between the menu-bar app and the File Provider extension.
 //
-//  The app group holds non-secret connection metadata; the password lives in
-//  the shared Keychain access group.  Files are sandboxed per target.
+//  A free Personal Team cannot provision App Groups, so connection metadata,
+//  sync status and pinned items live in small shared Keychain items instead.
+//  File contents and the metadata cache stay inside the extension container.
 //
 
 import Foundation
@@ -11,74 +12,80 @@ import Security
 
 public enum FileProviderShared {
 
-    public static let appGroup = "group.com.tern.menubar"
-    public static let domainIdentifier = "com.tern.menubar.fileprovider"
+    public static let domainIdentifier = "com.tern.menubar.fileprovider.offline2"
     public static let keychainService = "com.tern.menubar.fileprovider"
+    private static let configService = "com.tern.menubar.fileprovider.config"
+    private static let statusService = "com.tern.menubar.fileprovider.status"
+    private static let pinnedService = "com.tern.menubar.fileprovider.pinned"
 
-    private static var defaults: UserDefaults? {
-        UserDefaults(suiteName: appGroup)
+    private struct Configuration: Codable {
+        let serverURL: String
+        let username: String
+    }
+
+    private struct Status: Codable {
+        let pending: Int
+        let error: String?
+        let lastSync: Double?
     }
 
     // MARK: - Connection metadata
 
     public static func saveConfiguration(serverURL: URL, username: String) {
-        guard let defaults else { return }
-        defaults.set(serverURL.absoluteString, forKey: "serverURL")
-        defaults.set(username, forKey: "username")
+        let value = Configuration(serverURL: serverURL.absoluteString, username: username)
+        guard let data = try? JSONEncoder().encode(value) else { return }
+        _ = write(data, service: configService, account: "config")
     }
 
     public static func loadConfiguration() -> (serverURL: URL, username: String)? {
-        guard let defaults,
-              let text = defaults.string(forKey: "serverURL"),
-              let url = URL(string: text),
-              let username = defaults.string(forKey: "username"),
-              !username.isEmpty else { return nil }
-        return (url, username)
+        guard let data = read(service: configService, account: "config"),
+              let value = try? JSONDecoder().decode(Configuration.self, from: data),
+              let url = URL(string: value.serverURL),
+              !value.username.isEmpty else { return nil }
+        return (url, value.username)
     }
 
     public static func clearConfiguration() {
-        guard let defaults else { return }
-        defaults.removeObject(forKey: "serverURL")
-        defaults.removeObject(forKey: "username")
-    }
-
-    // MARK: - Keep downloaded
-
-    public static func isPinned(_ itemIdentifier: String) -> Bool {
-        guard let defaults else { return false }
-        return (defaults.stringArray(forKey: "fileProviderPinned") ?? []).contains(itemIdentifier)
-    }
-
-    public static func setPinned(_ pinned: Bool, itemIdentifier: String) {
-        guard let defaults else { return }
-        var values = Set(defaults.stringArray(forKey: "fileProviderPinned") ?? [])
-        if pinned { values.insert(itemIdentifier) } else { values.remove(itemIdentifier) }
-        defaults.set(Array(values), forKey: "fileProviderPinned")
+        delete(service: configService, account: "config")
     }
 
     // MARK: - Sync status
 
     public static func updateSyncStatus(pending: Int, error: String?) {
-        guard let defaults else { return }
-        defaults.set(pending, forKey: "fileProviderPending")
-        if let error { defaults.set(error, forKey: "fileProviderError") }
-        else { defaults.removeObject(forKey: "fileProviderError") }
-        defaults.set(Date().timeIntervalSince1970, forKey: "fileProviderLastSync")
+        let status = Status(pending: pending, error: error, lastSync: Date().timeIntervalSince1970)
+        guard let data = try? JSONEncoder().encode(status) else { return }
+        _ = write(data, service: statusService, account: "status")
     }
 
     public static func syncStatus() -> (pending: Int, error: String?, lastSync: Date?) {
-        guard let defaults else { return (0, nil, nil) }
-        let pending = defaults.integer(forKey: "fileProviderPending")
-        let error = defaults.string(forKey: "fileProviderError")
-        let timestamp = defaults.double(forKey: "fileProviderLastSync")
-        return (pending, error, timestamp > 0 ? Date(timeIntervalSince1970: timestamp) : nil)
+        guard let data = read(service: statusService, account: "status"),
+              let status = try? JSONDecoder().decode(Status.self, from: data) else {
+            return (0, nil, nil)
+        }
+        return (status.pending, status.error, status.lastSync.map(Date.init(timeIntervalSince1970:)))
     }
 
-    // MARK: - Keychain
+    // MARK: - Keep downloaded
 
-    /// The access group is declared in both entitlements files.  At runtime the
-    /// team identifier prefix is resolved from the code signature; ad-hoc
-    /// builds have no such entitlement and stay isolated.
+    public static func isPinned(_ itemIdentifier: String) -> Bool {
+        pinnedItems().contains(itemIdentifier)
+    }
+
+    public static func setPinned(_ pinned: Bool, itemIdentifier: String) {
+        var items = Set(pinnedItems())
+        if pinned { items.insert(itemIdentifier) } else { items.remove(itemIdentifier) }
+        guard let data = try? JSONEncoder().encode(Array(items)) else { return }
+        _ = write(data, service: pinnedService, account: "pinned")
+    }
+
+    private static func pinnedItems() -> [String] {
+        guard let data = read(service: pinnedService, account: "pinned"),
+              let items = try? JSONDecoder().decode([String].self, from: data) else { return [] }
+        return items
+    }
+
+    // MARK: - Password
+
     private static func sharedAccessGroup() -> String? {
         guard let task = SecTaskCreateFromSelf(nil) else { return nil }
         let value = SecTaskCopyValueForEntitlement(
@@ -97,60 +104,61 @@ public enum FileProviderShared {
 
     @discardableResult
     public static func savePassword(_ password: String, serverURL: URL, username: String) -> Bool {
-        let account = account(serverURL: serverURL, username: username)
-        let data = Data(password.utf8)
-        var query: [String: Any] = [
-            kSecClass as String: kSecClassGenericPassword,
-            kSecAttrService as String: keychainService,
-            kSecAttrAccount as String: account,
-        ]
-        if let group = sharedAccessGroup() {
-            query[kSecAttrAccessGroup as String] = group
-        }
-
-        let attributes: [String: Any] = [
-            kSecValueData as String: data,
-            kSecAttrLabel as String: "Tern File Provider (\(account))",
-            kSecAttrAccessible as String: kSecAttrAccessibleAfterFirstUnlock,
-        ]
-
-        let update = SecItemUpdate(query as CFDictionary, attributes as CFDictionary)
-        if update == errSecSuccess { return true }
-        if update != errSecItemNotFound { return false }
-
-        var addQuery = query
-        addQuery.merge(attributes) { _, new in new }
-        return SecItemAdd(addQuery as CFDictionary, nil) == errSecSuccess
+        write(Data(password.utf8), service: keychainService, account: account(serverURL: serverURL, username: username))
     }
 
     public static func loadPassword(serverURL: URL, username: String) -> String? {
-        let account = account(serverURL: serverURL, username: username)
-        var query: [String: Any] = [
-            kSecClass as String: kSecClassGenericPassword,
-            kSecAttrService as String: keychainService,
-            kSecAttrAccount as String: account,
-            kSecReturnData as String: true,
-            kSecMatchLimit as String: kSecMatchLimitOne,
-        ]
-        if let group = sharedAccessGroup() {
-            query[kSecAttrAccessGroup as String] = group
+        guard let data = read(service: keychainService, account: account(serverURL: serverURL, username: username)) else {
+            return nil
         }
-        var result: CFTypeRef?
-        guard SecItemCopyMatching(query as CFDictionary, &result) == errSecSuccess,
-              let data = result as? Data else { return nil }
         return String(data: data, encoding: .utf8)
     }
 
     @discardableResult
     public static func deletePassword(serverURL: URL, username: String) -> Bool {
-        var query: [String: Any] = [
+        delete(service: keychainService, account: account(serverURL: serverURL, username: username))
+    }
+
+    // MARK: - Keychain helpers
+
+    private static func query(service: String, account: String) -> [String: Any] {
+        var value: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
-            kSecAttrService as String: keychainService,
-            kSecAttrAccount as String: account(serverURL: serverURL, username: username),
+            kSecAttrService as String: service,
+            kSecAttrAccount as String: account,
         ]
         if let group = sharedAccessGroup() {
-            query[kSecAttrAccessGroup as String] = group
+            value[kSecAttrAccessGroup as String] = group
         }
-        return SecItemDelete(query as CFDictionary) == errSecSuccess
+        return value
+    }
+
+    private static func read(service: String, account: String) -> Data? {
+        var value = query(service: service, account: account)
+        value[kSecReturnData as String] = true
+        value[kSecMatchLimit as String] = kSecMatchLimitOne
+        var result: CFTypeRef?
+        guard SecItemCopyMatching(value as CFDictionary, &result) == errSecSuccess else { return nil }
+        return result as? Data
+    }
+
+    @discardableResult
+    private static func write(_ data: Data, service: String, account: String) -> Bool {
+        let attributes: [String: Any] = [
+            kSecValueData as String: data,
+            kSecAttrAccessible as String: kSecAttrAccessibleAfterFirstUnlock,
+        ]
+        let base = query(service: service, account: account)
+        let update = SecItemUpdate(base as CFDictionary, attributes as CFDictionary)
+        if update == errSecSuccess { return true }
+        if update != errSecItemNotFound { return false }
+        var add = base
+        add.merge(attributes) { _, new in new }
+        return SecItemAdd(add as CFDictionary, nil) == errSecSuccess
+    }
+
+    @discardableResult
+    private static func delete(service: String, account: String) -> Bool {
+        SecItemDelete(query(service: service, account: account) as CFDictionary) == errSecSuccess
     }
 }

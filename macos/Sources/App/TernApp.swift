@@ -10,6 +10,7 @@
 import SwiftUI
 import AppKit
 import Darwin
+import FileProvider
 
 // MARK: - Entry point
 
@@ -156,6 +157,12 @@ enum CommandLineModes {
             return runLoginItem(arguments: rest)
         case "--diagnose":
             return runDiagnose(arguments: rest)
+        case "--file-provider-setup":
+            return runFileProviderSetup(arguments: rest)
+        case "--file-provider-remove":
+            return runFileProviderRemove()
+        case "--file-provider-cleanup":
+            return runFileProviderCleanup()
 
         default:
             return nil
@@ -177,6 +184,9 @@ enum CommandLineModes {
                                        删除钥匙串中的密码
           --login-item status|enable|disable [--result FILE]
                                        查看/启用/关闭登录启动（LaunchAgent）
+          --file-provider-setup         把当前设置写入共享 Keychain 并注册 File Provider
+          --file-provider-remove        移除 Tern File Provider domain
+          --file-provider-cleanup       移除新旧 Tern File Provider domain 并清理数据
           --diagnose [--result FILE]   输出诊断信息
           --version                    显示版本
           --help                       显示本帮助
@@ -324,5 +334,82 @@ enum CommandLineModes {
         lines.append("log: \(CDLog.fileURL.path)")
         writeResult(lines.joined(separator: "\n"), to: resultFile)
         return 0
+    }
+}
+
+
+// MARK: - File Provider maintenance modes
+
+extension CommandLineModes {
+    fileprivate static func runFileProviderSetup(arguments: [String]) -> Int32 {
+        let flags = parseFlags(arguments)
+        Task {
+            do {
+                let store = SettingsStore.shared
+                let url = try store.validate()
+                let username = store.username.trimmingCharacters(in: .whitespacesAndNewlines)
+                let password = flags["--password"].flatMap { $0.isEmpty ? nil : $0 }
+                    ?? KeychainStore.loadPassword(serverURL: url, username: username)
+                    ?? ProcessInfo.processInfo.environment["TERN_PASSWORD"]
+                guard let password, !password.isEmpty else {
+                    FileHandle.standardError.write(Data("错误：钥匙串中没有密码，请在 Tern 设置里重新填写并保存。\n".utf8))
+                    exit(1)
+                }
+                FileProviderShared.saveConfiguration(serverURL: url, username: username)
+                guard FileProviderShared.savePassword(password, serverURL: url, username: username) else {
+                    FileHandle.standardError.write(Data("错误：无法写入共享钥匙串。\n".utf8))
+                    exit(1)
+                }
+                try await FileProviderBridge.addDomain()
+                print("OK: File Provider domain registered")
+                exit(0)
+            } catch {
+                FileHandle.standardError.write(Data(("错误：" + error.localizedDescription + "\n").utf8))
+                exit(1)
+            }
+        }
+        RunLoop.main.run()
+        return 1
+    }
+
+
+}
+
+extension CommandLineModes {
+    fileprivate static func runFileProviderRemove() -> Int32 {
+        Task {
+            do {
+                try await FileProviderBridge.removeDomain()
+                print("OK: File Provider domain removed")
+                exit(0)
+            } catch {
+                FileHandle.standardError.write(Data(("错误：" + error.localizedDescription + "\n").utf8))
+                exit(1)
+            }
+        }
+        RunLoop.main.run()
+        return 1
+    }
+}
+
+extension CommandLineModes {
+    fileprivate static func runFileProviderCleanup() -> Int32 {
+        Task {
+            for identifier in [
+                "com.tern.menubar.fileprovider",
+                "com.tern.menubar.fileprovider.offline",
+                "com.tern.menubar.fileprovider.offline3",
+            ] {
+                do {
+                    try await FileProviderBridge.removeDomain(identifier: identifier)
+                    print("removed: \(identifier)")
+                } catch {
+                    print("skip/err: \(identifier): \(error.localizedDescription)")
+                }
+            }
+            exit(0)
+        }
+        RunLoop.main.run()
+        return 1
     }
 }

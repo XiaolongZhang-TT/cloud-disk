@@ -1,9 +1,7 @@
 //
 //  FileProviderExtension.swift
-//  Phase 1: read-only File Provider.
-//
-//  Writes intentionally return NSFeatureUnsupportedError until the sync
-//  engine's upload/conflict handling is implemented.
+//  Replicated File Provider with on-demand download, writes, offline queue,
+//  conflict copies, thumbnails and custom "keep downloaded" actions.
 //
 
 import Foundation

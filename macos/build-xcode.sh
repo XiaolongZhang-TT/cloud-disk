@@ -41,7 +41,7 @@ COMMON=(
 )
 
 if [[ -n "${TEAM:-}" ]]; then
-  "$XCODEBUILD" "${COMMON[@]}" DEVELOPMENT_TEAM="$TEAM" CODE_SIGN_STYLE=Automatic build
+  "$XCODEBUILD" "${COMMON[@]}" DEVELOPMENT_TEAM="$TEAM" CODE_SIGN_STYLE=Automatic -allowProvisioningUpdates build
 else
   # No team on this machine: compile everything, including the extension, but
   # don't attempt to sign or embed a signed extension.

@@ -2,8 +2,8 @@
 //  FileProviderBridge.swift
 //  Main-app side of the File Provider integration.
 //
-//  Phase 1 registers a read-only domain.  The extension reads credentials from
-//  the app group / shared Keychain; no password is passed through XPC.
+//  Registers the replicated File Provider domain.  Connection metadata and
+//  credentials live in shared Keychain items; no password is passed through XPC.
 //
 
 import Foundation
@@ -14,10 +14,11 @@ import AppKit
 public enum FileProviderBridge {
 
     public static var domain: NSFileProviderDomain {
-        NSFileProviderDomain(
+        let domain = NSFileProviderDomain(
             identifier: NSFileProviderDomainIdentifier(rawValue: FileProviderShared.domainIdentifier),
             displayName: "Tern"
         )
+        return domain
     }
 
     public static func addDomain() async throws {
@@ -34,9 +35,15 @@ public enum FileProviderBridge {
         }
     }
 
-    public static func removeDomain() async throws {
+    public static func removeDomain(identifier: String? = nil) async throws {
+        let target = identifier.map {
+            NSFileProviderDomain(
+                identifier: NSFileProviderDomainIdentifier(rawValue: $0),
+                displayName: "Tern"
+            )
+        } ?? domain
         try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
-            NSFileProviderManager.remove(domain) { error in
+            NSFileProviderManager.remove(target, mode: .removeAll) { _, error in
                 if let error {
                     continuation.resume(throwing: error)
                 } else {

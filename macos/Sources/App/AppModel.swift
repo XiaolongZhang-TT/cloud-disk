@@ -159,6 +159,21 @@ public final class AppModel: ObservableObject {
         startNetworkMonitor()
         startPolling()
 
+        // A previously configured File Provider domain is re-registered from
+        // the real GUI app process (not a CLI helper) so macOS treats it as a
+        // replicated NSFileProviderReplicatedExtension domain.
+        if FileProviderShared.loadConfiguration() != nil {
+            Task { [weak self] in
+                guard self != nil else { return }
+                do {
+                    try await FileProviderBridge.addDomain()
+                    CDLog.info("fileprovider: domain registered on launch")
+                } catch {
+                    CDLog.warn("fileprovider: launch registration failed: \(error.localizedDescription)")
+                }
+            }
+        }
+
         if settings.autoConnect {
             let hasUser = !settings.username.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
             if hasUser && status != .connected {
@@ -514,8 +529,8 @@ public final class AppModel: ObservableObject {
         return "已断开 WebDAV 网络盘，并关闭自动连接。File Provider 位置会继续保留。"
     }
 
-    /// Register the File Provider domain.  Phase 1 is read-only; write
-    /// operations are added in the next stage.
+    /// Register the replicated File Provider domain, sharing connection
+    /// metadata and credentials through the shared Keychain.
     public func enableFileProvider() async -> String {
         guard let url = currentServerURL else {
             return "❌ 请先填写有效的服务器地址。"
@@ -529,14 +544,14 @@ public final class AppModel: ObservableObject {
         }
         FileProviderShared.saveConfiguration(serverURL: url, username: username)
         guard FileProviderShared.loadConfiguration() != nil else {
-            return "❌ 无法写入 App Group。请确认应用已使用 App Group entitlement 签名。"
+            return "❌ 无法写入共享 Keychain。请确认应用已使用 Keychain Sharing 签名。"
         }
         guard FileProviderShared.savePassword(password, serverURL: url, username: username) else {
-            return "❌ 无法把密码写入共享钥匙串。请确认应用已使用 App Group / Keychain Sharing 签名。"
+            return "❌ 无法把密码写入共享钥匙串。请确认应用已使用 Keychain Sharing 签名。"
         }
         do {
             try await FileProviderBridge.addDomain()
-            return "✅ 已添加 Tern 到 Finder 位置（只读预览）。"
+            return "✅ 已添加 Tern 到 Finder 位置。若系统提示未启用，请在 系统设置 → 通用 → 登录项与扩展 中打开 Tern。"
         } catch {
             let message = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
             return "❌ 添加 File Provider 失败：\(message)"

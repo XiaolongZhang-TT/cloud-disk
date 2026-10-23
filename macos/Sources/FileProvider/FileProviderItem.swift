@@ -63,8 +63,10 @@ public final class TernItem: NSObject, NSFileProviderItem {
         contentModificationDate = TernItemFactory.date(stored.updatedAt)
         itemVersion = TernItemFactory.version(for: stored)
         capabilities = stored.isFolder
-            ? [.allowsContentEnumerating, .allowsReading]
-            : [.allowsReading]
+            ? [.allowsContentEnumerating, .allowsReading, .allowsRenaming,
+               .allowsDeleting, .allowsReparenting, .allowsAddingSubItems]
+            : [.allowsReading, .allowsWriting, .allowsRenaming,
+               .allowsDeleting, .allowsReparenting]
         isDownloaded = (stored.pending ?? false)
         isUploaded = !(stored.pending ?? false)
         isMostRecentVersionDownloaded = !(stored.pending ?? false)
@@ -87,7 +89,9 @@ public final class TernRootItem: NSObject, NSFileProviderItem {
         contentVersion: Data("tern-root".utf8),
         metadataVersion: Data("tern-root".utf8)
     )
-    public let capabilities: NSFileProviderItemCapabilities = [.allowsContentEnumerating, .allowsReading]
+    public let capabilities: NSFileProviderItemCapabilities = [
+        .allowsContentEnumerating, .allowsReading, .allowsAddingSubItems,
+    ]
     public let isDownloaded: Bool = true
     public let isUploaded: Bool = true
     public let isMostRecentVersionDownloaded: Bool = true

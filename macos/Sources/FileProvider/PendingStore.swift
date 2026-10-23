@@ -33,8 +33,8 @@ public final class PendingStore: @unchecked Sendable {
     private let manifestURL: URL?
 
     public init() {
-        let container = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: FileProviderShared.appGroup)
-        directory = container?.appendingPathComponent("pending", isDirectory: true)
+        let container = FileProviderStore.supportDirectory
+        directory = container.appendingPathComponent("pending", isDirectory: true)
         manifestURL = directory?.appendingPathComponent("pending.json")
         if let directory {
             try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
