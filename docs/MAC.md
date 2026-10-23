@@ -5,6 +5,8 @@
 > 客户端不是同步盘，也不重复实现文件传输：它调用 macOS 自带的 `NetFSMountURLSync` 把 Tern 服务端的 WebDAV 端点挂载为**真正的网络卷**。因此卷会出现在 `/Volumes`、Finder 侧边栏的「位置（Locations）」中（与 iCloud Drive 并列），Finder、预览、终端、任何 App 都能像访问移动硬盘一样读写它。
 >
 > 不需要 Apple 开发者账号、不需要内核扩展，也不需要 File Provider 权限。
+>
+> 如果你要的是 Finder 中的 **离线 File Provider 位置**（按需下载/断网读缓存），那是另一条实验性路线，需要 Xcode 签名、App Group 和 Keychain Sharing，见 [docs/MAC_OFFLINE.md](MAC_OFFLINE.md)。
 
 ---
 
