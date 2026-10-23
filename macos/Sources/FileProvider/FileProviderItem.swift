@@ -50,6 +50,7 @@ public final class TernItem: NSObject, NSFileProviderItem {
     public let isDownloaded: Bool
     public let isUploaded: Bool
     public let isMostRecentVersionDownloaded: Bool
+    public let contentPolicy: NSFileProviderContentPolicy
 
     public init(stored: StoredItem) {
         itemIdentifier = NSFileProviderItemIdentifier(rawValue: stored.id)
@@ -67,6 +68,7 @@ public final class TernItem: NSObject, NSFileProviderItem {
         isDownloaded = (stored.pending ?? false)
         isUploaded = !(stored.pending ?? false)
         isMostRecentVersionDownloaded = !(stored.pending ?? false)
+        contentPolicy = .downloadLazily
         super.init()
     }
 }
@@ -87,4 +89,5 @@ public final class TernRootItem: NSObject, NSFileProviderItem {
     public let isDownloaded: Bool = true
     public let isUploaded: Bool = true
     public let isMostRecentVersionDownloaded: Bool = true
+    public let contentPolicy: NSFileProviderContentPolicy = .downloadLazily
 }

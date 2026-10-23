@@ -94,6 +94,8 @@ public final class FileProviderStore: @unchecked Sendable {
             }
             cache.cursor = page.cursor
             saveLocked()
+            let status = pending.list().count
+            FileProviderShared.updateSyncStatus(pending: status, error: nil)
             return deleted
         }
     }
@@ -148,45 +150,86 @@ public final class FileProviderStore: @unchecked Sendable {
         guard !operations.isEmpty else { return }
         let client = try makeClient()
         for operation in operations {
-            switch operation.kind {
-            case .createFolder:
-                guard let name = operation.name, let clientId = operation.clientId else { continue }
-                let change = try await client.createFolder(parentId: operation.parentId, name: name, clientId: clientId)
-                _ = upsert(change)
-            case .createFile:
-                guard let name = operation.name, let clientId = operation.clientId,
-                      let url = pending.contentURL(for: operation) else { continue }
-                let data = try Data(contentsOf: url)
-                let change = try await client.uploadFile(
-                    parentId: operation.parentId,
-                    name: name,
-                    clientId: clientId,
-                    data: data,
-                    mime: "application/octet-stream"
-                )
-                _ = upsert(change)
-            case .modifyContent:
-                guard let nodeId = operation.nodeId, let url = pending.contentURL(for: operation) else { continue }
-                let data = try Data(contentsOf: url)
-                let change = try await client.updateContent(id: nodeId, data: data, ifMatch: operation.baseEtag)
-                _ = upsert(change)
-            case .renameMove:
-                guard let nodeId = operation.nodeId else { continue }
-                let change = try await client.renameMove(
-                    id: nodeId,
-                    name: operation.name,
-                    parentId: operation.parentId,
-                    moveToRoot: operation.moveToRoot,
-                    ifMatch: nil
-                )
-                _ = upsert(change)
-            case .delete:
-                guard let nodeId = operation.nodeId else { continue }
-                try await client.delete(id: nodeId)
-                remove(id: nodeId)
+            do {
+                try await perform(operation, client: client)
+                pending.remove(id: operation.id)
+            } catch let error as SyncClientError {
+                if case .http(412, _) = error, operation.kind == .modifyContent {
+                    // The remote file changed while this edit was offline.
+                    // Keep the local version as a visible conflict copy instead
+                    // of silently overwriting or discarding it.
+                    try await makeConflictCopy(operation, client: client)
+                    pending.remove(id: operation.id)
+                } else {
+                    throw error
+                }
             }
-            pending.remove(id: operation.id)
+            FileProviderShared.updateSyncStatus(pending: pending.list().count, error: nil)
         }
+    }
+
+    private func perform(_ operation: PendingOperation, client: TernSyncClient) async throws {
+        switch operation.kind {
+        case .createFolder:
+            guard let name = operation.name, let clientId = operation.clientId else { return }
+            let change = try await client.createFolder(parentId: operation.parentId, name: name, clientId: clientId)
+            _ = upsert(change)
+        case .createFile:
+            guard let name = operation.name, let clientId = operation.clientId,
+                  let url = pending.contentURL(for: operation) else { return }
+            let data = try Data(contentsOf: url)
+            let change = try await client.uploadFile(
+                parentId: operation.parentId,
+                name: name,
+                clientId: clientId,
+                data: data,
+                mime: "application/octet-stream"
+            )
+            _ = upsert(change)
+        case .modifyContent:
+            guard let nodeId = operation.nodeId, let url = pending.contentURL(for: operation) else { return }
+            let data = try Data(contentsOf: url)
+            let change = try await client.updateContent(id: nodeId, data: data, ifMatch: operation.baseEtag)
+            _ = upsert(change)
+        case .renameMove:
+            guard let nodeId = operation.nodeId else { return }
+            let change = try await client.renameMove(
+                id: nodeId,
+                name: operation.name,
+                parentId: operation.parentId,
+                moveToRoot: operation.moveToRoot,
+                ifMatch: nil
+            )
+            _ = upsert(change)
+        case .delete:
+            guard let nodeId = operation.nodeId else { return }
+            try await client.delete(id: nodeId)
+            remove(id: nodeId)
+        }
+    }
+
+    private func makeConflictCopy(_ operation: PendingOperation, client: TernSyncClient) async throws {
+        guard let nodeId = operation.nodeId,
+              let item = item(id: nodeId),
+              let url = pending.contentURL(for: operation) else { return }
+        let data = try Data(contentsOf: url)
+        let name = conflictName(item.name)
+        let change = try await client.uploadFile(
+            parentId: item.parentId,
+            name: name,
+            clientId: UUID().uuidString.lowercased(),
+            data: data,
+            mime: item.mime ?? "application/octet-stream"
+        )
+        _ = upsert(change)
+        FileProviderShared.updateSyncStatus(pending: pending.list().count, error: "已生成冲突副本：\(name)")
+    }
+
+    private func conflictName(_ name: String) -> String {
+        let ns = name as NSString
+        let ext = ns.pathExtension
+        let base = ns.deletingPathExtension
+        return ext.isEmpty ? "\(base) (conflicted copy)" : "\(base) (conflicted copy).\(ext)"
     }
 
     // MARK: - Credentials / client

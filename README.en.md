@@ -72,7 +72,7 @@ Pass:   web password
 
 After connecting, **Tern** appears in Finder's **Locations** sidebar; drag it to **Favorites** to pin it. See [docs/MAC.md](docs/MAC.md) for details.
 
-> A File Provider offline prototype is in progress (Phase 2: online writes + offline queue): [docs/MAC_OFFLINE.md](docs/MAC_OFFLINE.md).
+> A File Provider offline prototype is in progress (Phase 3: writes, offline queue, conflict copies and thumbnails): [docs/MAC_OFFLINE.md](docs/MAC_OFFLINE.md).
 
 ## Windows client
 

@@ -11,6 +11,7 @@
 		06E48F21710BCC0AA1B388DB /* FileProviderShared.swift in Sources */ = {isa = PBXBuildFile; fileRef = 102DEA10E99DC7C114752354 /* FileProviderShared.swift */; };
 		2B7E3F3DE94B4AFC7495B8F8 /* FileProviderExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = BDF7B01D63651426B26DE96C /* FileProviderExtension.swift */; };
 		329EB95E46181CB25D45E330 /* AppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5F113F277901FB0E2232295 /* AppModel.swift */; };
+		32AC5B074EF2AA22261C9811 /* FileProviderThumbnails.swift in Sources */ = {isa = PBXBuildFile; fileRef = 06ABFF2E4980F549F014D7DD /* FileProviderThumbnails.swift */; };
 		3EE017ACA89453ED5E84C1FE /* FileProviderShared.swift in Sources */ = {isa = PBXBuildFile; fileRef = 102DEA10E99DC7C114752354 /* FileProviderShared.swift */; };
 		46E2D81B4497AE3713846363 /* TernInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC5F5A1E300BF5327F9A8943 /* TernInfo.swift */; };
 		5078F4925E9F088B63102F1B /* TernFileProvider.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 3DE759483646F7CDDF253593 /* TernFileProvider.appex */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
@@ -56,6 +57,7 @@
 
 /* Begin PBXFileReference section */
 		06A57010E1DDD3A0BAD09708 /* FileProviderStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileProviderStore.swift; sourceTree = "<group>"; };
+		06ABFF2E4980F549F014D7DD /* FileProviderThumbnails.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileProviderThumbnails.swift; sourceTree = "<group>"; };
 		0749EBE632CD2EAD98117CBC /* MountClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MountClient.swift; sourceTree = "<group>"; };
 		07A8DD9EA01FD3436A836DB9 /* KeychainStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainStore.swift; sourceTree = "<group>"; };
 		102DEA10E99DC7C114752354 /* FileProviderShared.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileProviderShared.swift; sourceTree = "<group>"; };
@@ -87,6 +89,7 @@
 				B0EB7626E07471872930DD4A /* FileProviderItem.swift */,
 				102DEA10E99DC7C114752354 /* FileProviderShared.swift */,
 				06A57010E1DDD3A0BAD09708 /* FileProviderStore.swift */,
+				06ABFF2E4980F549F014D7DD /* FileProviderThumbnails.swift */,
 				60ACF75E60DCBF86E7072870 /* PendingStore.swift */,
 				CDE535000D230B5E798B392D /* TernSyncClient.swift */,
 			);
@@ -234,6 +237,7 @@
 				D8CE3F7D849E6715A32F1D43 /* FileProviderItem.swift in Sources */,
 				06E48F21710BCC0AA1B388DB /* FileProviderShared.swift in Sources */,
 				D0E9A2086C11ADC5D891F621 /* FileProviderStore.swift in Sources */,
+				32AC5B074EF2AA22261C9811 /* FileProviderThumbnails.swift in Sources */,
 				9C3E41EB6A3A9AAC26EAE981 /* PendingStore.swift in Sources */,
 				9CCC8201732BE199955514FF /* TernSyncClient.swift in Sources */,
 			);

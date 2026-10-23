@@ -49,6 +49,22 @@ struct MenuBarView: View {
             }
         }
 
+        let sync = FileProviderShared.syncStatus()
+        if sync.pending > 0 || sync.error != nil {
+            Divider()
+            Text("Finder 离线位置")
+                .font(.caption)
+            if sync.pending > 0 {
+                Text("待上传：\(sync.pending) 项")
+                    .font(.caption)
+            }
+            if let error = sync.error {
+                Text(error)
+                    .font(.caption)
+                    .foregroundStyle(.orange)
+            }
+        }
+
         Divider()
 
         if model.canConnect {

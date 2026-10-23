@@ -42,3 +42,7 @@ windows/*.user
 # Xcode / File Provider build output
 macos/.build-xcode/
 macos/DerivedData/
+
+# Xcode user state
+macos/Tern.xcodeproj/xcuserdata/
+macos/Tern.xcodeproj/project.xcworkspace/xcuserdata/

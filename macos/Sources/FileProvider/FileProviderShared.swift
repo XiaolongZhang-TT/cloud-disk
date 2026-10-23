@@ -42,6 +42,24 @@ public enum FileProviderShared {
         defaults.removeObject(forKey: "username")
     }
 
+    // MARK: - Sync status
+
+    public static func updateSyncStatus(pending: Int, error: String?) {
+        guard let defaults else { return }
+        defaults.set(pending, forKey: "fileProviderPending")
+        if let error { defaults.set(error, forKey: "fileProviderError") }
+        else { defaults.removeObject(forKey: "fileProviderError") }
+        defaults.set(Date().timeIntervalSince1970, forKey: "fileProviderLastSync")
+    }
+
+    public static func syncStatus() -> (pending: Int, error: String?, lastSync: Date?) {
+        guard let defaults else { return (0, nil, nil) }
+        let pending = defaults.integer(forKey: "fileProviderPending")
+        let error = defaults.string(forKey: "fileProviderError")
+        let timestamp = defaults.double(forKey: "fileProviderLastSync")
+        return (pending, error, timestamp > 0 ? Date(timeIntervalSince1970: timestamp) : nil)
+    }
+
     // MARK: - Keychain
 
     /// The access group is declared in both entitlements files.  At runtime the

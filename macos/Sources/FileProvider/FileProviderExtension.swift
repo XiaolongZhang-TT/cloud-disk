@@ -12,8 +12,8 @@ import UniformTypeIdentifiers
 
 final class FileProviderExtension: NSObject, NSFileProviderReplicatedExtension {
 
-    private let domain: NSFileProviderDomain
-    private let store = FileProviderStore()
+    let domain: NSFileProviderDomain
+    let store = FileProviderStore()
 
     required init(domain: NSFileProviderDomain) {
         self.domain = domain
@@ -221,6 +221,14 @@ final class FileProviderExtension: NSObject, NSFileProviderReplicatedExtension {
                 signalChanges()
                 completionHandler(TernItem(stored: latest), [], false, nil)
             } catch {
+                if case SyncClientError.http(412, _) = error,
+                   let newContents,
+                   let stored = store.item(id: item.itemIdentifier.rawValue),
+                   let data = try? Data(contentsOf: newContents) {
+                    await makeConflictCopy(stored: stored, data: data, originalName: item.filename)
+                    completionHandler(nil, [], false, Self.conflictError())
+                    return
+                }
                 guard Self.isOffline(error) else {
                     completionHandler(nil, [], false, Self.providerError(error))
                     return
@@ -341,6 +349,28 @@ final class FileProviderExtension: NSObject, NSFileProviderReplicatedExtension {
         return TernEnumerator(container: containerItemIdentifier, store: store)
     }
 
+    private func makeConflictCopy(stored: StoredItem, data: Data, originalName: String) async {
+        do {
+            let client = try store.makeClient()
+            let ns = originalName as NSString
+            let ext = ns.pathExtension
+            let base = ns.deletingPathExtension
+            let name = ext.isEmpty ? "\(base) (conflicted copy)" : "\(base) (conflicted copy).\(ext)"
+            let change = try await client.uploadFile(
+                parentId: stored.parentId,
+                name: name,
+                clientId: UUID().uuidString.lowercased(),
+                data: data,
+                mime: stored.mime ?? "application/octet-stream"
+            )
+            _ = store.upsert(change)
+            FileProviderShared.updateSyncStatus(pending: 0, error: "已生成冲突副本：\(name)")
+            signalChanges()
+        } catch {
+            FileProviderShared.updateSyncStatus(pending: 1, error: "冲突副本创建失败：\(error.localizedDescription)")
+        }
+    }
+
     private func signalChanges() {
         let manager = NSFileProviderManager(for: domain)
         manager?.signalEnumerator(for: .workingSet) { _ in }
@@ -359,6 +389,12 @@ final class FileProviderExtension: NSObject, NSFileProviderReplicatedExtension {
     private static func noSuchItem() -> NSError {
         NSError(domain: NSFileProviderErrorDomain, code: -1005, userInfo: [
             NSLocalizedDescriptionKey: "Tern 中不存在该文件。",
+        ])
+    }
+
+    private static func conflictError() -> NSError {
+        NSError(domain: NSFileProviderErrorDomain, code: -2005, userInfo: [
+            NSLocalizedDescriptionKey: "服务器上的文件已被修改，本地内容已保存为冲突副本。",
         ])
     }
 
