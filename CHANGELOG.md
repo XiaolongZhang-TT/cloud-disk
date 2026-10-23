@@ -10,6 +10,16 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 See [ROADMAP.md](ROADMAP.md) for the prioritized backlog.
 
+## [1.3.1] - 2026-10-23
+
+### Fixed
+
+- macOS Finder share actions no longer trigger a Keychain password prompt.
+
+### Changed
+
+- Release version aligned with the macOS 1.3.1 build; Windows remains 1.2.0.
+
 ## [1.3.0] - 2026-10-23
 
 ### Added
