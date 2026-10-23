@@ -215,6 +215,7 @@ ok "codesign --verify 通过"
 # ---------------------------------------------------------------------------
 # Distributable zip
 # ---------------------------------------------------------------------------
+rm -f "$DIST_DIR"/"$APP_NAME"-*.zip "$DIST_DIR"/"$APP_NAME"-*.zip.sha256
 ZIP="$DIST_DIR/$APP_NAME-$VERSION.zip"
 info "打包 $ZIP"
 rm -f "$ZIP"
