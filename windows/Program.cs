@@ -14,6 +14,12 @@ internal static class Program
             return;
         }
 
+        if (args.Length >= 1 && args[0] == "--cloudfiles-selftest")
+        {
+            Environment.ExitCode = RunCloudFilesSelfTest();
+            return;
+        }
+
         if (args.Length >= 1 && args[0] == "--uninstall-cleanup")
         {
             TernSyncService.CleanupForUninstall(new SettingsStore().Load());
@@ -50,6 +56,49 @@ internal static class Program
         };
 
         Application.Run(new TrayApplicationContext(args));
+    }
+
+    private static int RunCloudFilesSelfTest()
+    {
+        var id = Guid.NewGuid().ToString("N");
+        var root = Path.Combine(Path.GetTempPath(), "TernCloudSelfTest-" + id);
+        var data = Path.Combine(Path.GetTempPath(), "TernCloudSelfTestData-" + id);
+        try
+        {
+            Directory.CreateDirectory(root);
+            Directory.CreateDirectory(data);
+            var backend = new TernBackendClient("http://127.0.0.1:9/Tern", "selftest", "selftest");
+            var provider = new CloudFilesProvider(root, data, backend);
+            provider.RegisterAndConnectAsync().GetAwaiter().GetResult();
+            var entry = new ManifestEntry
+            {
+                RelativePath = "hello.txt",
+                Kind = "file",
+                CourseId = "root",
+                SourceId = Guid.NewGuid().ToString(),
+                Revision = "1",
+                Size = 5,
+                UpdatedAt = DateTimeOffset.UtcNow.ToString("O"),
+                ContentType = "text/plain",
+            };
+            provider.CreateAsync(entry, "hello.txt", CancellationToken.None).GetAwaiter().GetResult();
+            var local = provider.SnapshotAsync(CancellationToken.None).GetAwaiter().GetResult();
+            Console.WriteLine($"SELF_TEST_OK files={local.Count} root={root}");
+            provider.DisposeAsync().AsTask().GetAwaiter().GetResult();
+            backend.DisposeAsync().AsTask().GetAwaiter().GetResult();
+            CloudFilesProvider.Unregister(root);
+            return local.Count == 1 ? 0 : 2;
+        }
+        catch (Exception exception)
+        {
+            Console.Error.WriteLine("SELF_TEST_FAILED: " + exception);
+            return 1;
+        }
+        finally
+        {
+            try { if (Directory.Exists(root)) Directory.Delete(root, true); } catch { }
+            try { if (Directory.Exists(data)) Directory.Delete(data, true); } catch { }
+        }
     }
 
     private static void RenderScreenshot(string path)

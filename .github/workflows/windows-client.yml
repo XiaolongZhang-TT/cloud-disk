@@ -46,6 +46,12 @@ jobs:
           -p:IncludeNativeLibrariesForSelfExtract=true
           -o windows/dist
 
+      - name: Cloud Files self-test
+        shell: pwsh
+        run: |
+          & "windows/dist/Tern.exe" --cloudfiles-selftest
+          if ($LASTEXITCODE -ne 0) { throw "Cloud Files self-test failed with exit code $LASTEXITCODE" }
+
       - name: Package portable zip
         run: Compress-Archive -Path windows/dist/* -DestinationPath Tern-Windows-x64.zip -Force
 
