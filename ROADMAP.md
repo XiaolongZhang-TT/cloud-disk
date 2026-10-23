@@ -71,7 +71,7 @@ These are known and accepted for v1.2.0:
 
 ## Done recently
 
-- [x] Windows tray client with WebDAV drive mapping (`Tern (T:)`)
+- [x] Windows Cloud Files client with offline writes and optional `T:` drive
 - [x] Docker deployment with web build inside the image
 - [x] macOS File Provider client with long-poll watcher and offline writes
 - [x] CI for server, web, Docker and macOS builds

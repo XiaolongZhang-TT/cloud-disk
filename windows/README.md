@@ -1,13 +1,14 @@
 # Tern for Windows
 
-Windows tray client that maps the Tern WebDAV endpoint to a drive letter.
+Windows tray client built on the **Windows Cloud Files API**. Finder-style
+on-demand files appear in Explorer; optional `T:` drive letter via `subst`.
 
 ## Requirements
 
-- Windows 10 / 11 x64
+- Windows 10 1709+ / Windows 11 x64
+- Local NTFS folder for the sync root (default `%USERPROFILE%\Tern`)
 - .NET 8 SDK only for building; the published app is self-contained
-- Windows **WebClient** service available
-- HTTPS endpoint, for example `https://nas.example.com:8080/Tern`
+- No WebClient / WebDAV setup required
 
 ## Build
 
@@ -15,50 +16,43 @@ Windows tray client that maps the Tern WebDAV endpoint to a drive letter.
 powershell -ExecutionPolicy Bypass -File .\build.ps1
 ```
 
-Outputs:
-
-```text
-windows\dist\Tern.exe
-windows\Tern-Windows-x64.zip
-windows\Tern-Windows-Setup.exe
-```
-
-Build the installer with Inno Setup:
-
-```powershell
-& "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" Tern.iss
-```
-
-CI builds the same artifact on `windows-latest` in
-`.github/workflows/windows-client.yml`.
+Outputs `windows\dist\Tern.exe`; install Inno Setup 6 for the installer.
+CI builds the same artifacts on `windows-latest`.
 
 ## Run
 
 1. Extract the zip and run `Tern.exe`.
-2. Open the tray icon → **设置**.
-3. Enter:
-   - server URL: `https://<NAS-IP>:8080/Tern`
-   - web username and password
-   - drive letter (default `T:`)
-4. Click **保存并连接**.
-5. `Tern (T:)` appears in **This PC**.
+2. Tray icon → **设置**.
+3. Enter server URL, username and password.
+4. Choose the sync folder (default `%USERPROFILE%\Tern`) and optional drive letter.
+5. Click **保存并启用**.
+6. **Tern** appears in Explorer; `T:` appears if mapped.
 
-The password is stored in **Windows Credential Manager**, not in
-`%LOCALAPPDATA%\Tern\settings.json`.
+Credentials live in **Windows Credential Manager**, not in `settings.json`.
+
+## Features
+
+- On-demand download through Cloud Files placeholders
+- Offline read for hydrated files, native **Always keep on this device**
+- Offline writes queued and uploaded when the network returns
+- Conflict copies instead of silent overwrite
+- New folders/files, edits, renames and deletes sync
+- Real-time remote changes through `/api/sync/watch`
+- Optional `T:` drive letter (`subst`)
 
 ## Source layout
 
 ```text
-Program.cs                  entry point / single instance
-TrayApplicationContext.cs   tray icon and connection state
+Program.cs                  entry point, screenshot and uninstall cleanup
+TrayApplicationContext.cs   tray icon, connect/disconnect, status
 SettingsForm.cs             first-run and settings UI
-DriveMapper.cs              WNetAddConnection2 drive mapping
+CloudFiles/                 Cloud Files native registration, placeholders,
+                            hydration, sync service and Tern REST backend
+AppSettings.cs              preferences + settings.json
 CredentialStore.cs          Windows Credential Manager
-WebDavProbe.cs              HTTPS WebDAV preflight
 ServerUrl.cs                URL normalization
 StartupManager.cs           launch at login (HKCU Run)
-WindowsWebClient.cs         WebClient / file-size diagnostics
 ```
 
-See [docs/WINDOWS.md](../docs/WINDOWS.md) for user setup, WebClient service,
-large-file registry settings and troubleshooting.
+See [docs/WINDOWS.md](../docs/WINDOWS.md) for setup, offline behavior and
+troubleshooting.

@@ -14,6 +14,12 @@ internal static class Program
             return;
         }
 
+        if (args.Length >= 1 && args[0] == "--uninstall-cleanup")
+        {
+            TernSyncService.CleanupForUninstall(new SettingsStore().Load());
+            return;
+        }
+
         using var mutex = new Mutex(true, @"Local\TernWindowsClient", out var createdNew);
         if (!createdNew)
         {
@@ -56,6 +62,7 @@ internal static class Program
         {
             ServerUrl = "https://nas.example.com:8080/Tern",
             Username = "demo",
+            SyncFolder = AppSettings.DefaultSyncFolder(),
             DriveLetter = "T",
             AutoConnect = true,
             LaunchAtLogin = true,

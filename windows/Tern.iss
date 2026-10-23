@@ -1,5 +1,5 @@
 #define MyAppName "Tern"
-#define MyAppVersion "1.0.4"
+#define MyAppVersion "1.1.0"
 #define MyAppPublisher "Tern contributors"
 #define MyAppExeName "Tern.exe"
 
@@ -41,6 +41,7 @@ Name: "{userdesktop}\Tern"; Filename: "{app}\{#MyAppExeName}"; Tasks: desktopico
 
 [UninstallRun]
 Filename: "{sys}\reg.exe"; Parameters: "delete ""HKCU\Software\Microsoft\Windows\CurrentVersion\Run"" /v Tern /f"; Flags: runhidden; RunOnceId: "RemoveTernStartup"
+Filename: "{app}\{#MyAppExeName}"; Parameters: "--uninstall-cleanup"; Flags: runhidden waituntilterminated; RunOnceId: "CleanupCloudFiles"
 
 [UninstallDelete]
 Type: filesandordirs; Name: "{localappdata}\Tern"

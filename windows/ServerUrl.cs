@@ -63,38 +63,6 @@ public static class ServerUrl
         return normalized;
     }
 
-    /// <summary>
-    /// Windows WebDAV often reports mapped drives as UNC paths such as
-    /// \\nas@SSL\DavWWWRoot\Tern instead of the original HTTPS URL.
-    /// </summary>
-    public static bool MatchesRemote(string? remote, string? serverUrl)
-    {
-        if (AreSame(remote, serverUrl)) return true;
-        if (string.IsNullOrWhiteSpace(remote) || string.IsNullOrWhiteSpace(serverUrl)) return false;
-        if (!Uri.TryCreate(serverUrl, UriKind.Absolute, out var uri)) return false;
-
-        var text = remote.Trim();
-        if (!text.StartsWith(@"\\", StringComparison.Ordinal)) return false;
-
-        var rest = text[2..];
-        var slash = rest.IndexOf('\\');
-        var hostPart = slash >= 0 ? rest[..slash] : rest;
-        var path = slash >= 0 ? rest[(slash + 1)..] : "";
-        var at = hostPart.IndexOf('@');
-        var host = at >= 0 ? hostPart[..at] : hostPart;
-
-        if (!host.Equals(uri.Host, StringComparison.OrdinalIgnoreCase)) return false;
-
-        var targetPath = uri.AbsolutePath.Trim('/');
-        if (targetPath.Length == 0) return true;
-
-        var normalized = path.Replace("DavWWWRoot", "", StringComparison.OrdinalIgnoreCase)
-            .Trim('\\', '/');
-        if (normalized.Length == 0) return true;
-        return normalized.Equals(targetPath, StringComparison.OrdinalIgnoreCase)
-            || normalized.EndsWith("/" + targetPath, StringComparison.OrdinalIgnoreCase)
-            || normalized.EndsWith("\\" + targetPath, StringComparison.OrdinalIgnoreCase);
-    }
 
     public static bool AreSame(string? a, string? b)
     {

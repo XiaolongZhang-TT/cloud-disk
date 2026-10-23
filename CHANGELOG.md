@@ -10,6 +10,25 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 See [ROADMAP.md](ROADMAP.md) for the prioritized backlog.
 
+## [Windows 1.1.0] - 2026-10-23
+
+### Added
+
+- Windows client rebuilt on the **Windows Cloud Files API**: Explorer cloud
+  location, on-demand hydration, offline reads/writes, native pin state,
+  conflict copies and optional `T:` drive.
+- Long-poll `/api/sync/watch` watcher so web/other-client uploads appear in
+  Explorer without reopening folders.
+- On-demand download and offline queue through the Tern REST API.
+
+### Changed
+
+- Removed Windows WebDAV mapping, WebClient dependency, large-file registry
+  workaround and related diagnostics.
+- Windows sync folder defaults to `%USERPROFILE%\Tern`; `T:` is optional and
+  implemented with `subst`.
+- Uninstall cleanup unregisters the Cloud Files sync root.
+
 ## [1.2.1] - 2026-10-23
 
 ### Added

@@ -16,7 +16,7 @@
 
 - 文件/文件夹管理、拖拽上传、图片/视频/PDF/文本预览、搜索、收藏、回收站
 - 多用户与存储配额、带密码和有效期的公开分享
-- WebDAV：`/dav` 和 `/Tern`，供 Windows、rclone 等客户端使用（macOS 客户端不再使用 WebDAV）
+- WebDAV：`/dav` 和 `/Tern`，供 rclone 等客户端使用（macOS / Windows 客户端都不再使用 WebDAV）
 - macOS 菜单栏客户端：原生 File Provider 位置，按需下载、离线写入、冲突副本、实时同步
 - Docker 单容器：SQLite + 本地文件存储，支持 amd64 / arm64
 
@@ -93,22 +93,25 @@ cp -R .build-xcode/Build/Products/Debug/Tern.app /Applications/
 
 ## Windows 客户端
 
-Windows 10/11 x64 托盘客户端，把网盘映射为 **`Tern (T:)`**，在「此电脑」里像网络盘一样使用。
+Windows 10/11 x64 托盘客户端，使用 **Windows Cloud Files API** 在资源管理器中
+创建离线位置，可选映射为 `T:` 盘符。
 
-从 [Releases](https://github.com/XiaolongZhang-dev/tern/releases/tag/v1.1.1) 下载 `Tern-Windows-Setup.exe` 安装（便携版为 `Tern-Windows-x64.zip`），或运行 `windows/build.ps1` 构建。安装后运行 `Tern.exe`：
+- 按需下载、离线读取、离线写入
+- Windows 原生「始终保留在此设备上 / 释放空间」
+- 冲突副本、新建/修改/重命名/移动/删除
+- 网页上传后通过长轮询 watcher 自动出现
+- 不再需要 WebDAV 或 WebClient 服务
 
-1. 托盘 Tern →「设置」；
-2. 填 `https://<NAS-IP>:8080/Tern`、用户名、密码，选择盘符；
-3. 点「保存并连接」，然后打开「此电脑」里的 `Tern (T:)`。
-
-需要 Windows **WebClient** 服务；大文件默认 50MB 限制的处理方式见 [docs/WINDOWS.md](docs/WINDOWS.md)。
+从 Releases 下载 `Tern-Windows-Setup.exe` 安装（或运行 `windows/build.ps1`
+构建），打开托盘 Tern →「设置」填写服务器、账号和同步文件夹即可。完整说明见
+[docs/WINDOWS.md](docs/WINDOWS.md)。
 
 ## 文档
 
 - [部署指南](docs/DEPLOY.md)：NAS、HTTPS、备份升级
 - [macOS 客户端](docs/MAC.md)：构建、安装、Finder 集成
 - [macOS 离线位置（实验）](docs/MAC_OFFLINE.md)：File Provider Phase 3
-- [Windows 客户端](docs/WINDOWS.md)：安装、盘符映射、WebClient
+- [Windows 客户端](docs/WINDOWS.md)：Cloud Files 离线位置、盘符映射、离线写入
 - [架构](docs/ARCHITECTURE.md) · [API](docs/API.md)
 - [路线图](ROADMAP.md) · [贡献指南](CONTRIBUTING.md) · [安全策略](SECURITY.md)
 

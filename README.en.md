@@ -16,7 +16,7 @@ A private cloud drive for your NAS: one-command Docker deployment, a clean web U
 
 - Files and folders, drag-and-drop uploads, previews (images/video/PDF/text), search, favorites and trash
 - Multi-user quotas and public share links with optional password and expiry
-- WebDAV at `/dav` and `/Tern`, usable by Windows, rclone and other clients (the macOS client no longer uses WebDAV)
+- WebDAV at `/dav` and `/Tern`, usable by rclone and other clients (the macOS and Windows clients no longer use WebDAV)
 - macOS menu-bar client: native File Provider location with on-demand download, offline writes, conflict copies and live sync
 - One Docker container: SQLite + local file storage, amd64 / arm64
 
@@ -86,22 +86,21 @@ See [docs/MAC.md](docs/MAC.md) and [docs/MAC_OFFLINE.md](docs/MAC_OFFLINE.md).
 
 ## Windows client
 
-A Windows 10/11 x64 tray app that maps the drive as **`Tern (T:)`** in **This PC**.
+A Windows 10/11 x64 tray app built on the **Windows Cloud Files API**. It
+creates an Explorer cloud location with on-demand download, offline reads and
+writes, native “Always keep on this device / Free up space”, conflict copies
+and an optional `T:` drive letter. No WebDAV / WebClient setup is required.
 
-Download `Tern-Windows-Setup.exe` from [Releases](https://github.com/XiaolongZhang-dev/tern/releases/tag/v1.1.1) (or use the portable `Tern-Windows-x64.zip`; build with `windows/build.ps1`), install and run `Tern.exe`:
-
-1. Tray icon → **Settings**;
-2. enter `https://<NAS-IP>:8080/Tern`, username, password and drive letter;
-3. click **Save and connect**, then open `Tern (T:)` in This PC.
-
-The Windows **WebClient** service is required. See [docs/WINDOWS.md](docs/WINDOWS.md) for the 50MB default limit and troubleshooting.
+Download `Tern-Windows-Setup.exe` from Releases (or build with
+`windows/build.ps1`), open Tern in the tray → **Settings**, and enter the server,
+account and sync folder. See [docs/WINDOWS.md](docs/WINDOWS.md).
 
 ## Documentation
 
 - [Deployment](docs/DEPLOY.md): NAS, HTTPS, backups and upgrades
 - [macOS client](docs/MAC.md): build, install and Finder integration
 - [macOS File Provider details](docs/MAC_OFFLINE.md): offline writes, conflicts, watcher
-- [Windows client](docs/WINDOWS.md): install, drive mapping, WebClient
+- [Windows client](docs/WINDOWS.md): Cloud Files location, drive letter, offline writes
 - [Architecture](docs/ARCHITECTURE.md) · [API](docs/API.md)
 - [Roadmap](ROADMAP.md) · [Contributing](CONTRIBUTING.md) · [Security](SECURITY.md)
 

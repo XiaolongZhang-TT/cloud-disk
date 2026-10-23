@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using System.Drawing;
 using System.Windows.Forms;
 
@@ -13,16 +12,15 @@ public sealed class SettingsForm : Form
     private readonly TextBox _serverBox = new();
     private readonly TextBox _usernameBox = new();
     private readonly TextBox _passwordBox = new();
+    private readonly TextBox _folderBox = new();
     private readonly ComboBox _driveBox = new();
     private readonly CheckBox _launchAtLogin = new();
     private readonly CheckBox _autoConnect = new();
     private readonly Label _statusLabel = new();
-    private readonly Label _serviceLabel = new();
-    private readonly Button _startServiceButton = new();
-    private readonly Label _limitLabel = new();
     private readonly Button _testButton = new();
     private readonly Button _saveButton = new();
     private readonly Button _cancelButton = new();
+    private readonly Button _browseButton = new();
 
     public bool Saved { get; private set; }
 
@@ -39,14 +37,12 @@ public sealed class SettingsForm : Form
         ShowInTaskbar = true;
         AutoScaleMode = AutoScaleMode.Dpi;
         Font = new Font("Segoe UI", 9F);
-        ClientSize = new Size(640, 560);
-        MinimumSize = new Size(620, 500);
+        ClientSize = new Size(640, 570);
+        MinimumSize = new Size(620, 540);
         BackColor = Color.FromArgb(248, 247, 244);
 
-        FormClosing += (_, _) => Log.Info("设置窗口关闭");
         BuildUi(firstRun);
         LoadValues();
-        UpdateDiagnostics();
     }
 
     private void BuildUi(bool firstRun)
@@ -62,8 +58,6 @@ public sealed class SettingsForm : Form
         root.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
         root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
 
-        // The form body scrolls; the action bar is fixed at the bottom so text
-        // can never cover the buttons again.
         var content = new Panel
         {
             Dock = DockStyle.Fill,
@@ -76,13 +70,13 @@ public sealed class SettingsForm : Form
             Dock = DockStyle.Top,
             AutoSize = true,
             ColumnCount = 2,
-            RowCount = 11,
+            RowCount = 12,
             Margin = new Padding(0),
             Padding = new Padding(0),
         };
         layout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 108));
         layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-        for (var i = 0; i < 11; i++) layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        for (var i = 0; i < 12; i++) layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
 
         var title = new Label
         {
@@ -97,8 +91,8 @@ public sealed class SettingsForm : Form
         var subtitle = new Label
         {
             Text = firstRun
-                ? "连接你的私有网盘，连接后会作为 T 盘出现在“此电脑”中。"
-                : "修改连接信息和启动行为。",
+                ? "连接你的私有网盘。Tern 会在资源管理器中创建离线同步位置，也可以映射为盘符。"
+                : "修改连接信息、同步文件夹和启动行为。",
             ForeColor = Color.FromArgb(105, 101, 116),
             AutoSize = true,
             MaximumSize = new Size(540, 0),
@@ -119,57 +113,51 @@ public sealed class SettingsForm : Form
             ? "输入网页端密码"
             : "已保存，留空保持不变";
 
-        AddRow(layout, 5, "盘符", _driveBox);
+        var folderRow = new TableLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            ColumnCount = 2,
+            RowCount = 1,
+            AutoSize = true,
+            Margin = new Padding(0),
+        };
+        folderRow.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+        folderRow.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+        _folderBox.Dock = DockStyle.Fill;
+        _folderBox.Margin = new Padding(0, 3, 6, 3);
+        _browseButton.Text = "选择…";
+        _browseButton.AutoSize = true;
+        _browseButton.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+        _browseButton.Margin = new Padding(0, 3, 0, 3);
+        _browseButton.Click += (_, _) => BrowseFolder();
+        folderRow.Controls.Add(_folderBox, 0, 0);
+        folderRow.Controls.Add(_browseButton, 1, 0);
+        AddRow(layout, 5, "同步文件夹", folderRow);
+
+        AddRow(layout, 6, "盘符", _driveBox);
         _driveBox.DropDownStyle = ComboBoxStyle.DropDownList;
-        _driveBox.Width = 120;
+        _driveBox.Width = 180;
 
         _launchAtLogin.Text = "登录 Windows 时自动启动 Tern";
         _launchAtLogin.AutoSize = true;
         _launchAtLogin.Margin = new Padding(0, 8, 0, 2);
-        layout.Controls.Add(_launchAtLogin, 1, 6);
+        layout.Controls.Add(_launchAtLogin, 1, 7);
 
-        _autoConnect.Text = "启动后自动连接";
+        _autoConnect.Text = "启动后自动启用同步";
         _autoConnect.AutoSize = true;
         _autoConnect.Margin = new Padding(0, 2, 0, 8);
-        layout.Controls.Add(_autoConnect, 1, 7);
+        layout.Controls.Add(_autoConnect, 1, 8);
 
-        _serviceLabel.AutoSize = true;
-        _serviceLabel.Margin = new Padding(0, 4, 12, 2);
-
-        _startServiceButton.Text = "启动服务";
-        _startServiceButton.Width = 92;
-        _startServiceButton.Height = 26;
-        _startServiceButton.Margin = new Padding(0, 2, 0, 2);
-        _startServiceButton.Click += async (_, _) => await StartServiceAsync();
-
-        var serviceRow = new FlowLayoutPanel
+        var note = new Label
         {
+            Text = "Tern 使用 Windows Cloud Files 在资源管理器中显示文件：文件按需下载，离线修改会在网络恢复后上传。首次启用需要 Windows 10 1709+ 和 NTFS 本地磁盘。",
+            ForeColor = Color.FromArgb(105, 101, 116),
             AutoSize = true,
-            WrapContents = false,
-            Margin = new Padding(0),
+            MaximumSize = new Size(540, 0),
+            Margin = new Padding(0, 6, 0, 4),
         };
-        serviceRow.Controls.Add(_serviceLabel);
-        serviceRow.Controls.Add(_startServiceButton);
-        layout.Controls.Add(serviceRow, 0, 8);
-        layout.SetColumnSpan(serviceRow, 2);
-
-        _limitLabel.AutoSize = false;
-        _limitLabel.Dock = DockStyle.Fill;
-        _limitLabel.Height = 22;
-        _limitLabel.AutoEllipsis = true;
-        _limitLabel.Margin = new Padding(0, 2, 0, 2);
-        layout.Controls.Add(_limitLabel, 0, 9);
-        layout.SetColumnSpan(_limitLabel, 2);
-
-        var helpLink = new LinkLabel
-        {
-            Text = "Windows 客户端说明 / 大文件限制",
-            AutoSize = true,
-            Margin = new Padding(0, 2, 0, 8),
-        };
-        helpLink.LinkClicked += (_, _) => OpenHelp();
-        layout.Controls.Add(helpLink, 0, 10);
-        layout.SetColumnSpan(helpLink, 2);
+        layout.Controls.Add(note, 0, 9);
+        layout.SetColumnSpan(note, 2);
 
         content.Controls.Add(layout);
 
@@ -192,7 +180,6 @@ public sealed class SettingsForm : Form
         _statusLabel.AutoEllipsis = true;
         _statusLabel.TextAlign = ContentAlignment.MiddleLeft;
         _statusLabel.ForeColor = Color.FromArgb(105, 101, 116);
-        _statusLabel.Margin = new Padding(0, 0, 0, 2);
         _statusLabel.Text = "未连接";
 
         var buttons = new FlowLayoutPanel
@@ -205,12 +192,12 @@ public sealed class SettingsForm : Form
             Margin = new Padding(0),
         };
 
-        _saveButton.Text = "保存并连接";
+        _saveButton.Text = "保存并启用";
         _saveButton.AutoSize = true;
         _saveButton.AutoSizeMode = AutoSizeMode.GrowAndShrink;
-        _saveButton.MinimumSize = new Size(110, 36);
+        _saveButton.MinimumSize = new Size(120, 36);
         _saveButton.Padding = new Padding(10, 3, 10, 3);
-        _saveButton.Click += async (_, _) => await SaveAndConnectAsync();
+        _saveButton.Click += async (_, _) => await SaveAsync();
 
         _cancelButton.Text = "取消";
         _cancelButton.AutoSize = true;
@@ -232,10 +219,8 @@ public sealed class SettingsForm : Form
 
         bottom.Controls.Add(_statusLabel, 0, 0);
         bottom.Controls.Add(buttons, 0, 1);
-
         root.Controls.Add(content, 0, 0);
         root.Controls.Add(bottom, 0, 1);
-
         Controls.Add(root);
         AcceptButton = _saveButton;
         CancelButton = _cancelButton;
@@ -260,36 +245,47 @@ public sealed class SettingsForm : Form
     {
         _serverBox.Text = _initial.ServerUrl;
         _usernameBox.Text = _initial.Username;
+        _folderBox.Text = _initial.SyncFolder;
 
-        var letters = DriveMapper.AvailableDriveLetters().ToList();
-        var current = DriveMapper.NormalizeDriveLetter(_initial.DriveLetter);
-        if (!letters.Contains(current)) letters.Insert(0, current);
         _driveBox.Items.Clear();
-        foreach (var letter in letters) _driveBox.Items.Add(letter + ":");
-        _driveBox.SelectedItem = current + ":";
+        _driveBox.Items.Add("不映射盘符");
+        foreach (var letter in DriveLetterSubst.AvailableLetters())
+            _driveBox.Items.Add(letter + ":");
+        var current = (_initial.DriveLetter ?? "").TrimEnd(':').ToUpperInvariant();
+        if (current.Length == 1)
+        {
+            var item = current + ":";
+            if (!_driveBox.Items.Contains(item)) _driveBox.Items.Add(item);
+            _driveBox.SelectedItem = item;
+        }
         if (_driveBox.SelectedIndex < 0) _driveBox.SelectedIndex = 0;
 
-        _launchAtLogin.Checked = StartupManager.IsEnabled();
+        _launchAtLogin.Checked = StartupManager.IsEnabled() || _initial.LaunchAtLogin;
         _autoConnect.Checked = _initial.AutoConnect;
     }
 
-    private void UpdateDiagnostics()
+    private void BrowseFolder()
     {
-        var running = WindowsWebClient.IsWebClientRunning();
-        _serviceLabel.Text = running ? "WebClient：运行中" : "WebClient：未运行";
-        _serviceLabel.ForeColor = running ? Color.FromArgb(35, 117, 82) : Color.FromArgb(180, 95, 25);
-        _startServiceButton.Visible = !running;
-
-        var limit = WindowsWebClient.FileSizeLimitBytes();
-        _limitLabel.Text = "文件大小限制：" + WindowsWebClient.LimitDescription();
-        _limitLabel.ForeColor = limit is null || limit < 100L * 1024 * 1024
-            ? Color.FromArgb(180, 95, 25)
-            : Color.FromArgb(105, 101, 116);
+        using var dialog = new FolderBrowserDialog
+        {
+            Description = "选择 Tern 同步文件夹",
+            UseDescriptionForTitle = true,
+            SelectedPath = _folderBox.Text,
+            ShowNewFolderButton = true,
+        };
+        if (dialog.ShowDialog(this) == DialogResult.OK)
+            _folderBox.Text = dialog.SelectedPath;
     }
 
-    private bool TryReadInputs(out string serverUrl, out string username, out string password, out string driveLetter, out string error)
+    private bool TryReadInputs(
+        out string serverUrl,
+        out string username,
+        out string password,
+        out string folder,
+        out string driveLetter,
+        out string error)
     {
-        serverUrl = username = password = driveLetter = "";
+        serverUrl = username = password = folder = driveLetter = "";
         error = "";
 
         if (!ServerUrl.TryNormalize(_serverBox.Text, out serverUrl, out error)) return false;
@@ -299,58 +295,43 @@ public sealed class SettingsForm : Form
             error = "请输入用户名。";
             return false;
         }
-
         password = _passwordBox.Text.Length > 0 ? _passwordBox.Text : (_savedPassword ?? "");
         if (password.Length == 0)
         {
             error = "请输入密码。";
             return false;
         }
-
-        driveLetter = DriveMapper.NormalizeDriveLetter(
-            (_driveBox.SelectedItem?.ToString() ?? "T:").TrimEnd(':'));
+        folder = _folderBox.Text.Trim();
+        if (folder.Length == 0) folder = AppSettings.DefaultSyncFolder();
+        try { folder = Path.GetFullPath(folder); }
+        catch
+        {
+            error = "同步文件夹路径不正确。";
+            return false;
+        }
+        var selected = _driveBox.SelectedItem?.ToString() ?? "不映射盘符";
+        driveLetter = selected == "不映射盘符" ? "" : selected.TrimEnd(':');
         return true;
-    }
-
-    private async Task StartServiceAsync()
-    {
-        SetBusy(true);
-        SetStatus("正在请求管理员权限启动 WebClient…", false);
-        try
-        {
-            var error = "";
-            var started = await Task.Run(() => WindowsWebClient.TryStartWebClient(out error));
-            UpdateDiagnostics();
-            SetStatus(started ? "WebClient 服务已启动。" : error, !started);
-        }
-        catch (Exception ex)
-        {
-            SetStatus($"启动 WebClient 失败：{ex.Message}", true);
-        }
-        finally
-        {
-            SetBusy(false);
-        }
     }
 
     private async Task TestAsync()
     {
-        if (!TryReadInputs(out var serverUrl, out var username, out var password, out _, out var error))
+        if (!TryReadInputs(out var serverUrl, out var username, out var password, out _, out _, out var error))
         {
             SetStatus(error, true);
             return;
         }
-
         SetBusy(true);
         SetStatus("正在测试连接…", false);
         try
         {
-            var result = await WebDavProbe.ProbeAsync(new Uri(serverUrl), username, password);
-            SetStatus(result.Message, !result.Ok);
+            await using var client = new TernBackendClient(serverUrl, username, password);
+            var result = await client.TestAsync();
+            SetStatus("✅ " + result, false);
         }
-        catch (Exception ex)
+        catch (Exception exception)
         {
-            SetStatus($"测试失败：{ex.Message}", true);
+            SetStatus("❌ " + exception.Message, true);
         }
         finally
         {
@@ -358,17 +339,11 @@ public sealed class SettingsForm : Form
         }
     }
 
-    private async Task SaveAndConnectAsync()
+    private async Task SaveAsync()
     {
-        if (!TryReadInputs(out var serverUrl, out var username, out var password, out var driveLetter, out var error))
+        if (!TryReadInputs(out var serverUrl, out var username, out var password, out var folder, out var driveLetter, out var error))
         {
             SetStatus(error, true);
-            return;
-        }
-
-        if (!WindowsWebClient.IsWebClientRunning())
-        {
-            SetStatus("请先启动 WebClient 服务（点击上方“启动服务”）。", true);
             return;
         }
 
@@ -376,72 +351,36 @@ public sealed class SettingsForm : Form
         SetStatus("正在验证服务器…", false);
         try
         {
-            var probe = await WebDavProbe.ProbeAsync(new Uri(serverUrl), username, password);
-            if (!probe.Ok)
+            await using (var client = new TernBackendClient(serverUrl, username, password))
             {
-                SetStatus(probe.Message, true);
-                return;
+                await client.LoginAsync();
             }
 
-            SetStatus("正在连接 T 盘…", false);
-            try
-            {
-                var oldLetter = DriveMapper.NormalizeDriveLetter(_initial.DriveLetter);
-                if (oldLetter != driveLetter)
-                {
-                    var oldRemote = DriveMapper.GetMappedRemote(oldLetter);
-                    if (oldRemote is not null && ServerUrl.MatchesRemote(oldRemote, serverUrl))
-                    {
-                        DriveMapper.Unmap(oldLetter);
-                    }
-                }
-
-                DriveMapper.Map(serverUrl, username, password, driveLetter);
-            }
-            catch (Exception ex)
-            {
-                SetStatus(ex.Message, true);
-                Log.Error($"映射网络驱动器失败：{ex.Message}");
-                return;
-            }
-
-            if (_passwordBox.Text.Length > 0 || !CredentialStore.Has(serverUrl, username))
-            {
-                if (!CredentialStore.Save(serverUrl, username, password))
-                {
-                    Log.Warn("无法保存密码到 Windows 凭据管理器；本次连接仍然有效。");
-                }
-            }
+            Directory.CreateDirectory(folder);
+            if (!CredentialStore.Save(serverUrl, username, password))
+                Log.Warn("无法保存密码到 Windows 凭据管理器。");
 
             var updated = new AppSettings
             {
                 ServerUrl = serverUrl,
                 Username = username,
+                SyncFolder = folder,
                 DriveLetter = driveLetter,
                 AutoConnect = _autoConnect.Checked,
                 LaunchAtLogin = _launchAtLogin.Checked,
             };
-
-            try
-            {
-                StartupManager.SetEnabled(updated.LaunchAtLogin);
-            }
-            catch (Exception ex)
-            {
-                Log.Warn($"设置开机启动失败：{ex.Message}");
-            }
-
             _store.Save(updated);
+            StartupManager.SetEnabled(updated.LaunchAtLogin);
+
+            SetStatus("✅ 设置已保存", false);
             Saved = true;
-            _passwordBox.Clear();
-            Log.Info($"设置已保存，准备关闭设置窗口：{driveLetter}:");
-            SetStatus($"已连接：{driveLetter}:", false);
-            CloseFromSuccess();
+            DialogResult = DialogResult.OK;
+            Close();
         }
-        catch (Exception ex)
+        catch (Exception exception)
         {
-            SetStatus($"连接失败：{ex.Message}", true);
-            Log.Error($"保存并连接失败：{ex.Message}");
+            SetStatus("❌ " + exception.Message, true);
+            Log.Error("保存设置失败：" + exception.Message);
         }
         finally
         {
@@ -449,49 +388,17 @@ public sealed class SettingsForm : Form
         }
     }
 
-    private void CloseFromSuccess()
+    private void SetStatus(string message, bool error)
     {
-        // Setting DialogResult normally closes a modal form, but do it on the
-        // next message loop iteration so any pending layout/paint completes.
-        void Finish()
-        {
-            DialogResult = DialogResult.OK;
-            Close();
-        }
-
-        if (IsHandleCreated) BeginInvoke(new Action(Finish));
-        else Finish();
+        _statusLabel.Text = message;
+        _statusLabel.ForeColor = error ? Color.FromArgb(186, 38, 38) : Color.FromArgb(35, 117, 82);
     }
 
     private void SetBusy(bool busy)
     {
-        _testButton.Enabled = !busy;
         _saveButton.Enabled = !busy;
+        _testButton.Enabled = !busy;
         _cancelButton.Enabled = !busy;
         Cursor = busy ? Cursors.WaitCursor : Cursors.Default;
-    }
-
-    private void SetStatus(string message, bool error)
-    {
-        if (message.Length > 90) message = message[..87] + "…";
-        _statusLabel.Text = message;
-        _statusLabel.ForeColor = error ? Color.FromArgb(180, 45, 55) : Color.FromArgb(35, 117, 82);
-        if (error) Log.Warn($"设置页：{message}");
-    }
-
-    private static void OpenHelp()
-    {
-        try
-        {
-            Process.Start(new ProcessStartInfo(
-                "https://github.com/XiaolongZhang-dev/tern/blob/main/docs/WINDOWS.md")
-            {
-                UseShellExecute = true,
-            });
-        }
-        catch
-        {
-            // Ignore browser launch failures.
-        }
     }
 }

@@ -13,21 +13,26 @@ public sealed class TrayApplicationContext : ApplicationContext
     private readonly ToolStripMenuItem _openItem;
     private readonly System.Windows.Forms.Timer _stateTimer;
     private readonly System.Windows.Forms.Timer _startupTimer;
+    private readonly TernSyncService _sync;
 
     private AppSettings _settings;
     private string? _savedPassword;
     private SettingsForm? _settingsForm;
     private bool _busy;
-    private bool? _lastConnected;
+    private bool? _lastRunning;
+    private string? _lastError;
 
     public TrayApplicationContext(string[] args)
     {
         _settings = _store.Load();
         _savedPassword = HasCredentials(_settings) ? CredentialStore.Load(_settings.ServerUrl, _settings.Username) : null;
+        _sync = new TernSyncService(_settings.SyncFolder, AppPaths.EnsureDataDirectory());
+        _sync.Progress += (_, progress) => Log.Info("sync: " + progress.Message);
+        _sync.StateChanged += (_, _) => UpdateMenu();
 
-        _statusItem = new ToolStripMenuItem("未连接") { Enabled = false };
-        _connectItem = new ToolStripMenuItem("连接", null, async (_, _) => await ConnectAsync(true));
-        _openItem = new ToolStripMenuItem("在资源管理器中打开", null, (_, _) => OpenDrive()) { Enabled = false };
+        _statusItem = new ToolStripMenuItem("未启用") { Enabled = false };
+        _connectItem = new ToolStripMenuItem("启用同步", null, async (_, _) => await ToggleAsync(true));
+        _openItem = new ToolStripMenuItem("打开 Tern", null, (_, _) => OpenLocation()) { Enabled = false };
 
         var menu = new ContextMenuStrip();
         menu.Items.Add(new ToolStripMenuItem("Tern") { Enabled = false });
@@ -43,35 +48,34 @@ public sealed class TrayApplicationContext : ApplicationContext
         _notifyIcon = new NotifyIcon
         {
             Icon = LoadIcon(),
-            Text = "Tern · 未连接",
+            Text = "Tern · 未启用",
             Visible = true,
             ContextMenuStrip = menu,
         };
         _notifyIcon.DoubleClick += (_, _) =>
         {
-            if (IsConnected()) OpenDrive();
+            if (_sync.IsRunning) OpenLocation();
             else ShowSettings();
         };
 
-        _stateTimer = new System.Windows.Forms.Timer { Interval = 5000 };
-        _stateTimer.Tick += (_, _) => RefreshState();
+        _stateTimer = new System.Windows.Forms.Timer { Interval = 3000 };
+        _stateTimer.Tick += (_, _) => UpdateMenu();
         _stateTimer.Start();
 
         _startupTimer = new System.Windows.Forms.Timer { Interval = 700 };
         _startupTimer.Tick += (_, _) =>
         {
             _startupTimer.Stop();
-            Start();
+            _ = StartAsync();
         };
         _startupTimer.Start();
 
         UpdateMenu();
     }
 
-    private void Start()
+    private async Task StartAsync()
     {
         SyncLaunchSetting();
-
         if (!HasConfig(_settings))
         {
             ShowSettings();
@@ -81,9 +85,7 @@ public sealed class TrayApplicationContext : ApplicationContext
         var autostart = Environment.GetCommandLineArgs().Any(a =>
             string.Equals(a, "--autostart", StringComparison.OrdinalIgnoreCase));
         if (_settings.AutoConnect || autostart)
-        {
-            _ = ConnectAsync(false);
-        }
+            await ToggleAsync(false);
     }
 
     private void SyncLaunchSetting()
@@ -96,13 +98,12 @@ public sealed class TrayApplicationContext : ApplicationContext
             }
             else
             {
-                // Also removes a stale value left by an older install path.
                 StartupManager.SetEnabled(false);
             }
         }
-        catch (Exception ex)
+        catch (Exception exception)
         {
-            Log.Warn($"同步开机启动设置失败：{ex.Message}");
+            Log.Warn("同步开机启动设置失败：" + exception.Message);
         }
     }
 
@@ -125,44 +126,20 @@ public sealed class TrayApplicationContext : ApplicationContext
         }
     }
 
-    private bool IsConnected()
-    {
-        return DriveMapper.IsMappedToServer(_settings.DriveLetter, _settings.ServerUrl);
-    }
-
-    private void RefreshState() => UpdateMenu();
-
-    private void UpdateMenu()
-    {
-        var connected = IsConnected();
-        var drive = _settings.DriveLetter + ":";
-
-        if (_lastConnected != connected)
-        {
-            var remote = DriveMapper.GetMappedRemote(_settings.DriveLetter);
-            Log.Info($"托盘连接状态：connected={connected}, drive={drive}, remote={remote ?? "<none>"}, server={_settings.ServerUrl}");
-            _lastConnected = connected;
-        }
-
-        _statusItem.Text = connected ? $"已连接 · {drive}" : "未连接";
-        _connectItem.Text = connected ? "断开连接" : "连接";
-        _connectItem.Enabled = !_busy;
-        _openItem.Enabled = connected;
-
-        var trayText = connected ? $"Tern · {drive}" : "Tern · 未连接";
-        _notifyIcon.Text = trayText.Length > 63 ? trayText[..63] : trayText;
-    }
-
-    private async Task ConnectAsync(bool interactive)
+    private async Task ToggleAsync(bool interactive)
     {
         if (_busy) return;
+        if (_sync.IsRunning)
+        {
+            await DisconnectAsync(interactive);
+            return;
+        }
 
         if (!HasConfig(_settings))
         {
             ShowSettings();
             return;
         }
-
         _savedPassword ??= CredentialStore.Load(_settings.ServerUrl, _settings.Username);
         if (string.IsNullOrWhiteSpace(_savedPassword))
         {
@@ -173,36 +150,82 @@ public sealed class TrayApplicationContext : ApplicationContext
 
         _busy = true;
         UpdateMenu();
-
         try
         {
-            var result = await Task.Run(() => DriveMapper.Map(
-                _settings.ServerUrl,
-                _settings.Username,
-                _savedPassword,
-                _settings.DriveLetter));
-
-            _settings.DriveLetter = result.DriveLetter;
-            _store.Save(_settings);
-            Log.Info($"已连接 {result.DriveLetter}: -> {result.RemotePath}");
-            if (interactive) OpenDrive();
+            await _sync.StartAsync(_settings, _savedPassword);
+            _lastError = null;
+            UpdateMenu();
+            if (interactive) OpenLocation();
         }
-        catch (Exception ex)
+        catch (Exception exception)
         {
-            Log.Error($"连接失败：{ex.Message}");
+            _lastError = exception.Message;
+            Log.Error("启用同步失败：" + exception.Message);
             if (interactive)
-            {
-                MessageBox.Show(ex.Message, "Tern 连接失败", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
+                MessageBox.Show(exception.Message, "Tern 启用失败", MessageBoxButtons.OK, MessageBoxIcon.Error);
             else
-            {
-                Notify("Tern 连接失败", ex.Message, ToolTipIcon.Error);
-            }
+                Notify("Tern 启用失败", exception.Message, ToolTipIcon.Error);
         }
         finally
         {
             _busy = false;
             UpdateMenu();
+        }
+    }
+
+    private async Task DisconnectAsync(bool interactive)
+    {
+        if (_busy) return;
+        _busy = true;
+        UpdateMenu();
+        try
+        {
+            await _sync.StopAsync();
+        }
+        catch (Exception exception)
+        {
+            Log.Warn("停止同步失败：" + exception.Message);
+            if (interactive)
+                MessageBox.Show(exception.Message, "Tern", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+        }
+        finally
+        {
+            _busy = false;
+            UpdateMenu();
+        }
+    }
+
+    private void UpdateMenu()
+    {
+        var running = _sync.IsRunning;
+        if (_lastRunning != running || _lastError is not null)
+        {
+            Log.Info($"托盘状态：running={running}, root={_sync.Root}, drive={_sync.DriveLetter ?? "<none>"}, error={_lastError ?? "无"}");
+            _lastRunning = running;
+        }
+
+        var location = _sync.DriveLetter is { Length: 1 } letter ? letter + ":" : _sync.Root;
+        _statusItem.Text = running ? "已启用 · " + location : (_lastError is null ? "未启用" : "错误：" + _lastError);
+        _connectItem.Text = running ? "断开同步" : "启用同步";
+        _connectItem.Enabled = !_busy;
+        _openItem.Enabled = running;
+        var text = running ? "Tern · " + location : "Tern · 未启用";
+        _notifyIcon.Text = text.Length > 63 ? text[..63] : text;
+    }
+
+    private void OpenLocation()
+    {
+        try
+        {
+            var target = _sync.DriveLetter is { Length: 1 } letter && Directory.Exists(letter + ":\\")
+                ? letter + ":\\"
+                : _sync.Root;
+            Directory.CreateDirectory(_sync.Root);
+            Process.Start(new ProcessStartInfo(target) { UseShellExecute = true });
+        }
+        catch (Exception exception)
+        {
+            MessageBox.Show("无法打开 Tern：" + exception.Message, "Tern", MessageBoxButtons.OK, MessageBoxIcon.Error);
         }
     }
 
@@ -217,40 +240,25 @@ public sealed class TrayApplicationContext : ApplicationContext
         _savedPassword = HasConfig(_settings)
             ? CredentialStore.Load(_settings.ServerUrl, _settings.Username)
             : null;
-
         _settingsForm = new SettingsForm(_settings.Clone(), _savedPassword, !HasConfig(_settings));
         var result = _settingsForm.ShowDialog();
         _settingsForm.Dispose();
         _settingsForm = null;
-
         if (result != DialogResult.OK) return;
 
         _settings = _store.Load();
         _savedPassword = CredentialStore.Load(_settings.ServerUrl, _settings.Username);
-        UpdateMenu();
-        OpenDrive();
+        _ = AfterSettingsSavedAsync();
     }
 
-    private void OpenDrive()
+    private async Task AfterSettingsSavedAsync()
     {
-        if (!IsConnected())
-        {
-            ShowSettings();
-            return;
-        }
-
-        try
-        {
-            Process.Start(new ProcessStartInfo
-            {
-                FileName = _settings.DriveLetter + ":\\",
-                UseShellExecute = true,
-            });
-        }
-        catch (Exception ex)
-        {
-            MessageBox.Show($"无法打开资源管理器：{ex.Message}", "Tern", MessageBoxButtons.OK, MessageBoxIcon.Error);
-        }
+        if (_sync.IsRunning) await DisconnectAsync(false);
+        SyncLaunchSetting();
+        if (_settings.AutoConnect)
+            await ToggleAsync(true);
+        else
+            UpdateMenu();
     }
 
     private void Notify(string title, string message, ToolTipIcon icon)
@@ -265,22 +273,20 @@ public sealed class TrayApplicationContext : ApplicationContext
     {
         try
         {
-            var mappedToUs = DriveMapper.IsMappedToServer(_settings.DriveLetter, _settings.ServerUrl);
-            if (mappedToUs)
+            if (_sync.IsRunning)
             {
                 var result = MessageBox.Show(
-                    $"退出并断开 {_settings.DriveLetter}: 吗？",
+                    "退出 Tern 并停止本地同步吗？\n已下载的文件会保留在同步文件夹中。",
                     "Tern",
                     MessageBoxButtons.YesNo,
                     MessageBoxIcon.Question);
                 if (result != DialogResult.Yes) return;
-                DriveMapper.Unmap(_settings.DriveLetter);
+                _sync.StopAsync().GetAwaiter().GetResult();
             }
         }
-        catch (Exception ex)
+        catch (Exception exception)
         {
-            MessageBox.Show($"断开失败：{ex.Message}", "Tern", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            return;
+            Log.Warn("退出时停止同步失败：" + exception.Message);
         }
 
         _stateTimer.Stop();
@@ -297,6 +303,7 @@ public sealed class TrayApplicationContext : ApplicationContext
             _stateTimer.Dispose();
             _startupTimer.Dispose();
             _notifyIcon.Dispose();
+            _sync.DisposeAsync().AsTask().GetAwaiter().GetResult();
         }
         base.Dispose(disposing);
     }

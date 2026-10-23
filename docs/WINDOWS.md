@@ -1,147 +1,128 @@
 # Windows 客户端（Tern for Windows）
 
-![Tern for Windows 设置](screenshots/windows-settings.png)
+Tern for Windows 是托盘应用，使用 **Windows Cloud Files API** 提供类似
+OneDrive 的离线位置。文件在资源管理器里是占位符，打开时才下载；支持离线
+读取、离线写入、冲突副本和可选的 `T:` 盘符。
 
-Tern for Windows 是一个托盘应用。它把 Tern 服务端的 WebDAV 端点映射为本地盘符，
-所以在「此电脑」里看到的不是一个网页，而是：
-
-```text
-Tern (T:)
-```
-
-可以像网络盘一样复制、粘贴、拖拽、打开文件；Office/WPS 也可以直接打开并保存。
-
-> 这是 **WebDAV 网络盘**，不是离线同步盘。服务器不可用时 T 盘不可用；如果需要离线缓存，
-> 后续应改用 WinFsp / Cloud Files 方案。
+> **不再使用 WebDAV / WebClient**。服务端仍保留 WebDAV 端点给其他客户端，
+> 但 Windows 客户端只走 REST API + Cloud Files。
 
 ## 1. 安装
 
-从 Releases 下载 `Tern-Windows-Setup.exe` 安装（推荐），或下载 `Tern-Windows-x64.zip` 解压后运行 `Tern.exe`。
+从 Releases 下载 `Tern-Windows-Setup.exe`（推荐）或 `Tern-Windows-x64.zip`。
+当前构建未做代码签名，SmartScreen 提示时选择「更多信息 → 仍要运行」。
 
-当前构建未做代码签名，Windows SmartScreen 可能提示「Windows 已保护你的电脑」。
-选择「更多信息 → 仍要运行」即可。
+需要：
 
-如果设置页显示 **WebClient：未运行**，点击右侧的 **启动服务**，Windows 会弹出 UAC 提示；启动后再点「保存并连接」。
+- Windows 10 1709+ / Windows 11 x64；
+- 本地 NTFS 磁盘上的同步文件夹（默认 `%USERPROFILE%\Tern`）；
+- 不需要开启 WebClient 服务，也不需要映射网络驱动器。
 
 ## 2. 第一次连接
 
-1. 右键任务栏托盘区域的 Tern 图标 → **设置**；
+1. 托盘 Tern → **设置**；
 2. 填写：
-   - **服务器地址**：`https://<NAS-IP>:8080/Tern`（局域网可用 `http://`，但建议 HTTPS）
-   - **用户名 / 密码**：与网页端相同
-   - **盘符**：默认 `T:`，可换其他空闲盘符
+   - 服务器地址：`https://<NAS>:<PORT>/Tern`
+   - 用户名 / 密码：与网页端一致
+   - 同步文件夹：默认 `%USERPROFILE%\Tern`
+   - 盘符：可选，默认 `T:`；也可以选「不映射盘符」
 3. 点 **测试连接**；
-4. 点 **保存并连接**；
-5. 打开「此电脑」，应看到 `Tern (T:)`。
+4. 点 **保存并启用**；
+5. 资源管理器左侧会出现 **Tern**；如果选择了盘符，也会出现 `T:`。
 
-如果连接成功，可以把 `Tern (T:)` 固定到「快速访问」。
+首次启用后，资源管理器可能需要几秒刷新出云文件图标。
 
-## 3. 托盘菜单
+## 3. 文件和离线行为
+
+- **按需下载**：文件默认只显示元数据，打开时下载内容；
+- **始终保留在此设备上**：Windows 原生右键菜单，文件固定到本地；
+- **释放空间**：Windows 原生右键菜单，删除本地内容但保留云端占位符；
+- **离线读取**：已下载/固定的文件断网可打开；
+- **离线写入**：断网时新建或修改的文件留在本地，网络恢复后自动上传；
+- **冲突副本**：服务端文件已被修改时，本地内容上传为
+  `name (conflicted copy).ext`，原文件更新为服务端版本；
+- **重命名 / 移动 / 删除 / 新建文件夹**：本地修改会同步到服务端；
+- **远程变化**：菜单栏 watcher 长轮询 `/api/sync/watch`，网页上传后约
+  1 秒出现在资源管理器；
+- **盘符**：`T:` 只是通过 `subst` 指向同步根的快捷方式，不改变 Cloud Files
+  的离线行为。
+
+## 4. 托盘菜单
 
 ```text
 Tern
 ────────────────
-已连接 · T: · 在线
-在资源管理器中打开
-断开连接 / 连接
+已启用 · T:
+打开 Tern
+断开同步
 设置…
 打开日志
 退出 Tern
 ```
 
-- **登录时自动启动**：写入当前用户的 `HKCU\Software\Microsoft\Windows\CurrentVersion\Run`
-- **启动后自动连接**：启动时用保存的凭据重新映射
-- 密码保存在 **Windows 凭据管理器**，不会写到配置文件
+- **登录时自动启动**：HKCU Run；
+- **启动后自动启用同步**：启动时自动连接；
+- 密码保存在 Windows 凭据管理器。
 
-## 4. 前置条件：WebClient 服务
+## 5. 与 WebDAV 的关系
 
-Windows 的 WebDAV 重定向器依赖 **WebClient** 服务：
+Windows 客户端不再调用 WebDAV，也不需要 WebClient。服务端的 `/Tern` 和
+`/dav` 仍可供 rclone、旧版客户端等使用。
 
-1. 按 `Win + R`，输入 `services.msc`；
-2. 找到 **WebClient**；
-3. 启动服务，启动类型建议设为「手动」或「自动」。
+如果从旧版 Windows 客户端升级，旧的 `T:` WebDAV 映射可能占用盘符；在
+设置里选择「不映射盘符」或换一个盘符即可，旧映射可以手动断开。
 
-管理员命令行也可以：
+## 6. 常见问题
 
-```powershell
-sc start WebClient
-```
+### 资源管理器没有 Tern
 
-如果设置页显示「WebClient 服务：未运行」，先启动它再连接。
+- 确认设置已保存并点「启用同步」；
+- 确认同步文件夹在本地 NTFS 磁盘，不在网络盘；
+- 查看 `%LOCALAPPDATA%\Tern\Tern.log`；
+- 重启资源管理器（任务管理器 → Windows 资源管理器 → 重新启动）。
 
-## 5. 大文件限制
+### 文件只有云图标，打开失败
 
-Windows WebDAV 默认只允许约 **50MB** 的单个文件。需要传输更大文件时，
-以管理员身份修改注册表并重启 WebClient：
+- 检查网络和服务器地址；
+- 测试连接；
+- 查看日志中的 hydration 错误。
 
-```powershell
-reg add "HKLM\SYSTEM\CurrentControlSet\Services\WebClient\Parameters" /v FileSizeLimitInBytes /t REG_DWORD /d 4294967295 /f
-sc stop WebClient
-sc start WebClient
-```
+### T: 被占用
 
-> `4294967295` 表示不限制；也可以设置成需要的字节数。修改系统注册表前请自行评估风险。
+- 设置里换盘符或选「不映射盘符」；
+- `subst` 不能覆盖已存在的网络驱动器映射。
 
-## 6. HTTPS 与证书
+### 离线修改后没有上传
 
-Windows WebDAV 推荐使用 HTTPS：
+- 恢复网络后等待几秒；
+- 确认文件不是“仅云端”状态；
+- 查看日志中的 upload/conflict 错误。
 
-- Let's Encrypt 等公共证书通常可直接使用；
-- 自签名证书需要先在「证书管理器」中导入并信任；
-- 如果提示 `1200`、证书错误或无法访问，先检查证书信任链。
+### 卸载
 
-公网访问不要直接暴露明文 HTTP。
+卸载程序会：
 
-## 7. 常见错误
+- 停止托盘进程；
+- 注销 Cloud Files sync root；
+- 删除 `%LOCALAPPDATA%\Tern`；
+- 删除登录启动项。
 
-| 错误码 / 现象 | 处理 |
-|---|---|
-| `1200` | WebClient 服务未运行，或 HTTPS 证书不受信任 |
-| `67` | 服务器路径不对，确认地址是 `/Tern` |
-| `1326` / `86` | 用户名或密码错误 |
-| `53` | 网络不通、地址或端口错误 |
-| `1219` | 该账号已有冲突的网络凭据，断开其他映射后重试 |
-| 盘符不可用 | 在设置里换一个空闲盘符 |
-| 能登录网页但客户端失败 | 检查 WebClient 服务、HTTPS 证书和 `/Tern` 路径 |
+同步文件夹里的普通文件会尽量保留；仅云端占位符会在注销时删除。
 
-日志位置：
-
-```text
-%LOCALAPPDATA%\Tern\Tern.log
-```
-
-## 8. 卸载
-
-**安装版：** 设置 → 应用 → Tern → 卸载。卸载程序会删除程序目录、`%LOCALAPPDATA%\Tern` 和开始菜单项，同时清理开机启动注册表项。
-
-**便携版：**
-
-1. 托盘菜单 → **退出 Tern**；
-2. 删除 `Tern.exe` 所在文件夹；
-3. 删除 `%LOCALAPPDATA%\Tern`；
-4. 如启用了开机启动，删除注册表值：
-
-```powershell
-reg delete "HKCU\Software\Microsoft\Windows\CurrentVersion\Run" /v Tern /f
-```
-
-可选：在「凭据管理器 → Windows 凭据」中删除 `Tern:` 开头的条目。
-
-## 9. 从源码构建
-
-需要 .NET 8 SDK：
+## 7. 从源码构建
 
 ```powershell
 cd windows
 powershell -ExecutionPolicy Bypass -File .\build.ps1
 ```
 
-生成 `windows\Tern-Windows-x64.zip`；安装 Inno Setup 6 后还会生成 `windows\Tern-Windows-Setup.exe`。
+需要 .NET 8 SDK；安装 Inno Setup 6 后还会生成安装包。CI 在
+`.github/workflows/windows-client.yml` 中构建 x64 自包含版本。
 
-## 10. 已知限制
+## 8. 已知限制
 
-- 仅支持 Windows 10/11 x64；
-- WebDAV 网络盘，无离线缓存；
-- 首次映射依赖 WebClient 服务；
-- 默认 50MB 单文件限制需要手动调整；
-- 未签名构建，首次运行可能有 SmartScreen 提示。
+- 仅 Windows 10/11 x64；
+- 首次启用需要约 1–2 秒注册 sync root；
+- 盘符是 `subst` 快捷方式，不是独立卷；
+- 当前构建未签名；
+- 极大量文件首次占位符创建需要一些时间。
