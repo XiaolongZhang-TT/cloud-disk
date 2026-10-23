@@ -143,6 +143,21 @@ request per client.
 - `POST /api/nodes/upload` returns 201, body `{ items }`.
 - macOS AppleDouble/metadata companions (`._*`, `.DS_Store`, `.localized`, `.Spotlight-V100`, `.Trashes`, `.fseventsd`) are stored and visible over WebDAV so Finder can preserve them, but are hidden from REST listings, search, recent, starred, trash and ZIP downloads.
 
+## Clipboard
+
+Manual, text-only cross-device clipboard. There is one slot per account; each
+save replaces the previous text. This endpoint is intentionally not automatic
+and is only used by explicit client actions.
+
+| Method | Path | Body | Response |
+|---|---|---|---|
+| GET | `/api/clipboard` | – | `{ clipboard: { text, version, device, updatedAt } \| null }` |
+| PUT | `/api/clipboard` | `{ text, device? }` | `{ clipboard }` |
+
+- `text` is required, non-empty, at most 256 KiB characters.
+- `device` is optional, at most 120 characters.
+- Requires a normal authenticated session.
+
 ## Sharing
 
 | Method | Path | Body | Response |

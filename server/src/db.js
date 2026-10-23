@@ -83,6 +83,14 @@ CREATE TABLE IF NOT EXISTS shares (
 );
 CREATE INDEX IF NOT EXISTS shares_owner_idx ON shares(owner_id);
 CREATE INDEX IF NOT EXISTS shares_node_idx ON shares(node_id);
+
+CREATE TABLE IF NOT EXISTS clipboard (
+  owner_id   TEXT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+  content    TEXT NOT NULL,
+  version    INTEGER NOT NULL DEFAULT 1,
+  device     TEXT,
+  updated_at TEXT NOT NULL
+);
 `;
 
 /**

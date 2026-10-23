@@ -10,6 +10,19 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 See [ROADMAP.md](ROADMAP.md) for the prioritized backlog.
 
+## [1.3.0] - 2026-10-23
+
+### Added
+
+- Server clipboard API (`GET/PUT /api/clipboard`) for manual cross-device
+  text clipboard transfer.
+- macOS Finder "创建分享链接…" File Provider action with a per-share policy
+  dialog (password optional, expiry defaults to 24 hours).
+- macOS menu-bar "发送剪贴板到 Tern" and "从 Tern 获取剪贴板" actions.
+- Windows Explorer "创建 Tern 分享链接…" context menu and per-share policy
+  dialog.
+- Windows tray clipboard send/fetch actions.
+
 ## [Windows 1.1.1] - 2026-10-23
 
 ### Added

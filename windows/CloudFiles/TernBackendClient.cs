@@ -30,6 +30,10 @@ public sealed record TernChange(TernNode? Node, string Id, bool Deleted);
 
 public sealed record TernChanges(IReadOnlyList<TernChange> Changes, int Cursor, bool Reset, bool HasMore);
 
+public sealed record TernShareInfo(string Url, bool HasPassword, string? ExpiresAt);
+
+public sealed record TernClipboardInfo(string Text, int Version, string? Device, string? UpdatedAt);
+
 public sealed class TernBackendClient : IAsyncDisposable
 {
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
@@ -278,6 +282,88 @@ public sealed class TernBackendClient : IAsyncDisposable
     {
         await LoginAsync(cancellationToken).ConfigureAwait(false);
         return "服务器可达，登录正常。";
+    }
+
+    public async Task<TernShareInfo> CreateShareAsync(
+        string nodeId,
+        string? password,
+        int? expiresInHours,
+        CancellationToken cancellationToken = default)
+    {
+        var body = new Dictionary<string, object?> { ["nodeId"] = nodeId };
+        if (!string.IsNullOrWhiteSpace(password)) body["password"] = password;
+        if (expiresInHours is > 0) body["expiresInHours"] = expiresInHours;
+        using var content = new StringContent(
+            JsonSerializer.Serialize(body), Encoding.UTF8, "application/json");
+        using var response = await SendAuthorizedAsync(
+            HttpMethod.Post,
+            new Uri(apiBase, "shares"),
+            content,
+            cancellationToken).ConfigureAwait(false);
+        if (!response.IsSuccessStatusCode)
+            throw new TernBackendException("share_failed", $"服务器返回 HTTP {(int)response.StatusCode}。");
+        var json = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
+        using var doc = JsonDocument.Parse(json);
+        var share = doc.RootElement.GetProperty("share");
+        var rawUrl = share.GetProperty("url").GetString() ?? "";
+        var url = Uri.TryCreate(rawUrl, UriKind.Absolute, out var absolute)
+            ? absolute.ToString()
+            : new UriBuilder(ServerUri) { Path = rawUrl, Query = "", Fragment = "" }.Uri.ToString();
+        var hasPassword = share.TryGetProperty("hasPassword", out var hp) && hp.GetBoolean();
+        var expiresAt = share.TryGetProperty("expiresAt", out var exp) && exp.ValueKind != JsonValueKind.Null
+            ? exp.GetString()
+            : null;
+        return new TernShareInfo(url, hasPassword, expiresAt);
+    }
+
+    public async Task<TernClipboardInfo?> GetClipboardAsync(CancellationToken cancellationToken = default)
+    {
+        using var response = await SendAuthorizedAsync(
+            HttpMethod.Get,
+            new Uri(apiBase, "clipboard"),
+            null,
+            cancellationToken).ConfigureAwait(false);
+        if (!response.IsSuccessStatusCode)
+            throw new TernBackendException("clipboard_failed", $"服务器返回 HTTP {(int)response.StatusCode}。");
+        var json = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
+        using var doc = JsonDocument.Parse(json);
+        if (!doc.RootElement.TryGetProperty("clipboard", out var clipboard) || clipboard.ValueKind == JsonValueKind.Null)
+            return null;
+        return ParseClipboard(clipboard);
+    }
+
+    public async Task<TernClipboardInfo> PutClipboardAsync(
+        string text,
+        string? device,
+        CancellationToken cancellationToken = default)
+    {
+        var body = new Dictionary<string, object?> { ["text"] = text };
+        if (!string.IsNullOrWhiteSpace(device)) body["device"] = device;
+        using var content = new StringContent(
+            JsonSerializer.Serialize(body), Encoding.UTF8, "application/json");
+        using var response = await SendAuthorizedAsync(
+            HttpMethod.Put,
+            new Uri(apiBase, "clipboard"),
+            content,
+            cancellationToken).ConfigureAwait(false);
+        if (!response.IsSuccessStatusCode)
+            throw new TernBackendException("clipboard_failed", $"服务器返回 HTTP {(int)response.StatusCode}。");
+        var json = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
+        using var doc = JsonDocument.Parse(json);
+        return ParseClipboard(doc.RootElement.GetProperty("clipboard"));
+    }
+
+    private static TernClipboardInfo ParseClipboard(JsonElement clipboard)
+    {
+        return new TernClipboardInfo(
+            clipboard.GetProperty("text").GetString() ?? "",
+            clipboard.TryGetProperty("version", out var version) && version.TryGetInt32(out var v) ? v : 0,
+            clipboard.TryGetProperty("device", out var device) && device.ValueKind != JsonValueKind.Null
+                ? device.GetString()
+                : null,
+            clipboard.TryGetProperty("updatedAt", out var updated) && updated.ValueKind != JsonValueKind.Null
+                ? updated.GetString()
+                : null);
     }
 
     public async Task<HttpResponseMessage> OpenContentAsync(string nodeId, CancellationToken cancellationToken)

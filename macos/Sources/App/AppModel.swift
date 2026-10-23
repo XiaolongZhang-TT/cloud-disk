@@ -83,6 +83,7 @@ public final class AppModel: ObservableObject {
         refreshCredentialState()
         fileProviderEnabled = FileProviderShared.loadConfiguration() != nil
         fileProviderWatcher.start()
+        ShareRequestHandler.shared.start()
 
         if FileProviderShared.loadConfiguration() != nil {
             Task { [weak self] in
@@ -99,6 +100,7 @@ public final class AppModel: ObservableObject {
 
     public func shutdown() {
         fileProviderWatcher.stop()
+        ShareRequestHandler.shared.stop()
         CDLog.info("app: shutdown")
     }
 
@@ -250,6 +252,83 @@ public final class AppModel: ObservableObject {
     public func copyServerAddress() {
         NSPasteboard.general.clearContents()
         NSPasteboard.general.setString(serverURLText, forType: .string)
+    }
+
+    // MARK: - Clipboard
+
+    public func sendClipboardToTern() {
+        guard let text = NSPasteboard.general.string(forType: .string), !text.isEmpty else {
+            presentClipboardError("剪贴板里没有可发送的文本。")
+            return
+        }
+        Task {
+            do {
+                let client = try sharedClient()
+                _ = try await client.putClipboard(text: text, device: clipboardDeviceName)
+                await MainActor.run {
+                    presentClipboardInfo("剪贴板已发送到 Tern", "远端设备可以通过「从 Tern 获取剪贴板」取得这段文本。")
+                }
+            } catch {
+                await MainActor.run {
+                    presentClipboardError("发送剪贴板失败：\(error.localizedDescription)")
+                }
+            }
+        }
+    }
+
+    public func fetchClipboardFromTern() {
+        Task {
+            do {
+                let client = try sharedClient()
+                guard let clipboard = try await client.getClipboard() else {
+                    await MainActor.run { presentClipboardError("Tern 上还没有保存的剪贴板内容。") }
+                    return
+                }
+                await MainActor.run {
+                    let pasteboard = NSPasteboard.general
+                    pasteboard.clearContents()
+                    pasteboard.setString(clipboard.text, forType: .string)
+                    presentClipboardInfo("已获取 Tern 剪贴板",
+                                         "已写入本地剪贴板\(clipboard.device.map { "（来自 \($0)）" } ?? "")。")
+                }
+            } catch {
+                await MainActor.run {
+                    presentClipboardError("获取剪贴板失败：\(error.localizedDescription)")
+                }
+            }
+        }
+    }
+
+    private var clipboardDeviceName: String {
+        Host.current().localizedName ?? ProcessInfo.processInfo.hostName
+    }
+
+    private func sharedClient() throws -> TernSyncClient {
+        guard let config = FileProviderShared.loadConfiguration(),
+              let password = FileProviderShared.loadPassword(serverURL: config.serverURL,
+                                                             username: config.username) else {
+            throw SyncClientError.notConfigured
+        }
+        return try TernSyncClient(serverURL: config.serverURL,
+                                  username: config.username,
+                                  password: password)
+    }
+
+    private func presentClipboardInfo(_ title: String, _ message: String) {
+        let alert = NSAlert()
+        alert.messageText = title
+        alert.informativeText = message
+        alert.addButton(withTitle: "好")
+        alert.runModal()
+    }
+
+    private func presentClipboardError(_ message: String) {
+        let alert = NSAlert()
+        alert.messageText = "Tern 剪贴板"
+        alert.informativeText = message
+        alert.alertStyle = .warning
+        alert.addButton(withTitle: "好")
+        alert.runModal()
     }
 
     public func openLog() {

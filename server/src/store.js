@@ -650,4 +650,31 @@ export class Store {
   incrementShareDownload(id) {
     this.db.prepare('UPDATE shares SET download_count = download_count + 1 WHERE id = ?').run(id);
   }
+
+  // ------------------------------------------------------------ clipboard ---
+
+  getClipboard(ownerId) {
+    return this.db
+      .prepare(
+        `SELECT owner_id, content, version, device, updated_at
+           FROM clipboard WHERE owner_id = ?`,
+      )
+      .get(ownerId) ?? null;
+  }
+
+  setClipboard(ownerId, content, device = null) {
+    const updatedAt = nowIso();
+    this.db
+      .prepare(
+        `INSERT INTO clipboard (owner_id, content, version, device, updated_at)
+         VALUES (?, ?, 1, ?, ?)
+         ON CONFLICT(owner_id) DO UPDATE SET
+           content = excluded.content,
+           version = clipboard.version + 1,
+           device = excluded.device,
+           updated_at = excluded.updated_at`,
+      )
+      .run(ownerId, content, device, updatedAt);
+    return this.getClipboard(ownerId);
+  }
 }

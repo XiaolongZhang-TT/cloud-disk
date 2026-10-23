@@ -58,6 +58,20 @@ public struct TernWatchPage: Codable, Sendable {
     public var changed: Bool
 }
 
+public struct TernShare: Codable, Sendable {
+    public var id: String
+    public var url: String
+    public var hasPassword: Bool
+    public var expiresAt: String?
+}
+
+public struct TernClipboard: Codable, Sendable {
+    public var text: String
+    public var version: Int
+    public var device: String?
+    public var updatedAt: String
+}
+
 public enum SyncClientError: LocalizedError {
     case notConfigured
     case invalidServerURL
@@ -227,6 +241,79 @@ public final class TernSyncClient: @unchecked Sendable {
         } catch {
             throw SyncClientError.malformedResponse
         }
+    }
+
+    // MARK: - Sharing
+
+    public func createShare(nodeId: String, password: String?, expiresInHours: Int?) async throws -> TernShare {
+        var body: [String: Any] = ["nodeId": nodeId]
+        if let password, !password.isEmpty { body["password"] = password }
+        if let expiresInHours { body["expiresInHours"] = expiresInHours }
+        var request = URLRequest(url: apiBase.appendingPathComponent("shares"))
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        request.httpBody = try JSONSerialization.data(withJSONObject: body)
+        let (data, http) = try await withAuth(request)
+        guard http.statusCode == 201 || http.statusCode == 200 else {
+            throw SyncClientError.http(http.statusCode, Self.errorMessage(data))
+        }
+        guard let root = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let rawShare = root["share"],
+              let shareData = try? JSONSerialization.data(withJSONObject: rawShare) else {
+            throw SyncClientError.malformedResponse
+        }
+        var share = try JSONDecoder().decode(TernShare.self, from: shareData)
+        share.url = absoluteShareURL(share.url).absoluteString
+        return share
+    }
+
+    private func absoluteShareURL(_ raw: String) -> URL {
+        if let url = URL(string: raw), url.scheme != nil { return url }
+        var components = URLComponents()
+        components.scheme = serverURL.scheme
+        components.host = serverURL.host
+        components.port = serverURL.port
+        components.path = raw.hasPrefix("/") ? raw : "/" + raw
+        return components.url ?? serverURL
+    }
+
+    // MARK: - Clipboard
+
+    public func getClipboard() async throws -> TernClipboard? {
+        var request = URLRequest(url: apiBase.appendingPathComponent("clipboard"))
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        let (data, http) = try await withAuth(request)
+        guard http.statusCode == 200 else {
+            throw SyncClientError.http(http.statusCode, Self.errorMessage(data))
+        }
+        guard let root = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+            throw SyncClientError.malformedResponse
+        }
+        guard let raw = root["clipboard"] as? [String: Any] else { return nil }
+        let rawData = try JSONSerialization.data(withJSONObject: raw)
+        return try JSONDecoder().decode(TernClipboard.self, from: rawData)
+    }
+
+    @discardableResult
+    public func putClipboard(text: String, device: String?) async throws -> TernClipboard {
+        var body: [String: Any] = ["text": text]
+        if let device, !device.isEmpty { body["device"] = device }
+        var request = URLRequest(url: apiBase.appendingPathComponent("clipboard"))
+        request.httpMethod = "PUT"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        request.httpBody = try JSONSerialization.data(withJSONObject: body)
+        let (data, http) = try await withAuth(request)
+        guard http.statusCode == 200 else {
+            throw SyncClientError.http(http.statusCode, Self.errorMessage(data))
+        }
+        guard let root = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let raw = root["clipboard"] as? [String: Any] else {
+            throw SyncClientError.malformedResponse
+        }
+        let rawData = try JSONSerialization.data(withJSONObject: raw)
+        return try JSONDecoder().decode(TernClipboard.self, from: rawData)
     }
 
     // MARK: - Contents

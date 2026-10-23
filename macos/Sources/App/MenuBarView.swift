@@ -63,6 +63,15 @@ struct MenuBarView: View {
         }
         .keyboardShortcut(",", modifiers: .command)
 
+        Divider()
+        Button("发送剪贴板到 Tern") {
+            model.sendClipboardToTern()
+        }
+        Button("从 Tern 获取剪贴板") {
+            model.fetchClipboardFromTern()
+        }
+
+        Divider()
         Button("复制服务器地址") {
             model.copyServerAddress()
         }

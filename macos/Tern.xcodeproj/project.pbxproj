@@ -25,6 +25,7 @@
 		BC86E05F087A546D83A51611 /* FileProviderBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 847F706BD5764B5C76B032F9 /* FileProviderBridge.swift */; };
 		BE75F6EE72937B3DEEEDC611 /* TernSyncClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDE535000D230B5E798B392D /* TernSyncClient.swift */; };
 		C9C3A3996DEFDFBE18228787 /* MenuBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B56B450C31858D8C8E23FAD /* MenuBarView.swift */; };
+		D0127A798767A429F4156084 /* ShareRequestHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7CE7820189A6ACB275BB8C6 /* ShareRequestHandler.swift */; };
 		D0E9A2086C11ADC5D891F621 /* FileProviderStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 06A57010E1DDD3A0BAD09708 /* FileProviderStore.swift */; };
 		D8CE3F7D849E6715A32F1D43 /* FileProviderItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0EB7626E07471872930DD4A /* FileProviderItem.swift */; };
 		EE455C331FBDA476C663F3EA /* FileProviderWatcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3555787C1AA6FC16A5351556 /* FileProviderWatcher.swift */; };
@@ -76,6 +77,7 @@
 		CDE535000D230B5E798B392D /* TernSyncClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TernSyncClient.swift; sourceTree = "<group>"; };
 		DCF4101FD2502203EE1C7BCE /* SettingsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsStore.swift; sourceTree = "<group>"; };
 		F502661480805AAF492F7D8C /* FileProviderEnumerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileProviderEnumerator.swift; sourceTree = "<group>"; };
+		F7CE7820189A6ACB275BB8C6 /* ShareRequestHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareRequestHandler.swift; sourceTree = "<group>"; };
 		F9A92E1E2B76C749AB488A9F /* TernApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TernApp.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -132,6 +134,7 @@
 				5B56B450C31858D8C8E23FAD /* MenuBarView.swift */,
 				DCF4101FD2502203EE1C7BCE /* SettingsStore.swift */,
 				7B2339C2CCDF127F089A5098 /* SettingsView.swift */,
+				F7CE7820189A6ACB275BB8C6 /* ShareRequestHandler.swift */,
 				F9A92E1E2B76C749AB488A9F /* TernApp.swift */,
 			);
 			path = App;
@@ -255,6 +258,7 @@
 				C9C3A3996DEFDFBE18228787 /* MenuBarView.swift in Sources */,
 				000F78ABBE127A26BF7102C1 /* SettingsStore.swift in Sources */,
 				6F15AEC6FDDDDE94738909F3 /* SettingsView.swift in Sources */,
+				D0127A798767A429F4156084 /* ShareRequestHandler.swift in Sources */,
 				689211458F55479891A831EF /* TernApp.swift in Sources */,
 				46E2D81B4497AE3713846363 /* TernInfo.swift in Sources */,
 				BE75F6EE72937B3DEEEDC611 /* TernSyncClient.swift in Sources */,

@@ -25,6 +25,7 @@ public sealed class TrayApplicationContext : ApplicationContext
     public TrayApplicationContext(string[] args)
     {
         _settings = _store.Load();
+        ShellContextMenu.Register();
         _savedPassword = HasCredentials(_settings) ? CredentialStore.Load(_settings.ServerUrl, _settings.Username) : null;
         _sync = new TernSyncService(_settings.SyncFolder, AppPaths.EnsureDataDirectory());
         _sync.Progress += (_, progress) => Log.Info("sync: " + progress.Message);
@@ -40,6 +41,10 @@ public sealed class TrayApplicationContext : ApplicationContext
         menu.Items.Add(new ToolStripSeparator());
         menu.Items.Add(_connectItem);
         menu.Items.Add(_openItem);
+        menu.Items.Add(new ToolStripSeparator());
+        menu.Items.Add(new ToolStripMenuItem("发送剪贴板到 Tern", null, async (_, _) => await SendClipboardAsync()));
+        menu.Items.Add(new ToolStripMenuItem("从 Tern 获取剪贴板", null, async (_, _) => await FetchClipboardAsync()));
+        menu.Items.Add(new ToolStripSeparator());
         menu.Items.Add(new ToolStripMenuItem("设置…", null, (_, _) => ShowSettings()));
         menu.Items.Add(new ToolStripMenuItem("打开日志", null, (_, _) => Log.OpenLog()));
         menu.Items.Add(new ToolStripSeparator());
@@ -247,6 +252,7 @@ public sealed class TrayApplicationContext : ApplicationContext
         if (result != DialogResult.OK) return;
 
         _settings = _store.Load();
+        ShellContextMenu.Register();
         _savedPassword = CredentialStore.Load(_settings.ServerUrl, _settings.Username);
         _ = AfterSettingsSavedAsync();
     }
@@ -259,6 +265,71 @@ public sealed class TrayApplicationContext : ApplicationContext
             await ToggleAsync(true);
         else
             UpdateMenu();
+    }
+
+    private async Task SendClipboardAsync()
+    {
+        try
+        {
+            if (!Clipboard.ContainsText())
+            {
+                Notify("Tern 剪贴板", "剪贴板里没有可发送的文本。", ToolTipIcon.Info);
+                return;
+            }
+            var text = Clipboard.GetText();
+            if (string.IsNullOrEmpty(text)) return;
+            var (client, settings, password) = await CreateBackendAsync().ConfigureAwait(true);
+            await using (client)
+            {
+                _ = password;
+                await client.PutClipboardAsync(text, Environment.MachineName).ConfigureAwait(true);
+            }
+            Notify("Tern 剪贴板", "剪贴板已发送到 Tern。", ToolTipIcon.Info);
+        }
+        catch (Exception exception)
+        {
+            Log.Error("send clipboard failed: " + exception);
+            Notify("Tern 剪贴板发送失败", exception.Message, ToolTipIcon.Error);
+        }
+    }
+
+    private async Task FetchClipboardAsync()
+    {
+        try
+        {
+            var (client, settings, password) = await CreateBackendAsync().ConfigureAwait(true);
+            await using (client)
+            {
+                _ = password;
+                var clipboard = await client.GetClipboardAsync().ConfigureAwait(true);
+                if (clipboard is null)
+                {
+                    Notify("Tern 剪贴板", "Tern 上还没有保存的剪贴板内容。", ToolTipIcon.Info);
+                    return;
+                }
+                Clipboard.SetText(clipboard.Text);
+                Notify("Tern 剪贴板", clipboard.Device is { Length: > 0 }
+                    ? $"已获取来自 {clipboard.Device} 的剪贴板内容。"
+                    : "已获取 Tern 剪贴板内容。", ToolTipIcon.Info);
+            }
+        }
+        catch (Exception exception)
+        {
+            Log.Error("fetch clipboard failed: " + exception);
+            Notify("Tern 剪贴板获取失败", exception.Message, ToolTipIcon.Error);
+        }
+    }
+
+    private async Task<(TernBackendClient client, AppSettings settings, string password)> CreateBackendAsync()
+    {
+        if (!HasConfig(_settings))
+            throw new InvalidOperationException("Tern 尚未配置服务器和账号。");
+        _savedPassword ??= CredentialStore.Load(_settings.ServerUrl, _settings.Username);
+        if (string.IsNullOrWhiteSpace(_savedPassword))
+            throw new InvalidOperationException("Tern 尚未保存密码。");
+        var client = new TernBackendClient(_settings.ServerUrl, _settings.Username, _savedPassword);
+        await client.LoginAsync().ConfigureAwait(true);
+        return (client, _settings, _savedPassword);
     }
 
     private void Notify(string title, string message, ToolTipIcon icon)

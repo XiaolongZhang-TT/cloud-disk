@@ -16,6 +16,7 @@ import { createAuthRouter } from './routes/auth.js';
 import { createAdminRouter } from './routes/admin.js';
 import { createCollectionsRouter, createNodesRouter } from './routes/nodes.js';
 import { createSharesRouter } from './routes/shares.js';
+import { createClipboardRouter } from './routes/clipboard.js';
 import { createPublicSharesRouter } from './routes/public-shares.js';
 import { createWebdavRouter } from './webdav.js';
 import { errorHandler } from './errors.js';
@@ -103,6 +104,7 @@ export function createApp(config) {
   api.use(requireUser);
   api.use(createCollectionsRouter({ store, config }));
   api.use('/shares', createSharesRouter({ store, config }));
+  api.use('/clipboard', createClipboardRouter({ store }));
   api.use('/admin', requireAdmin, createAdminRouter({ store, config }));
   api.use((req, res) => {
     res.status(404).json({ error: { code: 'not_found', message: 'Unknown API endpoint' } });

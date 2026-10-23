@@ -23,6 +23,13 @@ internal static class Program
         if (args.Length >= 1 && args[0] == "--uninstall-cleanup")
         {
             TernSyncService.CleanupForUninstall(new SettingsStore().Load());
+            ShellContextMenu.Unregister();
+            return;
+        }
+
+        if (args.Length >= 2 && args[0] == "--share")
+        {
+            Environment.ExitCode = ShareCommand.Run(args[1]);
             return;
         }
 

@@ -441,6 +441,19 @@ final class FileProviderExtension: NSObject, NSFileProviderReplicatedExtension, 
                 }
                 signalChanges()
                 completionHandler(nil)
+            case "com.tern.fileprovider.share":
+                guard let identifier = itemIdentifiers.first else {
+                    completionHandler(NSError(
+                        domain: NSCocoaErrorDomain,
+                        code: NSFileNoSuchFileError,
+                        userInfo: [NSLocalizedDescriptionKey: "请选择一个要分享的项目"]
+                    ))
+                    return
+                }
+                let name = store.item(id: identifier.rawValue)?.name ?? "Tern 文件"
+                FileProviderShared.saveShareRequest(nodeId: identifier.rawValue, name: name)
+                FileProviderShared.notifyShareRequest()
+                completionHandler(nil)
             default:
                 completionHandler(NSError(
                     domain: NSCocoaErrorDomain,

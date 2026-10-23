@@ -17,6 +17,7 @@ public enum FileProviderShared {
     private static let configService = "com.tern.menubar.fileprovider.config"
     private static let statusService = "com.tern.menubar.fileprovider.status"
     private static let pinnedService = "com.tern.menubar.fileprovider.pinned"
+    private static let shareRequestService = "com.tern.menubar.fileprovider.shareRequest"
 
     private struct Configuration: Codable {
         let serverURL: String
@@ -117,6 +118,37 @@ public enum FileProviderShared {
     @discardableResult
     public static func deletePassword(serverURL: URL, username: String) -> Bool {
         delete(service: keychainService, account: account(serverURL: serverURL, username: username))
+    }
+
+    // MARK: - Share request bridge
+
+    public static let shareRequestNotification = "com.tern.fileprovider.shareRequest"
+
+    public struct ShareRequest: Codable, Sendable {
+        public let nodeId: String
+        public let name: String
+    }
+
+    public static func saveShareRequest(nodeId: String, name: String) {
+        guard let data = try? JSONEncoder().encode(ShareRequest(nodeId: nodeId, name: name)) else { return }
+        _ = write(data, service: shareRequestService, account: "pending")
+    }
+
+    /// Read and remove the pending request so one Finder action is handled once.
+    public static func takeShareRequest() -> ShareRequest? {
+        guard let data = read(service: shareRequestService, account: "pending") else { return nil }
+        delete(service: shareRequestService, account: "pending")
+        return try? JSONDecoder().decode(ShareRequest.self, from: data)
+    }
+
+    public static func notifyShareRequest() {
+        CFNotificationCenterPostNotification(
+            CFNotificationCenterGetDarwinNotifyCenter(),
+            CFNotificationName(shareRequestNotification as CFString),
+            nil,
+            nil,
+            true
+        )
     }
 
     // MARK: - Keychain helpers
