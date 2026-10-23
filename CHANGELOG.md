@@ -10,14 +10,22 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 See [ROADMAP.md](ROADMAP.md) for the prioritized backlog.
 
+## [1.2.0] - 2026-10-23
+
 ### Added
 
 - Server `GET /api/sync/changes` append-only change feed with bootstrap snapshots, incremental upserts and tombstones, plus integration tests.
+- Server `PUT /api/nodes/:id/content` with `If-Match`/ETag conflict detection, and `clientId` support for stable offline-created nodes.
 - macOS File Provider Phase 3: online create/upload/modify/move/delete, client-supplied IDs, durable offline write queue, automatic conflict copies, image thumbnails, sync status, Keep Downloaded / Remove Download actions, WebDAV-mount migration, NWPathMonitor network recovery and a Developer ID/notarization script.
-- Windows 10/11 x64 tray client that maps Tern as a drive letter (`Tern (T:)`) via WebDAV, with Credential Manager storage, auto-connect, drive-letter selection and a Windows build workflow.
+- Windows 10/11 x64 tray client that maps Tern as a drive letter (`Tern (T:)`) via WebDAV, with Credential Manager storage, auto-connect, drive-letter selection, WebClient diagnostics and a Windows build workflow.
 - GitHub Actions workflow to publish multi-arch (`amd64`/`arm64`) Docker images to
   Docker Hub on `v*` tags, plus a `docker-compose.hub.yml` deployment path for the
   prebuilt image.
+
+### Notes
+
+- The Docker image is built from the server/web tree; macOS File Provider code remains
+  an experimental source build until a signed notarized client is published.
 
 ## [1.1.1] - 2026-10-19
 
@@ -84,6 +92,7 @@ release.
 - macOS AppleDouble/metadata files are hidden from REST listings while remaining
   available to Finder over WebDAV.
 
-[Unreleased]: https://github.com/XiaolongZhang-dev/tern/compare/v1.1.1...HEAD
+[Unreleased]: https://github.com/XiaolongZhang-dev/tern/compare/v1.2.0...HEAD
+[1.2.0]: https://github.com/XiaolongZhang-dev/tern/releases/tag/v1.2.0
 [1.1.1]: https://github.com/XiaolongZhang-dev/tern/releases/tag/v1.1.1
 [1.1.0]: https://github.com/XiaolongZhang-dev/tern/releases/tag/v1.1.0

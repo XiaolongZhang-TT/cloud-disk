@@ -27,7 +27,7 @@ const FALLBACK: AuthStatus = {
   authenticated: false,
   setupRequired: false,
   serverName: 'Tern',
-  version: '1.1.1',
+  version: '1.2.0',
   allowRegistration: false,
   maxUploadBytes: 0,
 }

@@ -215,7 +215,7 @@ docker compose pull && docker compose up -d --build
 镜像发布工作流在 [`.github/workflows/docker-publish.yml`](../.github/workflows/docker-publish.yml)：
 
 - 推送 `v*` tag 时构建并推送 `linux/amd64` + `linux/arm64` 镜像；
-- tag `v1.1.1` 会生成 Docker Hub 的 `1.1.1`、`1.1`、`1`、`latest`；
+- tag `v1.2.0` 会生成 Docker Hub 的 `1.2.0`、`1.2`、`1`、`latest`；
 - 手动运行 `workflow_dispatch` 会生成 `edge` 和 `latest` 镜像；
 - 使用 GitHub Actions cache，不重复构建所有层。
 
@@ -244,5 +244,5 @@ git push origin v1.1.2
 
 ```text
 docker.io/<DOCKERHUB_USERNAME>/tern:latest
-docker.io/<DOCKERHUB_USERNAME>/tern:1.1.1
+docker.io/<DOCKERHUB_USERNAME>/tern:1.2.0
 ```

@@ -9,7 +9,7 @@ approach. Items marked **good first issue** are usually small and self-contained
 
 ## Current limitations
 
-These are known and accepted for v1.1.1:
+These are known and accepted for v1.2.0:
 
 - **macOS File Provider is Phase 3 only.** On-demand download, offline read
   cache, create/upload/modify/move/delete, an offline write queue, conflict
