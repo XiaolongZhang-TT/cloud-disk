@@ -128,6 +128,14 @@ jobs:
           codesign --verify --deep --strict --verbose=2 dist/Tern.app
           unzip -t dist/Tern-1.1.1.zip
 
+      - name: Build Xcode app + File Provider extension (unsigned)
+        run: ./build-xcode.sh
+
+      - name: Verify embedded extension
+        run: |
+          test -d ".build-xcode/Build/Products/Debug/Tern.app/Contents/PlugIns/TernFileProvider.appex"
+          plutil -p ".build-xcode/Build/Products/Debug/Tern.app/Contents/PlugIns/TernFileProvider.appex/Contents/Info.plist"
+
       - name: Upload macOS build
         uses: actions/upload-artifact@v7
         with:

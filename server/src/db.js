@@ -48,6 +48,20 @@ CREATE INDEX IF NOT EXISTS nodes_owner_starred_idx ON nodes(owner_id, starred);
 CREATE UNIQUE INDEX IF NOT EXISTS nodes_live_name_uidx
   ON nodes(owner_id, COALESCE(parent_id, ''), name) WHERE trashed_at IS NULL;
 
+-- Append-only change feed used by the macOS File Provider client.
+-- seq is global and monotonic; payload is a JSON snapshot (upsert) or
+-- {"id":"...","deleted":true} (tombstone). The feed is intentionally kept
+-- separate from nodes so deletes can be replayed after the row is gone.
+CREATE TABLE IF NOT EXISTS sync_changes (
+  seq        INTEGER PRIMARY KEY AUTOINCREMENT,
+  owner_id   TEXT NOT NULL,
+  node_id    TEXT NOT NULL,
+  kind       TEXT NOT NULL CHECK (kind IN ('upsert', 'delete')),
+  payload    TEXT NOT NULL,
+  created_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS sync_changes_owner_seq_idx ON sync_changes(owner_id, seq);
+
 CREATE TABLE IF NOT EXISTS sessions (
   token_hash TEXT PRIMARY KEY,
   user_id    TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,

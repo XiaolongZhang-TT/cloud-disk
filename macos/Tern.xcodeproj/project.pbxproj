@@ -1,0 +1,501 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		000F78ABBE127A26BF7102C1 /* SettingsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = DCF4101FD2502203EE1C7BCE /* SettingsStore.swift */; };
+		06E48F21710BCC0AA1B388DB /* FileProviderShared.swift in Sources */ = {isa = PBXBuildFile; fileRef = 102DEA10E99DC7C114752354 /* FileProviderShared.swift */; };
+		2B7E3F3DE94B4AFC7495B8F8 /* FileProviderExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = BDF7B01D63651426B26DE96C /* FileProviderExtension.swift */; };
+		329EB95E46181CB25D45E330 /* AppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5F113F277901FB0E2232295 /* AppModel.swift */; };
+		3EE017ACA89453ED5E84C1FE /* FileProviderShared.swift in Sources */ = {isa = PBXBuildFile; fileRef = 102DEA10E99DC7C114752354 /* FileProviderShared.swift */; };
+		46E2D81B4497AE3713846363 /* TernInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC5F5A1E300BF5327F9A8943 /* TernInfo.swift */; };
+		5078F4925E9F088B63102F1B /* TernFileProvider.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 3DE759483646F7CDDF253593 /* TernFileProvider.appex */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		59656928A866B6ECB5A46566 /* FileProviderEnumerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = F502661480805AAF492F7D8C /* FileProviderEnumerator.swift */; };
+		689211458F55479891A831EF /* TernApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = F9A92E1E2B76C749AB488A9F /* TernApp.swift */; };
+		6D16DDF9DCDEB10E2B7E1C0B /* KeychainStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07A8DD9EA01FD3436A836DB9 /* KeychainStore.swift */; };
+		6F15AEC6FDDDDE94738909F3 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B2339C2CCDF127F089A5098 /* SettingsView.swift */; };
+		7999D6B3BC54E4BDFC830347 /* Log.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2695F3AB8A4516714C98B842 /* Log.swift */; };
+		7CFEE1848AD480833F725D74 /* SmokeRunner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8808C84A7E3AC74F515DC6B7 /* SmokeRunner.swift */; };
+		8DD3B5EF7A99B8CC8767DD95 /* MountClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0749EBE632CD2EAD98117CBC /* MountClient.swift */; };
+		9CCC8201732BE199955514FF /* TernSyncClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDE535000D230B5E798B392D /* TernSyncClient.swift */; };
+		BC86E05F087A546D83A51611 /* FileProviderBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 847F706BD5764B5C76B032F9 /* FileProviderBridge.swift */; };
+		C9C3A3996DEFDFBE18228787 /* MenuBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B56B450C31858D8C8E23FAD /* MenuBarView.swift */; };
+		D0E9A2086C11ADC5D891F621 /* FileProviderStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 06A57010E1DDD3A0BAD09708 /* FileProviderStore.swift */; };
+		D8CE3F7D849E6715A32F1D43 /* FileProviderItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0EB7626E07471872930DD4A /* FileProviderItem.swift */; };
+		F61356BEA299C32A7EE7FEF8 /* LaunchAgentManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 52D2D18F808319F4967106C1 /* LaunchAgentManager.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		F5BF5FDEA4DCE8488DB3A53C /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 3F05839F78952C56E263E71B /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 851A885E931604F73FDE4A9F;
+			remoteInfo = TernFileProvider;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		CF22BF009D1D851494922296 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				5078F4925E9F088B63102F1B /* TernFileProvider.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		06A57010E1DDD3A0BAD09708 /* FileProviderStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileProviderStore.swift; sourceTree = "<group>"; };
+		0749EBE632CD2EAD98117CBC /* MountClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MountClient.swift; sourceTree = "<group>"; };
+		07A8DD9EA01FD3436A836DB9 /* KeychainStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainStore.swift; sourceTree = "<group>"; };
+		102DEA10E99DC7C114752354 /* FileProviderShared.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileProviderShared.swift; sourceTree = "<group>"; };
+		2695F3AB8A4516714C98B842 /* Log.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Log.swift; sourceTree = "<group>"; };
+		3DE759483646F7CDDF253593 /* TernFileProvider.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = TernFileProvider.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		52D2D18F808319F4967106C1 /* LaunchAgentManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LaunchAgentManager.swift; sourceTree = "<group>"; };
+		5B56B450C31858D8C8E23FAD /* MenuBarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarView.swift; sourceTree = "<group>"; };
+		7B2339C2CCDF127F089A5098 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		847F706BD5764B5C76B032F9 /* FileProviderBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileProviderBridge.swift; sourceTree = "<group>"; };
+		8808C84A7E3AC74F515DC6B7 /* SmokeRunner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmokeRunner.swift; sourceTree = "<group>"; };
+		B0EB7626E07471872930DD4A /* FileProviderItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileProviderItem.swift; sourceTree = "<group>"; };
+		BDF7B01D63651426B26DE96C /* FileProviderExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileProviderExtension.swift; sourceTree = "<group>"; };
+		C5F113F277901FB0E2232295 /* AppModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppModel.swift; sourceTree = "<group>"; };
+		C6B1962F97D1AE340138E9E8 /* Tern.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Tern.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		CC5F5A1E300BF5327F9A8943 /* TernInfo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TernInfo.swift; sourceTree = "<group>"; };
+		CDE535000D230B5E798B392D /* TernSyncClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TernSyncClient.swift; sourceTree = "<group>"; };
+		DCF4101FD2502203EE1C7BCE /* SettingsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsStore.swift; sourceTree = "<group>"; };
+		F502661480805AAF492F7D8C /* FileProviderEnumerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileProviderEnumerator.swift; sourceTree = "<group>"; };
+		F9A92E1E2B76C749AB488A9F /* TernApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TernApp.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXGroup section */
+		1616E4C7CDF3A1345DDACDB7 /* FileProvider */ = {
+			isa = PBXGroup;
+			children = (
+				F502661480805AAF492F7D8C /* FileProviderEnumerator.swift */,
+				BDF7B01D63651426B26DE96C /* FileProviderExtension.swift */,
+				B0EB7626E07471872930DD4A /* FileProviderItem.swift */,
+				102DEA10E99DC7C114752354 /* FileProviderShared.swift */,
+				06A57010E1DDD3A0BAD09708 /* FileProviderStore.swift */,
+				CDE535000D230B5E798B392D /* TernSyncClient.swift */,
+			);
+			path = FileProvider;
+			sourceTree = "<group>";
+		};
+		25E5C6686CF2410C5E15CF30 = {
+			isa = PBXGroup;
+			children = (
+				527946FE4A1B2357268BC313 /* Sources */,
+				5A450F05DF7571ACABA2226F /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		527946FE4A1B2357268BC313 /* Sources */ = {
+			isa = PBXGroup;
+			children = (
+				A06EB39DD2F87F8D88FFE749 /* App */,
+				1616E4C7CDF3A1345DDACDB7 /* FileProvider */,
+				A4DB025E6E15E1A37B93F435 /* Shared */,
+			);
+			path = Sources;
+			sourceTree = "<group>";
+		};
+		5A450F05DF7571ACABA2226F /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				C6B1962F97D1AE340138E9E8 /* Tern.app */,
+				3DE759483646F7CDDF253593 /* TernFileProvider.appex */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		A06EB39DD2F87F8D88FFE749 /* App */ = {
+			isa = PBXGroup;
+			children = (
+				C5F113F277901FB0E2232295 /* AppModel.swift */,
+				847F706BD5764B5C76B032F9 /* FileProviderBridge.swift */,
+				52D2D18F808319F4967106C1 /* LaunchAgentManager.swift */,
+				5B56B450C31858D8C8E23FAD /* MenuBarView.swift */,
+				DCF4101FD2502203EE1C7BCE /* SettingsStore.swift */,
+				7B2339C2CCDF127F089A5098 /* SettingsView.swift */,
+				F9A92E1E2B76C749AB488A9F /* TernApp.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		A4DB025E6E15E1A37B93F435 /* Shared */ = {
+			isa = PBXGroup;
+			children = (
+				07A8DD9EA01FD3436A836DB9 /* KeychainStore.swift */,
+				2695F3AB8A4516714C98B842 /* Log.swift */,
+				0749EBE632CD2EAD98117CBC /* MountClient.swift */,
+				8808C84A7E3AC74F515DC6B7 /* SmokeRunner.swift */,
+				CC5F5A1E300BF5327F9A8943 /* TernInfo.swift */,
+			);
+			path = Shared;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		851A885E931604F73FDE4A9F /* TernFileProvider */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = D0A33EC8BC3C5A00A418EBBF /* Build configuration list for PBXNativeTarget "TernFileProvider" */;
+			buildPhases = (
+				3ACE3E6F659A8FCBC0F842C4 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = TernFileProvider;
+			packageProductDependencies = (
+			);
+			productName = TernFileProvider;
+			productReference = 3DE759483646F7CDDF253593 /* TernFileProvider.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+		BBFF520E39915BE740C6E8B0 /* Tern */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 4A49523F1A031359434BF5E7 /* Build configuration list for PBXNativeTarget "Tern" */;
+			buildPhases = (
+				C3D3ED9347EDD2ED0A650D28 /* Sources */,
+				CF22BF009D1D851494922296 /* Embed Foundation Extensions */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				1D444CB89E5C6E13FEEB6D33 /* PBXTargetDependency */,
+			);
+			name = Tern;
+			packageProductDependencies = (
+			);
+			productName = Tern;
+			productReference = C6B1962F97D1AE340138E9E8 /* Tern.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		3F05839F78952C56E263E71B /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1430;
+				TargetAttributes = {
+					851A885E931604F73FDE4A9F = {
+						DevelopmentTeam = "";
+						ProvisioningStyle = Automatic;
+					};
+					BBFF520E39915BE740C6E8B0 = {
+						DevelopmentTeam = "";
+						ProvisioningStyle = Automatic;
+					};
+				};
+			};
+			buildConfigurationList = 1006C1F0BCA9D2496DCCBFA5 /* Build configuration list for PBXProject "Tern" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = 25E5C6686CF2410C5E15CF30;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 5A450F05DF7571ACABA2226F /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				BBFF520E39915BE740C6E8B0 /* Tern */,
+				851A885E931604F73FDE4A9F /* TernFileProvider */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		3ACE3E6F659A8FCBC0F842C4 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				59656928A866B6ECB5A46566 /* FileProviderEnumerator.swift in Sources */,
+				2B7E3F3DE94B4AFC7495B8F8 /* FileProviderExtension.swift in Sources */,
+				D8CE3F7D849E6715A32F1D43 /* FileProviderItem.swift in Sources */,
+				06E48F21710BCC0AA1B388DB /* FileProviderShared.swift in Sources */,
+				D0E9A2086C11ADC5D891F621 /* FileProviderStore.swift in Sources */,
+				9CCC8201732BE199955514FF /* TernSyncClient.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C3D3ED9347EDD2ED0A650D28 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				329EB95E46181CB25D45E330 /* AppModel.swift in Sources */,
+				BC86E05F087A546D83A51611 /* FileProviderBridge.swift in Sources */,
+				3EE017ACA89453ED5E84C1FE /* FileProviderShared.swift in Sources */,
+				6D16DDF9DCDEB10E2B7E1C0B /* KeychainStore.swift in Sources */,
+				F61356BEA299C32A7EE7FEF8 /* LaunchAgentManager.swift in Sources */,
+				7999D6B3BC54E4BDFC830347 /* Log.swift in Sources */,
+				C9C3A3996DEFDFBE18228787 /* MenuBarView.swift in Sources */,
+				8DD3B5EF7A99B8CC8767DD95 /* MountClient.swift in Sources */,
+				000F78ABBE127A26BF7102C1 /* SettingsStore.swift in Sources */,
+				6F15AEC6FDDDDE94738909F3 /* SettingsView.swift in Sources */,
+				7CFEE1848AD480833F725D74 /* SmokeRunner.swift in Sources */,
+				689211458F55479891A831EF /* TernApp.swift in Sources */,
+				46E2D81B4497AE3713846363 /* TernInfo.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		1D444CB89E5C6E13FEEB6D33 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 851A885E931604F73FDE4A9F /* TernFileProvider */;
+			targetProxy = F5BF5FDEA4DCE8488DB3A53C /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		0410224BF557B63A8864BEB7 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_ENTITLEMENTS = FileProvider/Resources/TernFileProvider.entitlements;
+				COMBINE_HIDPI_IMAGES = YES;
+				INFOPLIST_FILE = FileProvider/Resources/FileProvider.Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@executable_path/../../../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.tern.menubar.FileProvider;
+				PRODUCT_NAME = TernFileProvider;
+				SDKROOT = macosx;
+				SKIP_INSTALL = YES;
+			};
+			name = Debug;
+		};
+		44FD69CD5EC952E46545BC5F /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = "";
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		5F4B71B1EFD0991900488E94 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = FileProvider/Resources/Tern.entitlements;
+				COMBINE_HIDPI_IMAGES = YES;
+				INFOPLIST_FILE = Resources/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.tern.menubar;
+				PRODUCT_NAME = Tern;
+				SDKROOT = macosx;
+				SWIFT_OBJC_BRIDGING_HEADER = "";
+			};
+			name = Release;
+		};
+		641204ECA635C3715A873451 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_ENTITLEMENTS = FileProvider/Resources/TernFileProvider.entitlements;
+				COMBINE_HIDPI_IMAGES = YES;
+				INFOPLIST_FILE = FileProvider/Resources/FileProvider.Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@executable_path/../../../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.tern.menubar.FileProvider;
+				PRODUCT_NAME = TernFileProvider;
+				SDKROOT = macosx;
+				SKIP_INSTALL = YES;
+			};
+			name = Release;
+		};
+		B14E420B43615DC01DBB95E9 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = FileProvider/Resources/Tern.entitlements;
+				COMBINE_HIDPI_IMAGES = YES;
+				INFOPLIST_FILE = Resources/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.tern.menubar;
+				PRODUCT_NAME = Tern;
+				SDKROOT = macosx;
+				SWIFT_OBJC_BRIDGING_HEADER = "";
+			};
+			name = Debug;
+		};
+		B2924E758C9F4F33CF168DAF /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		1006C1F0BCA9D2496DCCBFA5 /* Build configuration list for PBXProject "Tern" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B2924E758C9F4F33CF168DAF /* Debug */,
+				44FD69CD5EC952E46545BC5F /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		4A49523F1A031359434BF5E7 /* Build configuration list for PBXNativeTarget "Tern" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B14E420B43615DC01DBB95E9 /* Debug */,
+				5F4B71B1EFD0991900488E94 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		D0A33EC8BC3C5A00A418EBBF /* Build configuration list for PBXNativeTarget "TernFileProvider" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				0410224BF557B63A8864BEB7 /* Debug */,
+				641204ECA635C3715A873451 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 3F05839F78952C56E263E71B /* Project object */;
+}

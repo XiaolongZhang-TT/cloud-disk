@@ -1,0 +1,56 @@
+name: Tern
+options:
+  minimumXcodeGenVersion: 2.38.0
+  deploymentTarget:
+    macOS: "13.0"
+  createIntermediateGroups: true
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    MACOSX_DEPLOYMENT_TARGET: "13.0"
+    CODE_SIGN_STYLE: Automatic
+    DEVELOPMENT_TEAM: ""
+    ENABLE_HARDENED_RUNTIME: YES
+    CLANG_ENABLE_MODULES: YES
+targets:
+  Tern:
+    type: application
+    platform: macOS
+    sources:
+      - path: Sources/App
+      - path: Sources/Shared
+      - path: Sources/FileProvider/FileProviderShared.swift
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.tern.menubar
+        PRODUCT_NAME: Tern
+        INFOPLIST_FILE: Resources/Info.plist
+        CODE_SIGN_ENTITLEMENTS: FileProvider/Resources/Tern.entitlements
+        SWIFT_OBJC_BRIDGING_HEADER: ""
+    dependencies:
+      - target: TernFileProvider
+        embed: true
+        codeSign: true
+  TernFileProvider:
+    type: app-extension
+    platform: macOS
+    sources:
+      - path: Sources/FileProvider
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.tern.menubar.FileProvider
+        PRODUCT_NAME: TernFileProvider
+        INFOPLIST_FILE: FileProvider/Resources/FileProvider.Info.plist
+        CODE_SIGN_ENTITLEMENTS: FileProvider/Resources/TernFileProvider.entitlements
+        SKIP_INSTALL: YES
+        APPLICATION_EXTENSION_API_ONLY: YES
+
+schemes:
+  Tern:
+    build:
+      targets:
+        Tern: all
+    run:
+      config: Debug
+    archive:
+      config: Release

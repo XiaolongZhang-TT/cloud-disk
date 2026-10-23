@@ -1,5 +1,5 @@
 import { randomBytes, randomUUID } from 'node:crypto';
-import { nowIso } from './util.js';
+import { etagForNode, nowIso } from './util.js';
 
 /**
  * Virtual root of a user's tree. `parent_id IS NULL` in the database; the
@@ -36,6 +36,19 @@ const SORT_COLUMNS = {
 function sortClause(sort, order) {
   const column = SORT_COLUMNS[sort] ?? SORT_COLUMNS.name;
   return column(order === 'desc' ? 'DESC' : 'ASC');
+}
+
+/** Names that Finder writes as metadata and should never become File Provider items. */
+function isSyncHiddenName(name) {
+  if (typeof name !== 'string') return false;
+  return (
+    name === '.DS_Store' ||
+    name === '.localized' ||
+    name.startsWith('._') ||
+    name === '.Spotlight-V100' ||
+    name === '.Trashes' ||
+    name === '.fseventsd'
+  );
 }
 
 /**
@@ -210,7 +223,9 @@ export class Store {
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL)`,
       )
       .run(id, ownerId, parentId, name, type, size, mime, storageKey, starred ? 1 : 0, createdAt, updatedAt);
-    return this.getNode(id);
+    const node = this.getNode(id);
+    if (node) this.recordSyncUpsert(node);
+    return node;
   }
 
   getNode(id) {
@@ -261,7 +276,11 @@ export class Store {
       values.push(id);
       this.db.prepare(`UPDATE nodes SET ${sets.join(', ')} WHERE id = ?`).run(...values);
     }
-    return this.getNode(id);
+    const node = this.getNode(id);
+    // Trash/restore transitions are recorded by markSubtreeTrashed /
+    // untrashSubtree, because they can affect a whole subtree at once.
+    if (node && !node.trashed_at) this.recordSyncUpsert(node);
+    return node;
   }
 
   /** Ancestors of a node ordered from the root down to the direct parent. */
@@ -321,7 +340,18 @@ export class Store {
   }
 
   markSubtreeTrashed(id, timestamp = nowIso()) {
-    return this.db
+    const rows = this.db
+      .prepare(
+        `WITH RECURSIVE sub(id) AS (
+           SELECT id FROM nodes WHERE id = ?
+           UNION ALL
+           SELECT n.id FROM nodes n JOIN sub s ON n.parent_id = s.id
+         )
+         SELECT n.id, n.owner_id FROM nodes n JOIN sub s ON n.id = s.id
+          WHERE n.trashed_at IS NULL`,
+      )
+      .all(id);
+    const changes = this.db
       .prepare(
         `WITH RECURSIVE sub(id) AS (
            SELECT id FROM nodes WHERE id = ?
@@ -332,10 +362,12 @@ export class Store {
           WHERE id IN (SELECT id FROM sub) AND trashed_at IS NULL`,
       )
       .run(id, timestamp, timestamp).changes;
+    for (const row of rows) this.recordSyncDelete(row.owner_id, row.id);
+    return changes;
   }
 
   untrashSubtree(id, timestamp = nowIso()) {
-    return this.db
+    const changes = this.db
       .prepare(
         `WITH RECURSIVE sub(id) AS (
            SELECT id FROM nodes WHERE id = ?
@@ -346,6 +378,10 @@ export class Store {
           WHERE id IN (SELECT id FROM sub)`,
       )
       .run(id, timestamp).changes;
+    for (const node of this.listSubtree(id)) {
+      if (!node.trashed_at) this.recordSyncUpsert(node);
+    }
+    return changes;
   }
 
   listTrashRoots(ownerId, { sort = 'trashed', order = 'desc' } = {}) {
@@ -426,7 +462,12 @@ export class Store {
   }
 
   deleteNodeRow(id) {
-    return this.db.prepare('DELETE FROM nodes WHERE id = ?').run(id).changes;
+    // A parent delete cascades to children in SQLite, so tombstone the whole
+    // subtree before the rows disappear.
+    const rows = this.listSubtree(id);
+    const changes = this.db.prepare('DELETE FROM nodes WHERE id = ?').run(id).changes;
+    for (const row of rows) this.recordSyncDelete(row.owner_id, row.id);
+    return changes;
   }
 
   /** Live direct children of many folders in one query (tree expansion). */
@@ -439,6 +480,100 @@ export class Store {
           ORDER BY ${sortClause(sort, order)}`,
       )
       .all(ownerId, ...parentIds);
+  }
+
+  // ---------------------------------------------------------------- sync ---
+
+  /** Append a change to the feed. Returns the monotonically increasing seq. */
+  recordSyncChange(ownerId, nodeId, kind, payload) {
+    const result = this.db
+      .prepare(
+        `INSERT INTO sync_changes (owner_id, node_id, kind, payload, created_at)
+         VALUES (?, ?, ?, ?, ?)`,
+      )
+      .run(ownerId, nodeId, kind, JSON.stringify(payload), nowIso());
+    return Number(result.lastInsertRowid);
+  }
+
+  recordSyncUpsert(node) {
+    if (!node || node.trashed_at) return;
+    this.recordSyncChange(node.owner_id, node.id, 'upsert', this.syncPayload(node));
+  }
+
+  recordSyncDelete(ownerId, nodeId) {
+    this.recordSyncChange(ownerId, nodeId, 'delete', { id: nodeId, deleted: true });
+  }
+
+  syncPayload(node) {
+    return {
+      id: node.id,
+      parentId: node.parent_id ?? null,
+      name: node.name,
+      type: node.type,
+      size: node.effective_size != null ? node.effective_size : node.size,
+      mime: node.mime ?? null,
+      starred: Boolean(node.starred),
+      createdAt: node.created_at,
+      updatedAt: node.updated_at,
+      etag: etagForNode(node),
+      deleted: false,
+    };
+  }
+
+  /** Max sequence for a user. Used for the bootstrap cursor. */
+  syncCursor(ownerId) {
+    const row = this.db
+      .prepare('SELECT COALESCE(MAX(seq), 0) AS seq FROM sync_changes WHERE owner_id = ?')
+      .get(ownerId);
+    return Number(row?.seq ?? 0);
+  }
+
+  /**
+   * Bootstrap snapshot: every live, user-visible node. File Provider starts
+   * from this and then follows the change feed.
+   */
+  syncSnapshot(ownerId) {
+    return this.db
+      .prepare(`${NODE_SELECT} WHERE n.owner_id = ? AND n.trashed_at IS NULL ORDER BY n.created_at ASC`)
+      .all(ownerId)
+      .filter((node) => !isSyncHiddenName(node.name))
+      .map((node) => this.syncPayload(node));
+  }
+
+  /**
+   * Incremental changes after `afterSeq`, newest change per node. `hasMore`
+   * lets the client page until it catches up.
+   */
+  syncChanges(ownerId, afterSeq, limit = 500) {
+    const rows = this.db
+      .prepare(
+        `SELECT seq, node_id, kind, payload
+           FROM sync_changes
+          WHERE owner_id = ? AND seq > ?
+          ORDER BY seq ASC
+          LIMIT ?`,
+      )
+      .all(ownerId, afterSeq, limit + 1);
+
+    const hasMore = rows.length > limit;
+    const page = hasMore ? rows.slice(0, limit) : rows;
+    const byNode = new Map();
+    for (const row of page) {
+      let payload;
+      try {
+        payload = JSON.parse(row.payload);
+      } catch {
+        continue;
+      }
+      if (payload.deleted === false && isSyncHiddenName(payload.name)) continue;
+      byNode.set(row.node_id, { seq: Number(row.seq), ...payload });
+    }
+    const changes = [...byNode.values()].sort((a, b) => a.seq - b.seq);
+    return {
+      changes,
+      cursor: page.length > 0 ? Number(page[page.length - 1].seq) : afterSeq,
+      hasMore,
+    };
   }
 
   // -------------------------------------------------------------- shares ---

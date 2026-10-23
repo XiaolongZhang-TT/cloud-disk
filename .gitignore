@@ -38,3 +38,7 @@ windows/bin/
 windows/obj/
 windows/dist/
 windows/*.user
+
+# Xcode / File Provider build output
+macos/.build-xcode/
+macos/DerivedData/

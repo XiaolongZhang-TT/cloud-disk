@@ -125,6 +125,7 @@ SHARED_SOURCES=(
   Sources/Shared/TernInfo.swift
   Sources/Shared/Log.swift
   Sources/Shared/KeychainStore.swift
+  Sources/FileProvider/FileProviderShared.swift
   Sources/Shared/MountClient.swift
   Sources/Shared/SmokeRunner.swift
 )
@@ -135,6 +136,7 @@ APP_SOURCES=(
   Sources/App/LaunchAgentManager.swift
   Sources/App/MenuBarView.swift
   Sources/App/SettingsView.swift
+  Sources/App/FileProviderBridge.swift
 )
 CLI_SOURCES=(
   Sources/CLI/MountSmokeMain.swift
@@ -144,16 +146,21 @@ for file in "${SHARED_SOURCES[@]}" "${APP_SOURCES[@]}" "${CLI_SOURCES[@]}"; do
   [[ -f "$file" ]] || fail "缺少源文件：$file"
 done
 
+PLUGIN_PATH="/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib/swift/host/plugins"
+PLUGIN_FLAGS=()
+if [[ -d "$PLUGIN_PATH" ]]; then PLUGIN_FLAGS=(-plugin-path "$PLUGIN_PATH"); fi
 COMMON_FLAGS=(
   -sdk "$SDK"
   -module-cache-path "$MODULE_CACHE"
   -swift-version 5
+  -Xfrontend -disable-sandbox
   -O
   -parse-as-library
   -framework NetFS
   -framework Security
   -framework AppKit
   -framework SwiftUI
+  -framework FileProvider
 )
 
 APP_SLICES=()
@@ -164,7 +171,7 @@ for arch in $ARCHS; do
   cli_slice="$BUILD_DIR/mount-smoke-${arch}"
 
   info "编译应用（${arch}）"
-  if ! "$SWIFTC" "${COMMON_FLAGS[@]}" -target "$target" \
+  if ! "$SWIFTC" "${COMMON_FLAGS[@]}" "${PLUGIN_FLAGS[@]}" -target "$target" \
         "${APP_SOURCES[@]}" "${SHARED_SOURCES[@]}" \
         -o "$app_slice" 2> "$BUILD_DIR/build-app-${arch}.log"; then
     cat "$BUILD_DIR/build-app-${arch}.log" >&2
@@ -176,7 +183,7 @@ for arch in $ARCHS; do
   ok "$app_slice"
 
   info "编译 mount-smoke（${arch}）"
-  if ! "$SWIFTC" "${COMMON_FLAGS[@]}" -target "$target" \
+  if ! "$SWIFTC" "${COMMON_FLAGS[@]}" "${PLUGIN_FLAGS[@]}" -target "$target" \
         "${CLI_SOURCES[@]}" "${SHARED_SOURCES[@]}" \
         -o "$cli_slice" 2> "$BUILD_DIR/build-cli-${arch}.log"; then
     cat "$BUILD_DIR/build-cli-${arch}.log" >&2

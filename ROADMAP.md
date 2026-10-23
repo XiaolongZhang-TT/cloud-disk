@@ -11,11 +11,11 @@ approach. Items marked **good first issue** are usually small and self-contained
 
 These are known and accepted for v1.1.1:
 
-- **No offline sync / File Provider.** The macOS client mounts a WebDAV network
-  volume. It appears in Finder's *Locations* next to iCloud Drive, but unlike
-  iCloud it needs the server to be reachable and cannot provide File Provider
-  offline semantics. A native File Provider extension would also need an Apple
-  Developer account, App Group entitlements and notarization.
+- **macOS File Provider is Phase 1 only.** A read-only File Provider extension,
+  `/api/sync/changes`, on-demand download and offline read cache now exist, but
+  uploads, moves, deletes, conflict handling, thumbnails and notarized
+  distribution are still pending. The old WebDAV mount remains the production
+  path until Phase 2 is complete.
 - **Single process / single SQLite file.** No horizontal scaling or HA. SQLite WAL
   is fine for a personal or family NAS but not a multi-node cluster.
 - **No file versioning.** Overwriting a file keeps only the latest content;

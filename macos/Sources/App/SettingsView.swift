@@ -16,6 +16,8 @@ struct SettingsView: View {
     @State private var messageIsError = false
     @State private var testResult: String?
     @State private var testing = false
+    @State private var enablingFileProvider = false
+    @State private var fileProviderMessage: String?
 
     var body: some View {
         Form {
@@ -100,6 +102,32 @@ struct SettingsView: View {
                         .foregroundStyle(messageIsError ? .red : .secondary)
                         .textSelection(.enabled)
                 }
+            }
+
+            Section {
+                Button(enablingFileProvider ? "正在添加…" : "在 Finder 中启用 Tern（只读预览）") {
+                    enablingFileProvider = true
+                    fileProviderMessage = nil
+                    Task {
+                        let result = await model.enableFileProvider()
+                        await MainActor.run {
+                            fileProviderMessage = result
+                            enablingFileProvider = false
+                        }
+                    }
+                }
+                .disabled(enablingFileProvider)
+                Text("Phase 1 只读：Finder 会按需下载文件，最近打开的文件在断网时仍可用。写入同步将在下一阶段加入。")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                if let fileProviderMessage {
+                    Text(fileProviderMessage)
+                        .font(.callout)
+                        .foregroundStyle(fileProviderMessage.hasPrefix("✅") ? .green : .red)
+                        .textSelection(.enabled)
+                }
+            } header: {
+                Text("Finder 离线位置")
             }
 
             Section {

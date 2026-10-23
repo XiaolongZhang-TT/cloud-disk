@@ -207,5 +207,30 @@ export function createCollectionsRouter({ store, config }) {
     res.json(overview(store, config, req.user));
   });
 
+  // Bootstrap (cursor 0) returns a full live-tree snapshot; subsequent calls
+  // replay the append-only change feed. Used by the macOS File Provider.
+  router.get('/sync/changes', (req, res) => {
+    let cursor = 0;
+    if (req.query.cursor !== undefined) {
+      cursor = Number.parseInt(String(req.query.cursor), 10);
+      if (!Number.isInteger(cursor) || cursor < 0) {
+        throw badRequest('invalid_cursor', 'cursor must be a non-negative integer');
+      }
+    }
+    const limit = intParam(req.query.limit, 500, 1, 5000);
+
+    if (cursor === 0) {
+      res.json({
+        reset: true,
+        cursor: store.syncCursor(req.user.id),
+        changes: store.syncSnapshot(req.user.id),
+      });
+      return;
+    }
+
+    const result = store.syncChanges(req.user.id, cursor, limit);
+    res.json({ reset: false, ...result });
+  });
+
   return router;
 }

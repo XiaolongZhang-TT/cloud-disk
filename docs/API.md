@@ -77,6 +77,43 @@
 | GET | `/api/search` | `q`, `limit?` | `{ query, items: Node[] }` |
 | GET | `/api/storage` | – | `{ used, quota, fileCount, folderCount, trashCount, trashSize }` |
 | GET | `/api/overview` | – | `{ storage, recent: Node[], starred: Node[] }` |
+| GET | `/api/sync/changes` | `cursor=0` or cursor, `limit?` | `{ reset, cursor, changes, hasMore? }` — bootstrap snapshot for cursor 0; incremental upserts/tombstones after |
+
+### Sync changes (File Provider)
+
+`GET /api/sync/changes?cursor=0` returns a bootstrap snapshot of every live,
+non-hidden node plus the current cursor. Subsequent calls with the returned
+cursor return incremental changes.
+
+```json
+{
+  "reset": false,
+  "cursor": 123,
+  "changes": [
+    {
+      "seq": 123,
+      "id": "node-uuid",
+      "parentId": "parent-uuid",
+      "name": "photo.jpg",
+      "type": "file",
+      "size": 12345,
+      "mime": "image/jpeg",
+      "createdAt": "2026-10-23T…",
+      "updatedAt": "2026-10-23T…",
+      "etag": "\"node-uuid-…\"",
+      "deleted": false
+    },
+    { "seq": 124, "id": "deleted-uuid", "deleted": true }
+  ],
+  "hasMore": false
+}
+```
+
+- `cursor=0` is a snapshot; it also works when the client has lost its cache.
+- Tombstones are retained in the `sync_changes` table.
+- `seq` is a global monotonic change sequence (not a timestamp).
+- Hidden AppleDouble/`.DS_Store` files are excluded.
+- Requires the normal session cookie.
 
 ### Upload rules
 

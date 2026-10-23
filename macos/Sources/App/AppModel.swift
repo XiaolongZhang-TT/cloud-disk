@@ -428,6 +428,14 @@ public final class AppModel: ObservableObject {
             settings.username = trimmedUsername
             settings.autoConnect = autoConnect
 
+            // The File Provider extension runs in its own process and reads
+            // connection metadata + password from the app group / shared
+            // Keychain. Keep those in sync whenever settings are saved.
+            FileProviderShared.saveConfiguration(serverURL: url, username: trimmedUsername)
+            if let password, !password.isEmpty {
+                _ = FileProviderShared.savePassword(password, serverURL: url, username: trimmedUsername)
+            }
+
             if connectAtLogin != LaunchAgentManager.isInstalled() {
                 if connectAtLogin {
                     try LaunchAgentManager.install(appURL: Bundle.main.bundleURL)
@@ -445,6 +453,32 @@ public final class AppModel: ObservableObject {
             return nil
         } catch {
             return error.localizedDescription
+        }
+    }
+
+    /// Register the File Provider domain.  Phase 1 is read-only; write
+    /// operations are added in the next stage.
+    public func enableFileProvider() async -> String {
+        guard let url = currentServerURL else {
+            return "❌ 请先填写有效的服务器地址。"
+        }
+        let username = settings.username.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !username.isEmpty else {
+            return "❌ 请先填写用户名。"
+        }
+        guard let password = storedPassword(for: url, username: username), !password.isEmpty else {
+            return "❌ 请先保存密码。"
+        }
+        FileProviderShared.saveConfiguration(serverURL: url, username: username)
+        guard FileProviderShared.savePassword(password, serverURL: url, username: username) else {
+            return "❌ 无法把密码写入共享钥匙串。请确认应用已使用 App Group / Keychain Sharing 签名。"
+        }
+        do {
+            try await FileProviderBridge.addDomain()
+            return "✅ 已添加 Tern 到 Finder 位置（只读预览）。"
+        } catch {
+            let message = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+            return "❌ 添加 File Provider 失败：\(message)"
         }
     }
 
