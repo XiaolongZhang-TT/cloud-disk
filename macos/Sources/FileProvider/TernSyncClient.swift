@@ -65,6 +65,13 @@ public struct TernShare: Codable, Sendable {
     public var expiresAt: String?
 }
 
+public struct TernUploadSession: Codable, Sendable {
+    public var id: String
+    public var chunkSize: Int
+    public var chunksTotal: Int
+    public var received: Int
+}
+
 public struct TernClipboard: Codable, Sendable {
     public var text: String
     public var version: Int
@@ -340,6 +347,69 @@ public final class TernSyncClient: @unchecked Sendable {
             throw SyncClientError.http(http.statusCode, Self.errorMessage(data))
         }
         return try decodeNode(data)
+    }
+
+    /// Large new files use the resumable upload API; updates still use the
+    /// If-Match content endpoint so conflict detection remains atomic.
+    public func uploadFileResumable(parentId: String?, name: String, data: Data, mime: String) async throws -> TernChange {
+        var body: [String: Any] = ["name": name, "size": data.count]
+        if let parentId { body["parentId"] = parentId }
+        var request = URLRequest(url: apiBase.appendingPathComponent("uploads"))
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        request.httpBody = try JSONSerialization.data(withJSONObject: body)
+        let (createdData, createdHTTP) = try await withAuth(request)
+        guard createdHTTP.statusCode == 201 || createdHTTP.statusCode == 200 else {
+            throw SyncClientError.http(createdHTTP.statusCode, Self.errorMessage(createdData))
+        }
+        guard let createdRoot = try? JSONSerialization.jsonObject(with: createdData) as? [String: Any],
+              let rawSession = createdRoot["upload"],
+              let sessionData = try? JSONSerialization.data(withJSONObject: rawSession) else {
+            throw SyncClientError.malformedResponse
+        }
+        let session = try JSONDecoder().decode(TernUploadSession.self, from: sessionData)
+
+        for index in 0..<session.chunksTotal {
+            let start = index * session.chunkSize
+            let end = min(data.count, start + session.chunkSize)
+            let chunk = data.subdata(in: start..<end)
+            var lastError: Error?
+            for attempt in 0..<3 {
+                do {
+                    var chunkRequest = URLRequest(url: apiBase
+                        .appendingPathComponent("uploads")
+                        .appendingPathComponent(session.id)
+                        .appendingPathComponent("chunks")
+                        .appendingPathComponent(String(index)))
+                    chunkRequest.httpMethod = "PUT"
+                    chunkRequest.setValue("application/octet-stream", forHTTPHeaderField: "Content-Type")
+                    chunkRequest.httpBody = chunk
+                    let (_, chunkHTTP) = try await withAuth(chunkRequest)
+                    guard (200..<300).contains(chunkHTTP.statusCode) else {
+                        throw SyncClientError.http(chunkHTTP.statusCode, "上传分片失败")
+                    }
+                    lastError = nil
+                    break
+                } catch {
+                    lastError = error
+                    if attempt < 2 { try? await Task.sleep(nanoseconds: UInt64(500_000_000 * (attempt + 1))) }
+                }
+            }
+            if let lastError { throw lastError }
+        }
+
+        var complete = URLRequest(url: apiBase
+            .appendingPathComponent("uploads")
+            .appendingPathComponent(session.id)
+            .appendingPathComponent("complete"))
+        complete.httpMethod = "POST"
+        complete.setValue("application/json", forHTTPHeaderField: "Accept")
+        let (dataOut, completeHTTP) = try await withAuth(complete)
+        guard completeHTTP.statusCode == 201 || completeHTTP.statusCode == 200 else {
+            throw SyncClientError.http(completeHTTP.statusCode, Self.errorMessage(dataOut))
+        }
+        return try decodeNode(dataOut)
     }
 
     public func uploadFile(parentId: String?, name: String, clientId: String, data: Data, mime: String) async throws -> TernChange {

@@ -13,6 +13,7 @@ public sealed class TrayApplicationContext : ApplicationContext
     private readonly ToolStripMenuItem _openItem;
     private readonly System.Windows.Forms.Timer _stateTimer;
     private readonly System.Windows.Forms.Timer _startupTimer;
+    private readonly System.Windows.Forms.Timer _updateTimer;
     private readonly TernSyncService _sync;
 
     private AppSettings _settings;
@@ -67,6 +68,14 @@ public sealed class TrayApplicationContext : ApplicationContext
         _stateTimer.Tick += (_, _) => UpdateMenu();
         _stateTimer.Start();
 
+        _updateTimer = new System.Windows.Forms.Timer { Interval = 6000 };
+        _updateTimer.Tick += async (_, _) =>
+        {
+            _updateTimer.Stop();
+            await CheckForUpdatesAsync();
+        };
+        _updateTimer.Start();
+
         _startupTimer = new System.Windows.Forms.Timer { Interval = 700 };
         _startupTimer.Tick += (_, _) =>
         {
@@ -76,6 +85,31 @@ public sealed class TrayApplicationContext : ApplicationContext
         _startupTimer.Start();
 
         UpdateMenu();
+    }
+
+    private async Task CheckForUpdatesAsync()
+    {
+        var update = await UpdateChecker.CheckAsync();
+        if (update is null || _sync.IsRunning) return;
+        var answer = MessageBox.Show(
+            $"发现 Tern {update.Version} 新版本。\n\n是否下载并安装？",
+            "Tern 更新", MessageBoxButtons.YesNo, MessageBoxIcon.Information);
+        if (answer != DialogResult.Yes) return;
+        try
+        {
+            Cursor.Current = Cursors.WaitCursor;
+            var installer = await UpdateChecker.DownloadAsync(update);
+            Cursor.Current = Cursors.Default;
+            UpdateChecker.LaunchInstaller(installer);
+            ExitThread();
+        }
+        catch (Exception exception)
+        {
+            Cursor.Current = Cursors.Default;
+            Log.Warn("update install failed: " + exception.Message);
+            MessageBox.Show("下载更新失败：" + exception.Message, "Tern 更新",
+                MessageBoxButtons.OK, MessageBoxIcon.Warning);
+        }
     }
 
     private async Task StartAsync()
@@ -362,6 +396,7 @@ public sealed class TrayApplicationContext : ApplicationContext
 
         _stateTimer.Stop();
         _startupTimer.Stop();
+        _updateTimer.Stop();
         _notifyIcon.Visible = false;
         _notifyIcon.Dispose();
         ExitThread();

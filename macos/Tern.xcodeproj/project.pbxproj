@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		000F78ABBE127A26BF7102C1 /* SettingsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = DCF4101FD2502203EE1C7BCE /* SettingsStore.swift */; };
 		06E48F21710BCC0AA1B388DB /* FileProviderShared.swift in Sources */ = {isa = PBXBuildFile; fileRef = 102DEA10E99DC7C114752354 /* FileProviderShared.swift */; };
+		1F1295C2FDF0E46E9D6D1F64 /* UpdateChecker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 276824321EB16FAECD66EB79 /* UpdateChecker.swift */; };
 		2B7E3F3DE94B4AFC7495B8F8 /* FileProviderExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = BDF7B01D63651426B26DE96C /* FileProviderExtension.swift */; };
 		329EB95E46181CB25D45E330 /* AppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5F113F277901FB0E2232295 /* AppModel.swift */; };
 		32AC5B074EF2AA22261C9811 /* FileProviderThumbnails.swift in Sources */ = {isa = PBXBuildFile; fileRef = 06ABFF2E4980F549F014D7DD /* FileProviderThumbnails.swift */; };
@@ -62,6 +63,7 @@
 		07A8DD9EA01FD3436A836DB9 /* KeychainStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainStore.swift; sourceTree = "<group>"; };
 		102DEA10E99DC7C114752354 /* FileProviderShared.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileProviderShared.swift; sourceTree = "<group>"; };
 		2695F3AB8A4516714C98B842 /* Log.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Log.swift; sourceTree = "<group>"; };
+		276824321EB16FAECD66EB79 /* UpdateChecker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpdateChecker.swift; sourceTree = "<group>"; };
 		3555787C1AA6FC16A5351556 /* FileProviderWatcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileProviderWatcher.swift; sourceTree = "<group>"; };
 		3DE759483646F7CDDF253593 /* TernFileProvider.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = TernFileProvider.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		52D2D18F808319F4967106C1 /* LaunchAgentManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LaunchAgentManager.swift; sourceTree = "<group>"; };
@@ -136,6 +138,7 @@
 				7B2339C2CCDF127F089A5098 /* SettingsView.swift */,
 				F7CE7820189A6ACB275BB8C6 /* ShareRequestHandler.swift */,
 				F9A92E1E2B76C749AB488A9F /* TernApp.swift */,
+				276824321EB16FAECD66EB79 /* UpdateChecker.swift */,
 			);
 			path = App;
 			sourceTree = "<group>";
@@ -262,6 +265,7 @@
 				689211458F55479891A831EF /* TernApp.swift in Sources */,
 				46E2D81B4497AE3713846363 /* TernInfo.swift in Sources */,
 				BE75F6EE72937B3DEEEDC611 /* TernSyncClient.swift in Sources */,
+				1F1295C2FDF0E46E9D6D1F64 /* UpdateChecker.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

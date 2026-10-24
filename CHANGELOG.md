@@ -23,6 +23,10 @@ See [ROADMAP.md](ROADMAP.md) for the prioritized backlog.
 - SHA-256 metadata for uploaded files and version snapshots.
 - Configurable version retention (`VERSION_RETENTION_DAYS`,
   `MAX_VERSIONS_PER_FILE`) and upload chunk size (`UPLOAD_CHUNK_BYTES`).
+- macOS and Windows new-file uploads use the resumable API for files >= 32 MiB
+  (existing-file edits remain atomic If-Match PUTs).
+- Windows checks GitHub Releases and can download/run the new installer;
+  macOS shows the release download page.
 
 ## [1.3.1] - 2026-10-23
 

@@ -34,6 +34,8 @@ public sealed record TernShareInfo(string Url, bool HasPassword, string? Expires
 
 public sealed record TernClipboardInfo(string Text, int Version, string? Device, string? UpdatedAt);
 
+public sealed record UploadSessionInfo(string Id, long ChunkSize, int ChunksTotal, int Received);
+
 public sealed class TernBackendClient : IAsyncDisposable
 {
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
@@ -427,6 +429,115 @@ public sealed class TernBackendClient : IAsyncDisposable
         using var doc = JsonDocument.Parse(json);
         var first = doc.RootElement.GetProperty("items")[0];
         return ParseNode(first);
+    }
+
+    /// Resumable upload of a new file. Existing-file updates stay on the
+    /// If-Match content endpoint so conflict detection remains atomic.
+    public async Task<TernNode> UploadFileAsync(
+        string? parentId,
+        string name,
+        string localPath,
+        string mime,
+        CancellationToken cancellationToken = default)
+    {
+        var info = new FileInfo(localPath);
+        if (info.Length < 32L * 1024 * 1024)
+        {
+            var small = await File.ReadAllBytesAsync(localPath, cancellationToken).ConfigureAwait(false);
+            return await UploadAsync(parentId, name, small, mime, cancellationToken).ConfigureAwait(false);
+        }
+
+        var session = await CreateUploadSessionAsync(parentId, name, info.Length, cancellationToken).ConfigureAwait(false);
+        await using var stream = new FileStream(localPath, FileMode.Open, FileAccess.Read, FileShare.Read, 1024 * 1024, useAsync: true);
+        var buffer = new byte[session.ChunkSize];
+        for (var index = 0; index < session.ChunksTotal; index++)
+        {
+            var offset = (long)index * session.ChunkSize;
+            var expected = (int)Math.Min(session.ChunkSize, info.Length - offset);
+            stream.Seek(offset, SeekOrigin.Begin);
+            var read = 0;
+            while (read < expected)
+            {
+                var chunk = await stream.ReadAsync(buffer.AsMemory(read, expected - read), cancellationToken).ConfigureAwait(false);
+                if (chunk == 0) throw new TernBackendException("upload_failed", "读取本地文件时意外结束。");
+                read += chunk;
+            }
+            Exception? last = null;
+            for (var attempt = 0; attempt < 3; attempt++)
+            {
+                try
+                {
+                    await UploadChunkAsync(session.Id, index, buffer.AsMemory(0, expected), cancellationToken).ConfigureAwait(false);
+                    last = null;
+                    break;
+                }
+                catch (Exception exception) when (exception is not OperationCanceledException)
+                {
+                    last = exception;
+                    await Task.Delay(500 * (attempt + 1), cancellationToken).ConfigureAwait(false);
+                }
+            }
+            if (last is not null) throw last;
+        }
+        return await CompleteUploadSessionAsync(session.Id, cancellationToken).ConfigureAwait(false);
+    }
+
+    public async Task<UploadSessionInfo> CreateUploadSessionAsync(
+        string? parentId,
+        string name,
+        long size,
+        CancellationToken cancellationToken = default)
+    {
+        var body = JsonSerializer.Serialize(new { name, size, parentId });
+        using var content = new StringContent(body, Encoding.UTF8, "application/json");
+        using var response = await SendAuthorizedAsync(
+            HttpMethod.Post,
+            new Uri(apiBase, "uploads"),
+            content,
+            cancellationToken).ConfigureAwait(false);
+        if (!response.IsSuccessStatusCode)
+            throw new TernBackendException("upload_failed", $"服务器返回 HTTP {(int)response.StatusCode}。");
+        var json = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
+        using var doc = JsonDocument.Parse(json);
+        var upload = doc.RootElement.GetProperty("upload");
+        return new UploadSessionInfo(
+            upload.GetProperty("id").GetString() ?? "",
+            upload.GetProperty("chunkSize").GetInt64(),
+            upload.GetProperty("chunksTotal").GetInt32(),
+            upload.TryGetProperty("received", out var received) ? received.GetInt32() : 0);
+    }
+
+    public async Task UploadChunkAsync(
+        string sessionId,
+        int index,
+        ReadOnlyMemory<byte> data,
+        CancellationToken cancellationToken = default)
+    {
+        using var content = new ByteArrayContent(data.ToArray());
+        content.Headers.ContentType = MediaTypeHeaderValue.Parse("application/octet-stream");
+        using var response = await SendAuthorizedAsync(
+            HttpMethod.Put,
+            new Uri(apiBase, "uploads/" + Uri.EscapeDataString(sessionId) + "/chunks/" + index),
+            content,
+            cancellationToken).ConfigureAwait(false);
+        if (!response.IsSuccessStatusCode)
+            throw new TernBackendException("upload_failed", $"服务器返回 HTTP {(int)response.StatusCode}。");
+    }
+
+    public async Task<TernNode> CompleteUploadSessionAsync(
+        string sessionId,
+        CancellationToken cancellationToken = default)
+    {
+        using var response = await SendAuthorizedAsync(
+            HttpMethod.Post,
+            new Uri(apiBase, "uploads/" + Uri.EscapeDataString(sessionId) + "/complete"),
+            null,
+            cancellationToken).ConfigureAwait(false);
+        if (!response.IsSuccessStatusCode)
+            throw new TernBackendException("upload_failed", $"服务器返回 HTTP {(int)response.StatusCode}。");
+        var json = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
+        using var doc = JsonDocument.Parse(json);
+        return ParseNode(doc.RootElement.GetProperty("node"));
     }
 
     public async Task<TernNode> UpdateContentAsync(

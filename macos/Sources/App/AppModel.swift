@@ -84,6 +84,7 @@ public final class AppModel: ObservableObject {
         fileProviderEnabled = FileProviderShared.loadConfiguration() != nil
         fileProviderWatcher.start()
         ShareRequestHandler.shared.start()
+        Task { await UpdateChecker.checkAndNotify() }
 
         if FileProviderShared.loadConfiguration() != nil {
             Task { [weak self] in

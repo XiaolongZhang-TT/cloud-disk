@@ -137,7 +137,11 @@ final class FileProviderExtension: NSObject, NSFileProviderReplicatedExtension, 
                         return
                     }
                     let mime = itemTemplate.contentType?.preferredMIMEType ?? "application/octet-stream"
-                    change = try await client.uploadFile(parentId: parent, name: name, clientId: clientId, data: data, mime: mime)
+                    if data.count >= 32 * 1024 * 1024 {
+                        change = try await client.uploadFileResumable(parentId: parent, name: name, data: data, mime: mime)
+                    } else {
+                        change = try await client.uploadFile(parentId: parent, name: name, clientId: clientId, data: data, mime: mime)
+                    }
                 }
                 guard let stored = store.upsert(change) else {
                     throw SyncClientError.malformedResponse

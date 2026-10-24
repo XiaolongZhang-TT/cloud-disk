@@ -551,8 +551,7 @@ public sealed class TernSyncService : IAsyncDisposable
                 var parent = ParentPath(relative);
                 nodesByPath.TryGetValue(parent, out var parentNode);
                 if (!string.IsNullOrEmpty(parent) && parentNode is null) continue;
-                var data = await File.ReadAllBytesAsync(absolute, cancellationToken).ConfigureAwait(false);
-                var node = await backend.UploadAsync(parentNode?.Id, Path.GetFileName(relative), data, MimeFor(relative), cancellationToken).ConfigureAwait(false);
+                var node = await backend.UploadFileAsync(parentNode?.Id, Path.GetFileName(relative), absolute, MimeFor(relative), cancellationToken).ConfigureAwait(false);
                 var remote = EntryFor(node, relative);
                 await provider.AdoptUploadedAsync(relative, remote, convertToPlaceholder: true, cancellationToken).ConfigureAwait(false);
                 nodesByPath[relative] = node;
