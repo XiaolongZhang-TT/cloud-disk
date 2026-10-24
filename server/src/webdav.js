@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import fsp from 'node:fs/promises';
 import path from 'node:path';
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { Router } from 'express';
 
 import { ApiError, asyncHandler, badRequest } from './errors.js';
@@ -17,6 +17,7 @@ import {
   streamBlob,
 } from './services/files.js';
 import { escapeXml, etagForNode, httpDate, normalizeNodeName, nowIso, readBody, xmlFirstText } from './util.js';
+import { sha256File, snapshotVersion } from './services/versions.js';
 
 const DAV_METHODS = 'OPTIONS, PROPFIND, PROPPATCH, GET, HEAD, PUT, DELETE, MKCOL, COPY, MOVE, LOCK, UNLOCK';
 const XML_DECL = '<?xml version="1.0" encoding="utf-8"?>';
@@ -582,6 +583,8 @@ export function createWebdavRouter({ store, config, basicCache }) {
         throw new ApiError(507, 'quota_exceeded', 'Not enough storage quota available');
       }
 
+      if (resolved.node) await snapshotVersion(store, config, req.user, resolved.node);
+      const sha256 = await sha256File(tempPath);
       const target = blobPath(config, req.user.id, nodeId);
       await fsp.mkdir(path.dirname(target), { recursive: true });
       await fsp.rename(tempPath, target);
@@ -589,6 +592,7 @@ export function createWebdavRouter({ store, config, basicCache }) {
         const updated = store.updateNode(nodeId, {
           size,
           mime: mimeForName(resolved.node.name),
+          sha256,
           updatedAt: nowIso(),
         });
         res.setHeader('ETag', etagForNode(updated));
@@ -603,6 +607,7 @@ export function createWebdavRouter({ store, config, basicCache }) {
           size,
           mime: mimeForName(resolved.missingName),
           storageKey: nodeId,
+          sha256,
         });
         res.setHeader('ETag', etagForNode(node));
         res.status(201).end();

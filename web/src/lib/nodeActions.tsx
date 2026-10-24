@@ -5,6 +5,7 @@ import {
   Download,
   Eye,
   FolderOpen,
+  History,
   Info,
   Move,
   Pencil,
@@ -20,7 +21,7 @@ import { useConfirm } from './confirm'
 import { useToast } from './toast'
 import { ContextMenu } from '../components/ContextMenu'
 import type { ContextMenuItem } from '../components/ContextMenu'
-import { DetailsDialog, MoveDialog, RenameDialog, ShareDialog } from '../components/NodeDialogs'
+import { DetailsDialog, MoveDialog, RenameDialog, ShareDialog, VersionHistoryDialog } from '../components/NodeDialogs'
 import { PreviewModal } from '../components/PreviewModal'
 
 interface MenuState {
@@ -40,6 +41,7 @@ interface NodeActionsValue {
   rename: (node: DirNode) => void
   move: (node: DirNode) => void
   share: (node: DirNode) => void
+  history: (node: DirNode) => void
   details: (node: DirNode) => void
   trash: (node: DirNode) => Promise<void>
   trashMany: (nodes: DirNode[]) => Promise<void>
@@ -63,6 +65,7 @@ export function NodeActionsProvider({ children }: { children: ReactNode }) {
   const [renaming, setRenaming] = useState<DirNode | null>(null)
   const [moving, setMoving] = useState<DirNode | null>(null)
   const [sharing, setSharing] = useState<DirNode | null>(null)
+  const [history, setHistory] = useState<DirNode | null>(null)
   const [details, setDetails] = useState<DirNode | null>(null)
 
   const previewFiles = useCallback((nodes: DirNode[], nodeId: string) => {
@@ -178,6 +181,7 @@ export function NodeActionsProvider({ children }: { children: ReactNode }) {
       rename: (node) => setRenaming(node),
       move: (node) => setMoving(node),
       share: (node) => setSharing(node),
+      history: (node) => setHistory(node),
       details: (node) => setDetails(node),
       trash,
       trashMany,
@@ -239,6 +243,14 @@ export function NodeActionsProvider({ children }: { children: ReactNode }) {
           icon: <Share2 size={16} />,
           onClick: () => setSharing(menuState.node),
         },
+        ...(menuState.node.type === 'file'
+          ? [{
+              key: 'history',
+              label: '历史版本',
+              icon: <History size={16} />,
+              onClick: () => setHistory(menuState.node),
+            }]
+          : []),
         {
           key: 'details',
           label: '详细信息',
@@ -278,6 +290,7 @@ export function NodeActionsProvider({ children }: { children: ReactNode }) {
       <RenameDialog node={renaming} onClose={() => setRenaming(null)} />
       <MoveDialog node={moving} onClose={() => setMoving(null)} />
       <ShareDialog node={sharing} onClose={() => setSharing(null)} />
+      <VersionHistoryDialog node={history} onClose={() => setHistory(null)} />
       <DetailsDialog node={details} onClose={() => setDetails(null)} />
     </NodeActionsContext.Provider>
   )

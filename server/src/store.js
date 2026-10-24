@@ -213,16 +213,17 @@ export class Store {
     size = 0,
     mime = null,
     storageKey = null,
+    sha256 = null,
     starred = 0,
     createdAt = nowIso(),
     updatedAt = createdAt,
   }) {
     this.db
       .prepare(
-        `INSERT INTO nodes (id, owner_id, parent_id, name, type, size, mime, storage_key, starred, created_at, updated_at, trashed_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL)`,
+        `INSERT INTO nodes (id, owner_id, parent_id, name, type, size, mime, storage_key, sha256, starred, created_at, updated_at, trashed_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL)`,
       )
-      .run(id, ownerId, parentId, name, type, size, mime, storageKey, starred ? 1 : 0, createdAt, updatedAt);
+      .run(id, ownerId, parentId, name, type, size, mime, storageKey, sha256, starred ? 1 : 0, createdAt, updatedAt);
     const node = this.getNode(id);
     if (node) this.recordSyncUpsert(node);
     return node;
@@ -261,6 +262,7 @@ export class Store {
       size: 'size',
       mime: 'mime',
       storageKey: 'storage_key',
+      sha256: 'sha256',
       updatedAt: 'updated_at',
       trashedAt: 'trashed_at',
     };
@@ -649,6 +651,137 @@ export class Store {
 
   incrementShareDownload(id) {
     this.db.prepare('UPDATE shares SET download_count = download_count + 1 WHERE id = ?').run(id);
+  }
+
+  /** Consistent SQLite snapshot for the admin backup endpoint. */
+  backupDatabase(filePath) {
+    const escaped = filePath.replace(/'/g, "''");
+    this.db.exec(`VACUUM INTO '${escaped}'`);
+  }
+
+  // ------------------------------------------------------- uploads ---
+
+  createUploadSession({
+    id = randomUUID(),
+    ownerId,
+    parentId,
+    name,
+    size,
+    mime = null,
+    chunkSize,
+    chunksTotal,
+    sha256 = null,
+    createdAt = nowIso(),
+  }) {
+    this.db
+      .prepare(
+        `INSERT INTO upload_sessions
+           (id, owner_id, parent_id, name, size, mime, chunk_size, chunks_total, received, sha256, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?)`,
+      )
+      .run(id, ownerId, parentId, name, size, mime, chunkSize, chunksTotal, sha256, createdAt, createdAt);
+    return this.getUploadSession(id, ownerId);
+  }
+
+  getUploadSession(id, ownerId) {
+    return this.db
+      .prepare('SELECT * FROM upload_sessions WHERE id = ? AND owner_id = ?')
+      .get(id, ownerId) ?? null;
+  }
+
+  updateUploadSession(id, ownerId, patch) {
+    const columns = {
+      received: 'received',
+      updatedAt: 'updated_at',
+    };
+    const sets = [];
+    const values = [];
+    for (const [key, column] of Object.entries(columns)) {
+      if (patch[key] !== undefined) {
+        sets.push(`${column} = ?`);
+        values.push(patch[key]);
+      }
+    }
+    if (sets.length) {
+      values.push(id, ownerId);
+      this.db.prepare(`UPDATE upload_sessions SET ${sets.join(', ')} WHERE id = ? AND owner_id = ?`).run(...values);
+    }
+    return this.getUploadSession(id, ownerId);
+  }
+
+  deleteUploadSession(id, ownerId) {
+    return this.db.prepare('DELETE FROM upload_sessions WHERE id = ? AND owner_id = ?').run(id, ownerId).changes;
+  }
+
+  listExpiredUploadSessions(before) {
+    return this.db.prepare('SELECT * FROM upload_sessions WHERE updated_at < ?').all(before);
+  }
+
+  // ---------------------------------------------------------- versions ---
+
+  createVersion({
+    id = randomUUID(),
+    ownerId,
+    nodeId,
+    version,
+    size,
+    mime = null,
+    storageKey,
+    sha256 = null,
+    createdAt = nowIso(),
+  }) {
+    this.db
+      .prepare(
+        `INSERT INTO node_versions
+           (id, owner_id, node_id, version, size, mime, storage_key, sha256, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      )
+      .run(id, ownerId, nodeId, version, size, mime, storageKey, sha256, createdAt);
+    return this.getVersion(id, nodeId, ownerId);
+  }
+
+  nextVersion(nodeId, ownerId) {
+    const row = this.db
+      .prepare('SELECT COALESCE(MAX(version), 0) AS max_version FROM node_versions WHERE node_id = ? AND owner_id = ?')
+      .get(nodeId, ownerId);
+    return Number(row?.max_version ?? 0) + 1;
+  }
+
+  getVersion(id, nodeId, ownerId) {
+    return this.db
+      .prepare('SELECT * FROM node_versions WHERE id = ? AND node_id = ? AND owner_id = ?')
+      .get(id, nodeId, ownerId) ?? null;
+  }
+
+  listVersions(nodeId, ownerId) {
+    return this.db
+      .prepare('SELECT * FROM node_versions WHERE node_id = ? AND owner_id = ? ORDER BY version DESC')
+      .all(nodeId, ownerId);
+  }
+
+  /** Return rows that were removed so callers can unlink their blobs. */
+  pruneVersions(nodeId, ownerId, { maxVersions = 50, before = null } = {}) {
+    const keep = Math.max(1, Number(maxVersions) || 50);
+    const rows = this.listVersions(nodeId, ownerId);
+    const stale = [];
+    for (let index = 0; index < rows.length; index += 1) {
+      const row = rows[index];
+      const tooMany = index >= keep;
+      const tooOld = before && row.created_at < before;
+      if (tooMany || tooOld) stale.push(row);
+    }
+    if (stale.length === 0) return [];
+    const statement = this.db.prepare('DELETE FROM node_versions WHERE id = ?');
+    this.transaction(() => {
+      for (const row of stale) statement.run(row.id);
+    });
+    return stale;
+  }
+
+  deleteVersionsForNode(nodeId, ownerId) {
+    return this.db
+      .prepare('DELETE FROM node_versions WHERE node_id = ? AND owner_id = ?')
+      .run(nodeId, ownerId).changes;
   }
 
   // ------------------------------------------------------------ clipboard ---

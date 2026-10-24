@@ -55,6 +55,11 @@ export function loadConfig(overrides = {}) {
     defaultQuotaBytes,
     maxUploadBytes: overrides.maxUploadBytes ?? int(env.MAX_UPLOAD_BYTES, 20 * 1024 ** 3),
     maxFilesPerUpload: overrides.maxFilesPerUpload ?? 100,
+    uploadChunkBytes: overrides.uploadChunkBytes ?? int(env.UPLOAD_CHUNK_BYTES, 8 * 1024 * 1024),
+    versionRetentionDays:
+      overrides.versionRetentionDays ?? int(env.VERSION_RETENTION_DAYS, 30),
+    maxVersionsPerFile:
+      overrides.maxVersionsPerFile ?? int(env.MAX_VERSIONS_PER_FILE, 50),
 
     cookieName: 'cd_session',
     cookieSecure: String(overrides.cookieSecure ?? env.COOKIE_SECURE ?? 'auto').toLowerCase(),

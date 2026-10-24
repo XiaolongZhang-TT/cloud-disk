@@ -6,12 +6,13 @@ import {
   Download,
   ExternalLink,
   FolderOpen,
+  History,
   Link2,
   Lock,
   ShieldCheck,
 } from 'lucide-react'
-import type { Crumb, DirNode, Share } from '../lib/types'
-import { api, errorMessage, nodeDownloadUrl } from '../lib/api'
+import type { Crumb, DirNode, NodeVersion, Share } from '../lib/types'
+import { api, errorMessage, nodeDownloadUrl, nodeVersionDownloadUrl } from '../lib/api'
 import {
   copyText,
   describeNode,
@@ -443,6 +444,118 @@ export function ShareDialog({ node, onClose }: { node: DirNode | null; onClose: 
               {error}
             </p>
           )}
+        </div>
+      )}
+    </Modal>
+  )
+}
+
+/* ----------------------------- version history --------------------------- */
+
+export function VersionHistoryDialog({ node, onClose }: { node: DirNode | null; onClose: () => void }) {
+  const [items, setItems] = useState<NodeVersion[]>([])
+  const [loading, setLoading] = useState(false)
+  const [restoring, setRestoring] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const { refresh } = useAppData()
+  const toast = useToast()
+
+  useEffect(() => {
+    if (!node) return
+    let cancelled = false
+    setLoading(true)
+    setError(null)
+    api.nodes
+      .versions(node.id)
+      .then((result) => {
+        if (!cancelled) setItems(result.items)
+      })
+      .catch((err) => {
+        if (!cancelled) setError(errorMessage(err))
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [node])
+
+  if (!node) {
+    return <Modal open={false} onClose={onClose} title="历史版本" children={null} />
+  }
+
+  const restore = async (version: NodeVersion) => {
+    setRestoring(version.id)
+    setError(null)
+    try {
+      await api.nodes.restoreVersion(node.id, version.id)
+      toast.success(`已恢复到 ${formatDateTime(version.createdAt)} 的版本`)
+      refresh()
+      const result = await api.nodes.versions(node.id)
+      setItems(result.items)
+    } catch (err) {
+      setError(errorMessage(err))
+    } finally {
+      setRestoring(null)
+    }
+  }
+
+  return (
+    <Modal
+      open={node !== null}
+      onClose={onClose}
+      title={`「${node.name}」的历史版本`}
+      description="每次覆盖文件都会保留旧内容，默认保留 30 天。"
+      size="md"
+      footer={
+        <Button variant="ghost" onClick={onClose}>
+          完成
+        </Button>
+      }
+    >
+      {loading ? (
+        <div className="dialog-loading"><Spinner /></div>
+      ) : error ? (
+        <div className="form-error">{error}</div>
+      ) : items.length === 0 ? (
+        <EmptyState
+          icon={<History size={28} />}
+          title="还没有历史版本"
+          description="文件第一次被覆盖或通过客户端更新后，旧内容会出现在这里。"
+        />
+      ) : (
+        <div className="version-list">
+          {items.map((version) => (
+            <div className="version-row" key={version.id}>
+              <div className="version-main">
+                <div className="version-title">版本 {version.version}</div>
+                <div className="version-meta">
+                  {formatDateTime(version.createdAt)} · {formatBytes(version.size)}
+                </div>
+              </div>
+              <div className="version-actions">
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  icon={<Download size={14} />}
+                  onClick={() => {
+                    window.location.href = nodeVersionDownloadUrl(node.id, version.id)
+                  }}
+                >
+                  下载
+                </Button>
+                <Button
+                  size="sm"
+                  variant="soft"
+                  loading={restoring === version.id}
+                  onClick={() => void restore(version)}
+                >
+                  恢复
+                </Button>
+              </div>
+            </div>
+          ))}
         </div>
       )}
     </Modal>

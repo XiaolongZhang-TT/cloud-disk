@@ -35,6 +35,7 @@ CREATE TABLE IF NOT EXISTS nodes (
   size        INTEGER NOT NULL DEFAULT 0,
   mime        TEXT,
   storage_key TEXT,
+  sha256      TEXT,
   starred     INTEGER NOT NULL DEFAULT 0,
   created_at  TEXT NOT NULL,
   updated_at  TEXT NOT NULL,
@@ -47,6 +48,20 @@ CREATE INDEX IF NOT EXISTS nodes_owner_starred_idx ON nodes(owner_id, starred);
 -- unique constraint never blocks a restore or a delete.
 CREATE UNIQUE INDEX IF NOT EXISTS nodes_live_name_uidx
   ON nodes(owner_id, COALESCE(parent_id, ''), name) WHERE trashed_at IS NULL;
+
+-- Historical file contents. Older blobs live under storage/<owner>/versions/<node>/...
+CREATE TABLE IF NOT EXISTS node_versions (
+  id          TEXT PRIMARY KEY,
+  owner_id    TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  node_id     TEXT NOT NULL REFERENCES nodes(id) ON DELETE CASCADE,
+  version     INTEGER NOT NULL,
+  size        INTEGER NOT NULL,
+  mime        TEXT,
+  storage_key TEXT NOT NULL,
+  sha256      TEXT,
+  created_at  TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS node_versions_node_idx ON node_versions(node_id, version DESC);
 
 -- Append-only change feed used by the macOS File Provider client.
 -- seq is global and monotonic; payload is a JSON snapshot (upsert) or
@@ -84,6 +99,22 @@ CREATE TABLE IF NOT EXISTS shares (
 CREATE INDEX IF NOT EXISTS shares_owner_idx ON shares(owner_id);
 CREATE INDEX IF NOT EXISTS shares_node_idx ON shares(node_id);
 
+CREATE TABLE IF NOT EXISTS upload_sessions (
+  id           TEXT PRIMARY KEY,
+  owner_id     TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  parent_id    TEXT REFERENCES nodes(id) ON DELETE SET NULL,
+  name         TEXT NOT NULL,
+  size         INTEGER NOT NULL,
+  mime         TEXT,
+  chunk_size   INTEGER NOT NULL,
+  chunks_total INTEGER NOT NULL,
+  received     INTEGER NOT NULL DEFAULT 0,
+  sha256       TEXT,
+  created_at   TEXT NOT NULL,
+  updated_at   TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS upload_sessions_owner_idx ON upload_sessions(owner_id, updated_at);
+
 CREATE TABLE IF NOT EXISTS clipboard (
   owner_id   TEXT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
   content    TEXT NOT NULL,
@@ -92,6 +123,15 @@ CREATE TABLE IF NOT EXISTS clipboard (
   updated_at TEXT NOT NULL
 );
 `;
+
+function ensureColumns(db) {
+  const columns = new Set(
+    db.prepare('PRAGMA table_info(nodes)').all().map((row) => row.name),
+  );
+  if (!columns.has('sha256')) {
+    db.exec('ALTER TABLE nodes ADD COLUMN sha256 TEXT');
+  }
+}
 
 /**
  * Open (and migrate) the SQLite database.
@@ -109,5 +149,6 @@ export function openDatabase(config) {
     PRAGMA foreign_keys = ON;
   `);
   db.exec(SCHEMA);
+  ensureColumns(db);
   return db;
 }

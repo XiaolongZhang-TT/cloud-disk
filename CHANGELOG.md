@@ -10,6 +10,20 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 See [ROADMAP.md](ROADMAP.md) for the prioritized backlog.
 
+## [1.4.0] - 2026-10-24
+
+### Added
+
+- File version history: every raw overwrite snapshots the previous blob, with
+  listing, download and restore APIs plus a web UI.
+- Admin full backup download (consistent SQLite snapshot + storage ZIP) and a
+  restore script.
+- Resumable chunked upload API and automatic chunked uploads for large files
+  in the web UI.
+- SHA-256 metadata for uploaded files and version snapshots.
+- Configurable version retention (`VERSION_RETENTION_DAYS`,
+  `MAX_VERSIONS_PER_FILE`) and upload chunk size (`UPLOAD_CHUNK_BYTES`).
+
 ## [1.3.1] - 2026-10-23
 
 ### Fixed

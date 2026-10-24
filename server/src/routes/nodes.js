@@ -1,10 +1,11 @@
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
+import fs from 'node:fs';
 import express, { Router } from 'express';
 import multer from 'multer';
 import fsp from 'node:fs/promises';
 import path from 'node:path';
-import { etagForNode, intParam, likeEscape, nowIso } from '../util.js';
-import { ApiError, asyncHandler, badRequest } from '../errors.js';
+import { contentDisposition, etagForNode, intParam, likeEscape, nowIso } from '../util.js';
+import { ApiError, asyncHandler, badRequest, notFound } from '../errors.js';
 import {
   collectZipEntries,
   copyNode,
@@ -27,6 +28,14 @@ import {
   streamBlob,
 } from '../services/files.js';
 import { sendZip } from '../services/zip.js';
+import {
+  getVersion,
+  listVersions,
+  restoreVersion,
+  serializeVersion,
+  snapshotVersion,
+  versionContentPath,
+} from '../services/versions.js';
 
 const SORT_FIELDS = new Set(['name', 'modified', 'size', 'trashed']);
 const TRASH_SORT_FIELDS = new Set(['trashed', 'name', 'size']);
@@ -174,6 +183,8 @@ export function createNodesRouter({ store, config }) {
         throw new ApiError(507, 'quota_exceeded', 'Not enough storage quota available');
       }
 
+      await snapshotVersion(store, config, req.user, node);
+      const sha256 = createHash('sha256').update(req.body).digest('hex');
       const target = path.join(config.storageDir, req.user.id, node.storage_key ?? node.id);
       const temp = path.join(config.tmpDir, `content-${randomUUID()}.part`);
       await fsp.mkdir(path.dirname(target), { recursive: true });
@@ -188,10 +199,55 @@ export function createNodesRouter({ store, config }) {
       const updated = store.updateNode(node.id, {
         size,
         mime: mimeForName(node.name),
+        sha256,
         updatedAt: nowIso(),
       });
       res.setHeader('ETag', etagForNode(updated));
       res.json({ node: serializeNode(updated) });
+    }),
+  );
+
+  // Historical contents are captured before every overwrite. The current
+  // blob is represented by the node itself; this endpoint lists older ones.
+  router.get(
+    '/:id/versions',
+    asyncHandler(async (req, res) => {
+      const node = getLiveNode(store, req.user.id, req.params.id);
+      if (node.type !== 'file') throw badRequest('not_a_file', 'Only files have versions');
+      res.json({ items: listVersions(store, req.user, node) });
+    }),
+  );
+
+  router.get(
+    '/:id/versions/:versionId/content',
+    asyncHandler(async (req, res) => {
+      const node = getLiveNode(store, req.user.id, req.params.id);
+      const version = getVersion(store, req.user, node, req.params.versionId);
+      const filePath = versionContentPath(config, version, req.user.id);
+      let stat;
+      try {
+        stat = await fsp.stat(filePath);
+      } catch {
+        throw notFound('version_content_missing', 'Version content is missing');
+      }
+      res.setHeader('Content-Type', version.mime || 'application/octet-stream');
+      res.setHeader('Content-Length', stat.size);
+      res.setHeader(
+        'Content-Disposition',
+        contentDisposition('attachment', `version-${version.version}-${node.name}`),
+      );
+      res.setHeader('Cache-Control', 'private, no-store');
+      fs.createReadStream(filePath).on('error', () => res.destroy()).pipe(res);
+    }),
+  );
+
+  router.post(
+    '/:id/versions/:versionId/restore',
+    asyncHandler(async (req, res) => {
+      const node = getLiveNode(store, req.user.id, req.params.id);
+      const version = getVersion(store, req.user, node, req.params.versionId);
+      const updated = await restoreVersion(store, config, req.user, node, version);
+      res.json({ node: serializeNode(updated), version: serializeVersion(version) });
     }),
   );
 

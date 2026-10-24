@@ -143,6 +143,47 @@ request per client.
 - `POST /api/nodes/upload` returns 201, body `{ items }`.
 - macOS AppleDouble/metadata companions (`._*`, `.DS_Store`, `.localized`, `.Spotlight-V100`, `.Trashes`, `.fseventsd`) are stored and visible over WebDAV so Finder can preserve them, but are hidden from REST listings, search, recent, starred, trash and ZIP downloads.
 
+## File versions
+
+Every raw content overwrite (web raw PUT, WebDAV PUT, File Provider conflict path) first snapshots the previous blob. Old versions are retained according to `VERSION_RETENTION_DAYS` (default 30) and `MAX_VERSIONS_PER_FILE` (default 50).
+
+| Method | Path | Body | Response |
+|---|---|---|---|
+| GET | `/api/nodes/:id/versions` | – | `{ items: Version[] }` |
+| GET | `/api/nodes/:id/versions/:versionId/content` | – | binary |
+| POST | `/api/nodes/:id/versions/:versionId/restore` | – | `{ node, version }` |
+
+```json
+{
+  "id": "version-uuid",
+  "version": 3,
+  "size": 123,
+  "mime": "text/plain",
+  "sha256": "…",
+  "createdAt": "2026-10-24T..."
+}
+```
+
+Restoring snapshots the current content first, so a restore can itself be undone.
+
+## Resumable uploads
+
+For large files and unreliable networks:
+
+| Method | Path | Body | Response |
+|---|---|---|---|
+| POST | `/api/uploads` | `{ name, size, parentId?, sha256? }` | `{ upload }` 201 |
+| GET | `/api/uploads/:id` | – | `{ upload }` |
+| PUT | `/api/uploads/:id/chunks/:index` | raw bytes | `{ upload }` |
+| POST | `/api/uploads/:id/complete` | – | `{ node }` 201 |
+| DELETE | `/api/uploads/:id` | – | `{ ok: true }` |
+
+Chunks are 8 MiB by default (`UPLOAD_CHUNK_BYTES`). `received` counts stored chunks; a repeated chunk index is idempotent. Completed uploads verify the declared size and optional SHA-256 before creating the node.
+
+## Admin backup
+
+`GET /api/admin/backup` (admin only) streams a ZIP containing a consistent `cloud.db` snapshot and `storage/`. Restore with `scripts/restore-backup.sh` while the service is stopped. See `docs/BACKUP.md`.
+
 ## Clipboard
 
 Manual, text-only cross-device clipboard. There is one slot per account; each

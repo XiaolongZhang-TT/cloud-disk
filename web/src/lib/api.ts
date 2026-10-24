@@ -5,6 +5,7 @@ import type {
   DirNode,
   FolderListing,
   MeUpdate,
+  NodeVersion,
   Overview,
   PublicConfig,
   PublicShare,
@@ -112,9 +113,78 @@ interface UploadOptions {
   onProgress?: (percent: number) => void
 }
 
+const RESUMABLE_THRESHOLD = 32 * 1024 * 1024
+
+async function uploadChunked(file: File, opts: UploadOptions, signal: AbortSignal): Promise<DirNode> {
+  const created = await request<{ upload: { id: string; chunkSize: number; chunksTotal: number } }>(
+    '/api/uploads',
+    jsonInit('POST', {
+      name: file.name,
+      size: file.size,
+      parentId: opts.parentId || null,
+    }),
+  )
+  const upload = created.upload
+  let sent = 0
+  for (let index = 0; index < upload.chunksTotal; index += 1) {
+    if (signal.aborted) throw new ApiError(0, 'aborted', '上传已取消')
+    const start = index * upload.chunkSize
+    const end = Math.min(file.size, start + upload.chunkSize)
+    const chunk = file.slice(start, end)
+    let lastError: unknown = null
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      try {
+        const response = await fetch(
+          `/api/uploads/${encodeURIComponent(upload.id)}/chunks/${index}`,
+          {
+            method: 'PUT',
+            credentials: 'same-origin',
+            body: chunk,
+            headers: { 'Content-Type': 'application/octet-stream' },
+            signal,
+          },
+        )
+        if (!response.ok) {
+          const data = (await response.json().catch(() => null)) as
+            | { error?: { code?: string; message?: string } }
+            | null
+          throw new ApiError(
+            response.status,
+            data?.error?.code || 'upload_failed',
+            data?.error?.message || `上传分片失败（${response.status}）`,
+          )
+        }
+        sent = end
+        const percent = file.size > 0 ? Math.round((sent / file.size) * 99) : 99
+        opts.onProgress?.(percent)
+        lastError = null
+        break
+      } catch (error) {
+        lastError = error
+        if (signal.aborted) throw new ApiError(0, 'aborted', '上传已取消')
+        if (error instanceof ApiError && error.status >= 400 && error.status < 500) throw error
+        await new Promise((resolve) => window.setTimeout(resolve, 500 * (attempt + 1)))
+      }
+    }
+    if (lastError) throw lastError
+  }
+  const completed = await request<{ node: DirNode }>(
+    `/api/uploads/${encodeURIComponent(upload.id)}/complete`,
+    { method: 'POST' },
+  )
+  opts.onProgress?.(100)
+  return completed.node
+}
+
 /** Upload a single file with real progress events (XHR). */
 export function uploadNode(file: File, opts: UploadOptions = {}): UploadHandle {
   const controller = new AbortController()
+  if (file.size >= RESUMABLE_THRESHOLD) {
+    return {
+      promise: uploadChunked(file, opts, controller.signal),
+      abort: () => controller.abort(),
+    }
+  }
   const promise = new Promise<DirNode>((resolve, reject) => {
     const xhr = new XMLHttpRequest()
     xhr.open('POST', buildUrl('/api/nodes/upload', { parentId: opts.parentId || 'root' }))
@@ -169,6 +239,8 @@ export function uploadNode(file: File, opts: UploadOptions = {}): UploadHandle {
 }
 
 export const nodeDownloadUrl = (id: string) => `/api/nodes/${encodeURIComponent(id)}/download`
+export const nodeVersionDownloadUrl = (id: string, versionId: string) =>
+  `/api/nodes/${encodeURIComponent(id)}/versions/${encodeURIComponent(versionId)}/content`
 export const nodeContentUrl = (id: string) => `/api/nodes/${encodeURIComponent(id)}/content`
 export const nodeThumbUrl = (id: string) => `/api/nodes/${encodeURIComponent(id)}/content`
 
@@ -229,6 +301,13 @@ export const api = {
       ),
     remove: (id: string) =>
       request<{ ok: true }>(`/api/nodes/${encodeURIComponent(id)}`, { method: 'DELETE' }),
+    versions: (id: string) =>
+      request<{ items: NodeVersion[] }>(`/api/nodes/${encodeURIComponent(id)}/versions`),
+    restoreVersion: (id: string, versionId: string) =>
+      request<{ node: DirNode }>(
+        `/api/nodes/${encodeURIComponent(id)}/versions/${encodeURIComponent(versionId)}/restore`,
+        { method: 'POST' },
+      ),
   },
   trash: {
     list: (params: { sort?: 'trashed' | 'name' | 'size' } = {}) =>

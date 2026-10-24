@@ -1,5 +1,8 @@
 import { Router } from 'express';
 import fsp from 'node:fs/promises';
+import fs from 'node:fs';
+import { randomUUID } from 'node:crypto';
+import archiver from 'archiver';
 import path from 'node:path';
 
 import { asyncHandler, badRequest, conflict, notFound } from '../errors.js';
@@ -87,6 +90,32 @@ export function createAdminRouter({ store, config }) {
       // Remove blob storage for the deleted user.
       await fsp.rm(path.join(config.storageDir, target.id), { recursive: true, force: true }).catch(() => {});
       res.json({ ok: true });
+    }),
+  );
+
+  router.get(
+    '/backup',
+    asyncHandler(async (req, res) => {
+      const id = randomUUID();
+      const database = path.join(config.tmpDir, `backup-${id}.db`);
+      await fsp.mkdir(config.tmpDir, { recursive: true });
+      store.backupDatabase(database);
+      res.setHeader('Content-Type', 'application/zip');
+      res.setHeader('Content-Disposition', `attachment; filename="tern-backup-${new Date().toISOString().slice(0, 10)}.zip"`);
+      const archive = archiver('zip', { zlib: { level: 6 } });
+      const cleanup = () => fsp.unlink(database).catch(() => {});
+      archive.on('error', (error) => {
+        cleanup();
+        if (!res.headersSent) res.status(500).end();
+        else res.destroy(error);
+      });
+      res.on('close', cleanup);
+      archive.pipe(res);
+      archive.file(database, { name: 'cloud.db' });
+      if (fs.existsSync(config.storageDir)) {
+        archive.directory(config.storageDir, 'storage');
+      }
+      await archive.finalize();
     }),
   );
 

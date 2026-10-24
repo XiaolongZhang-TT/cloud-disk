@@ -3,6 +3,7 @@ import { useLocation } from 'react-router-dom'
 import {
   Check,
   Database,
+  Download,
   HardDrive,
   KeyRound,
   Monitor,
@@ -334,8 +335,37 @@ export function SettingsPage() {
           </div>
         </section>
 
+        {user.role === 'admin' && <AdminBackup />}
         {user.role === 'admin' && <AdminMembers />}
       </div>
     </div>
+  )
+}
+
+
+function AdminBackup() {
+  return (
+    <section className="panel">
+      <div className="panel-head">
+        <div className="panel-head-text">
+          <h2 className="panel-title">
+            <Database size={18} /> 数据备份
+          </h2>
+          <p className="panel-desc">
+            下载包含数据库和全部文件内容的 ZIP 快照。恢复前请先停止服务，详见文档。
+          </p>
+        </div>
+      </div>
+      <div className="server-note">
+        <ShieldCheck size={15} />
+        <span>备份会占用与数据量相当的临时空间；建议定期保存到另一块磁盘。</span>
+      </div>
+      <div className="settings-actions">
+        <a className="btn btn-primary" href="/api/admin/backup">
+          <Download size={15} />
+          <span>下载完整备份</span>
+        </a>
+      </div>
+    </section>
   )
 }

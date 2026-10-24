@@ -12,6 +12,16 @@ export interface DirNode {
   updatedAt: string
   trashedAt: string | null
   childCount?: number
+  sha256?: string | null
+}
+
+export interface NodeVersion {
+  id: string
+  version: number
+  size: number
+  mime: string | null
+  sha256: string | null
+  createdAt: string
 }
 
 export type UserRole = 'admin' | 'member'

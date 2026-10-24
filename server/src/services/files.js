@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import fsp from 'node:fs/promises';
 import path from 'node:path';
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import mime from 'mime-types';
 
 import { ApiError, badRequest, conflict, nodeNotFound, notFound, payloadTooLarge } from '../errors.js';
@@ -59,6 +59,7 @@ export function serializeNode(row) {
     type: row.type,
     size: row.effective_size != null ? row.effective_size : row.size,
     mime: row.mime ?? null,
+    sha256: row.sha256 ?? null,
     starred: Boolean(row.starred),
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -158,6 +159,17 @@ export function createFolder(store, ownerId, { parentId, name, id }) {
   });
 }
 
+async function hashFile(filePath) {
+  const hash = createHash('sha256');
+  await new Promise((resolve, reject) => {
+    const stream = fs.createReadStream(filePath);
+    stream.on('data', (chunk) => hash.update(chunk));
+    stream.on('error', reject);
+    stream.on('end', resolve);
+  });
+  return hash.digest('hex');
+}
+
 /**
  * Import a completed multipart upload (multer has already streamed every part
  * to disk). Validation, quota enforcement, auto-renaming, blob moves and DB
@@ -176,7 +188,12 @@ export async function importUploads(store, config, user, rawParentId, files, { c
     let total = 0;
     for (const file of files) {
       const stat = await fsp.stat(file.path);
-      entries.push({ file, size: stat.size, name: normalizeNodeName(file.originalname) });
+      entries.push({
+        file,
+        size: stat.size,
+        name: normalizeNodeName(file.originalname),
+        sha256: await hashFile(file.path),
+      });
       total += stat.size;
     }
     if (total > config.maxUploadBytes) {
@@ -205,6 +222,7 @@ export async function importUploads(store, config, user, rawParentId, files, { c
         size: entry.size,
         mime: mimeForName(name),
         storageKey: id,
+        sha256: entry.sha256,
       });
       createdIds.push(row.id);
       items.push(row);
@@ -297,6 +315,7 @@ async function copyRecursive(store, config, ownerId, source, parentId, name, dep
       size: source.size,
       mime: source.mime,
       storageKey: id,
+      sha256: source.sha256 ?? null,
     });
   }
   const folder = store.createNode({ ownerId, parentId, name, type: 'folder' });
@@ -336,9 +355,15 @@ export function restoreNode(store, user, node) {
 export async function permanentlyDeleteNode(store, config, ownerId, node) {
   if (!node.trashed_at) throw badRequest('not_trashed', 'Item must be in the trash before permanent deletion');
   const files = store.listSubtreeFiles(node.id);
+  const subtree = store.listSubtree(node.id);
   store.transaction(() => store.deleteNodeRow(node.id));
   await Promise.all(
     files.map((file) => fsp.unlink(blobPath(config, ownerId, file.storage_key ?? file.id)).catch(() => {})),
+  );
+  await Promise.all(
+    subtree.map((row) =>
+      fsp.rm(path.join(config.storageDir, ownerId, 'versions', row.id), { recursive: true, force: true }).catch(() => {}),
+    ),
   );
 }
 
