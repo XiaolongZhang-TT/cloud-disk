@@ -10,6 +10,14 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 See [ROADMAP.md](ROADMAP.md) for the prioritized backlog.
 
+## [Unreleased]
+
+### Added
+
+- macOS menu-bar **断开同步 / 启用同步** control. Pausing stops the long-poll
+  watcher and prevents the File Provider extension from making network
+  requests, while keeping downloaded files available in Finder.
+
 ## [1.4.1] - 2026-10-24
 
 ### Security

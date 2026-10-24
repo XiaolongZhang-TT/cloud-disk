@@ -27,15 +27,19 @@ final class TernEnumerator: NSObject, NSFileProviderEnumerator {
         Task {
             if invalidated { return }
             do {
-                try? await store.flushPending()
+                if FileProviderShared.isSyncEnabled {
+                    try? await store.flushPending()
+                }
                 // Opening a folder is also a refresh point. On an existing
                 // cache a network failure should not hide cached items; when
                 // there is no cache at all the error is still surfaced below.
                 let bootstrapping = store.cursor == 0
-                do {
-                    _ = try await store.sync(forceBootstrap: bootstrapping)
-                } catch {
-                    if bootstrapping { throw error }
+                if FileProviderShared.isSyncEnabled {
+                    do {
+                        _ = try await store.sync(forceBootstrap: bootstrapping)
+                    } catch {
+                        if bootstrapping { throw error }
+                    }
                 }
                 let items = self.itemsForContainer().map { TernItem(stored: $0) }
                 observer.didEnumerate(items)
@@ -54,6 +58,10 @@ final class TernEnumerator: NSObject, NSFileProviderEnumerator {
             do {
                 // If the system is at a valid older anchor, replay only what is
                 // newer. A zero anchor triggers the server snapshot.
+                if !FileProviderShared.isSyncEnabled {
+                    observer.finishEnumeratingChanges(upTo: Self.anchor(store.cursor), moreComing: false)
+                    return
+                }
                 try? await store.flushPending()
                 let deleted = try await store.sync(forceBootstrap: start == 0)
                 let updates = self.itemsForContainer().map { TernItem(stored: $0) }

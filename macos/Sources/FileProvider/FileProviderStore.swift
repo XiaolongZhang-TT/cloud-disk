@@ -153,6 +153,7 @@ public final class FileProviderStore: @unchecked Sendable {
     /// Flush queued writes. Stops at the first network error so the queue keeps
     /// its order; a conflict is also left in place for the user to resolve.
     public func flushPending() async throws {
+        guard FileProviderShared.isSyncEnabled else { return }
         let operations = pending.list()
         guard !operations.isEmpty else { return }
         let client = try makeClient()
@@ -242,6 +243,7 @@ public final class FileProviderStore: @unchecked Sendable {
     // MARK: - Credentials / client
 
     public func makeClient() throws -> TernSyncClient {
+        guard FileProviderShared.isSyncEnabled else { throw SyncClientError.syncPaused }
         guard let configuration = FileProviderShared.loadConfiguration(),
               let password = FileProviderShared.loadPassword(serverURL: configuration.serverURL,
                                                              username: configuration.username),
@@ -256,6 +258,7 @@ public final class FileProviderStore: @unchecked Sendable {
     /// Fetch the next batch. Callers should serialize syncs; File Provider
     /// normally issues one enumeration at a time per container.
     public func sync(forceBootstrap: Bool = false) async throws -> [String] {
+        guard FileProviderShared.isSyncEnabled else { return [] }
         let client = try makeClient()
         let start = forceBootstrap ? 0 : cursor
         let page = try await client.sync(cursor: start)

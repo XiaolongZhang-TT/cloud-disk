@@ -346,6 +346,7 @@ final class FileProviderExtension: NSObject, NSFileProviderReplicatedExtension, 
     private func change(from stored: StoredItem) -> StoredItem { stored }
 
     private static func isOffline(_ error: Error) -> Bool {
+        if case .syncPaused = error as? SyncClientError { return true }
         guard let urlError = error as? URLError else { return false }
         switch urlError.code {
         case .notConnectedToInternet, .networkConnectionLost, .cannotConnectToHost,

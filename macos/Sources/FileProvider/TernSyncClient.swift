@@ -85,6 +85,7 @@ public enum SyncClientError: LocalizedError {
     case http(Int, String)
     case malformedResponse
     case invalidItem
+    case syncPaused
 
     public var errorDescription: String? {
         switch self {
@@ -98,6 +99,8 @@ public enum SyncClientError: LocalizedError {
             return "服务器返回了无法解析的数据。"
         case .invalidItem:
             return "服务器返回了无效的文件条目。"
+        case .syncPaused:
+            return "Tern 同步已暂停。"
         }
     }
 }

@@ -19,6 +19,7 @@ public final class AppModel: ObservableObject {
     public static let shared = AppModel()
 
     @Published public private(set) var fileProviderEnabled = false
+    @Published public private(set) var syncEnabled = true
     @Published public private(set) var credentialsReady = false
     @Published public private(set) var lastError: String?
 
@@ -43,6 +44,7 @@ public final class AppModel: ObservableObject {
         if FileProviderShared.loadConfiguration() == nil {
             return "尚未配置"
         }
+        if !syncEnabled { return "同步已暂停" }
         return fileProviderEnabled ? "Tern File Provider" : "已配置，等待启用"
     }
 
@@ -82,7 +84,10 @@ public final class AppModel: ObservableObject {
 
         refreshCredentialState()
         fileProviderEnabled = FileProviderShared.loadConfiguration() != nil
-        fileProviderWatcher.start()
+        syncEnabled = FileProviderShared.isSyncEnabled
+        if fileProviderEnabled && syncEnabled {
+            fileProviderWatcher.start()
+        }
         ShareRequestHandler.shared.start()
         Task { await UpdateChecker.checkAndNotify() }
 
@@ -149,7 +154,9 @@ public final class AppModel: ObservableObject {
             settings.connectAtLogin = LaunchAgentManager.isInstalled()
 
             fileProviderEnabled = FileProviderShared.loadConfiguration() != nil
-            fileProviderWatcher.start()
+            if syncEnabled && fileProviderEnabled {
+                fileProviderWatcher.start()
+            }
             refreshCredentialState()
             lastError = nil
             CDLog.info("settings: saved url=\(url.absoluteString) user=\(trimmedUsername) loginItem=\(settings.connectAtLogin)")
@@ -183,6 +190,8 @@ public final class AppModel: ObservableObject {
 
         do {
             try await FileProviderBridge.addDomain()
+            FileProviderShared.setSyncEnabled(true)
+            syncEnabled = true
             fileProviderWatcher.start()
             fileProviderEnabled = true
             lastError = nil
@@ -330,6 +339,26 @@ public final class AppModel: ObservableObject {
         alert.alertStyle = .warning
         alert.addButton(withTitle: "好")
         alert.runModal()
+    }
+
+    /// Stop the long-poll watcher and prevent the File Provider extension from
+    /// making network requests. Cached files remain available in Finder.
+    public func setSyncEnabled(_ enabled: Bool) {
+        syncEnabled = enabled
+        FileProviderShared.setSyncEnabled(enabled)
+        if enabled {
+            if FileProviderShared.loadConfiguration() != nil {
+                fileProviderWatcher.start()
+                FileProviderBridge.signalChanges()
+            }
+        } else {
+            fileProviderWatcher.stop()
+        }
+        CDLog.info("app: sync enabled=\(enabled)")
+    }
+
+    public func toggleSync() {
+        setSyncEnabled(!syncEnabled)
     }
 
     public func openLog() {

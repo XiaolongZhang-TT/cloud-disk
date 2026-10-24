@@ -17,6 +17,7 @@ public enum FileProviderShared {
     private static let configService = "com.tern.menubar.fileprovider.config"
     private static let statusService = "com.tern.menubar.fileprovider.status"
     private static let pinnedService = "com.tern.menubar.fileprovider.pinned"
+    private static let syncStateService = "com.tern.menubar.fileprovider.syncState"
     private static let extensionBundleIdentifier = "com.tern.menubar.FileProvider"
 
     private struct Configuration: Codable {
@@ -48,6 +49,20 @@ public enum FileProviderShared {
 
     public static func clearConfiguration() {
         delete(service: configService, account: "config")
+    }
+
+    // MARK: - Sync enabled / paused
+
+    /// The menu-bar app owns this flag; the extension checks it before any
+    /// network request so "断开同步" really stops polling and login attempts.
+    public static var isSyncEnabled: Bool {
+        guard let data = read(service: syncStateService, account: "enabled"),
+              let value = String(data: data, encoding: .utf8) else { return true }
+        return value != "0"
+    }
+
+    public static func setSyncEnabled(_ enabled: Bool) {
+        _ = write(Data((enabled ? "1" : "0").utf8), service: syncStateService, account: "enabled")
     }
 
     // MARK: - Sync status

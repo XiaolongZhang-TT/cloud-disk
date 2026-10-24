@@ -50,6 +50,9 @@ struct MenuBarView: View {
         Divider()
 
         if FileProviderShared.loadConfiguration() != nil {
+            Button(model.syncEnabled ? "断开同步" : "启用同步") {
+                model.toggleSync()
+            }
             Button("在 Finder 中打开") {
                 model.openInFinder()
             }
