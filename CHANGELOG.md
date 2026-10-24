@@ -10,6 +10,16 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 See [ROADMAP.md](ROADMAP.md) for the prioritized backlog.
 
+## [1.4.1] - 2026-10-24
+
+### Security
+
+- Upgraded `body-parser` and `multer` to patched releases (0 known `npm audit`
+  vulnerabilities in production dependencies).
+- HSTS enabled on the NAS reverse proxy.
+- Session cookies are now marked `Secure` behind the reverse proxy
+  (`TRUST_PROXY=true`, `COOKIE_SECURE=true`).
+
 ## [1.4.0] - 2026-10-24
 
 ### Added
