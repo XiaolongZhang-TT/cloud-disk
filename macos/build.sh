@@ -136,6 +136,7 @@ APP_SOURCES=(
   Sources/App/FileProviderBridge.swift
   Sources/App/FileProviderWatcher.swift
   Sources/App/ShareRequestHandler.swift
+  Sources/App/UpdateChecker.swift
 )
 for file in "${SHARED_SOURCES[@]}" "${APP_SOURCES[@]}"; do
   [[ -f "$file" ]] || fail "缺少源文件：$file"
